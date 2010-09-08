@@ -1,0 +1,10 @@
+PLAN DES SAUVEGARDES
+====================
+
+PORT	JAIL					ETAT
+-------------------------------------------------------
+2222	Serveur 1 (IP)                            1
+2223	Serveur 2 (IP)                            1
+2224	Serveur 3 (IP)                            0
+etc....
+.......
