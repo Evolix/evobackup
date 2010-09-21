@@ -46,6 +46,7 @@ On créera ensuite les répertoires suivants :
 
 Pour la mise en place des backups incrémentaux sur le serveur :
 - Mettre en place le script evobackup-inc.sh dans /usr/share/scripts
+- Lui mettre les droits d'exécution : chmod u+x /usr/share/scripts/evobackup-inc.sh
 - Activer le crontab suivant (ajuster éventuellement les heures) :
   30 10 * * * /usr/share/scripts/evobackup-inc.sh
 
@@ -75,7 +76,8 @@ Côté serveur de sauvegardes
       
     # export JAIL=<nom d'hote>
 
-    - Se placer dans le bon répertoire puis exécuter :
+    - Se placer dans le bon répertoire (attention, ne pas déplacer le script car
+      il a besoin du répertoire etc/ !) puis exécuter :
 
     # sh chroot-ssh.sh /backup/jails/$JAIL
 
@@ -159,6 +161,11 @@ Côté serveur de sauvegardes
     Et bien sûr, on peut garder aussi le 15e jour (pour avoir une sauvegarde
     toutes les 15 jours, le 1er janvier de chaque année, etc.)
 
+    Attention, la création de ce fichier est *obligatoire* pour activer
+    les copies incrémentales. Par exemple, dans le cas particulier où l'on
+    voudrait garder des copies advitam aeternam, il suffit de créer un
+    fichier /etc/evobackup/$JAIL vide.
+    
 
 Côté serveur à sauvegarder
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
