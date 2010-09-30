@@ -94,53 +94,54 @@ DATE=$(/bin/date +"%d-%m-%Y")
 DEBUT=$(/bin/date +"%d-%m-%Y ; %H:%M")
 
 if [ $SYSTEME = "linux" ]; then
-	rep="/bin /boot /lib /opt /sbin /usr"
+    rep="/bin /boot /lib /opt /sbin /usr"
 else
-	rep="/bsd /bin /boot /sbin /usr"
+    rep="/bsd /bin /boot /sbin /usr"
 fi
 
-rsync -av --delete --ignore-errors				\
-	--exclude "lost+found"				        \
-	--exclude ".nfs.*"				        \
-	--exclude "/var/log"				        \
-	--exclude "/var/log/evobackup*"			   	\
-	--exclude "/var/lib/mysql"			        \
-	--exclude "/var/lib/postgres"				\
-	--exclude "/var/lib/sympa"			       	\
-	--exclude "/var/run"				        \
-	--exclude "/var/lock"				        \
-	--exclude "/var/state"					\
-	--exclude "/var/apt"				        \
-	--exclude "/var/cache"					\
-	--exclude "/usr/src"					\
-	--exclude "/usr/doc"					\
-	--exclude "/usr/share/doc"  				\
-	--exclude "/usr/obj"					\
-	--exclude "dev"						\
-	--exclude "/var/spool/postfix"				\
-	--exclude "/var/lib/amavis/amavisd.sock"		\
-	--exclude "/var/lib/munin/munin-update.stats.tmp"	\
-        --exclude "/var/lib/php5"                               \
-        --exclude "/var/spool/squid"                            \
-        $rep							\
-        /etc							\
-        /root							\
-        /var							\
-        /home							\
-        /srv							\
-        /vmlinuz						\
-	-e "ssh -p $SSH_PORT"					\
-	root@node$NODE.backup.example.com:/var/backup/		\
-	| tail -20 >> /var/log/evobackup.log
+rsync -av --delete --ignore-errors                     \
+    --exclude "lost+found"                             \
+    --exclude ".nfs.*"                                 \
+    --exclude "/var/log"                               \
+    --exclude "/var/log/evobackup*"                    \
+    --exclude "/var/lib/mysql"                         \
+    --exclude "/var/lib/postgres"                      \
+    --exclude "/var/lib/sympa"                         \
+    --exclude "/var/lib/metche"                        \
+    --exclude "/var/run"                               \
+    --exclude "/var/lock"                              \
+    --exclude "/var/state"                             \
+    --exclude "/var/apt"                               \
+    --exclude "/var/cache"                             \
+    --exclude "/usr/src"                               \
+    --exclude "/usr/doc"                               \
+    --exclude "/usr/share/doc"                         \
+    --exclude "/usr/obj"                               \
+    --exclude "dev"                                    \ 
+    --exclude "/var/spool/postfix"                     \
+    --exclude "/var/lib/amavis/amavisd.sock"           \
+    --exclude "/var/lib/munin/munin-update.stats.tmp"  \
+    --exclude "/var/lib/php5"                          \
+    --exclude "/var/spool/squid"                       \
+        $rep                                           \
+        /etc                                           \
+        /root                                          \
+        /var                                           \
+        /home                                          \
+        /srv                                           \
+        /vmlinuz                                       \
+    -e "ssh -p $SSH_PORT"                              \
+    root@node$NODE.backup.example.com:/var/backup/     \
+    | tail -20 >> /var/log/evobackup.log
 
 FIN=$(/bin/date +"%d-%m-%Y ; %H:%M")
 
-echo "EvoBackup - $HOSTNAME - START $DEBUT"			\
-	>> /var/log/evobackup.log
+echo "EvoBackup - $HOSTNAME - START $DEBUT"            \
+    >> /var/log/evobackup.log
 
-echo "EvoBackup - $HOSTNAME - STOP $FIN"			\
-	>> /var/log/evobackup.log
+echo "EvoBackup - $HOSTNAME - STOP $FIN"               \
+    >> /var/log/evobackup.log
 
-tail -10 /var/log/evobackup.log |				\
-	mail -s "[info] EvoBackup - Client $HOSTNAME"		\
-	$MAIL
+tail -10 /var/log/evobackup.log |                      \
+    mail -s "[info] EvoBackup - Client $HOSTNAME"      \
+    $MAIL
