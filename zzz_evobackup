@@ -117,7 +117,7 @@ rsync -av --delete --ignore-errors                     \
     --exclude "/usr/doc"                               \
     --exclude "/usr/share/doc"                         \
     --exclude "/usr/obj"                               \
-    --exclude "dev"                                    \ 
+    --exclude "dev"                                    \
     --exclude "/var/spool/postfix"                     \
     --exclude "/var/lib/amavis/amavisd.sock"           \
     --exclude "/var/lib/munin/munin-update.stats.tmp"  \
