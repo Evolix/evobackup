@@ -99,7 +99,7 @@ else
     rep="/bsd /bin /boot /sbin /usr"
 fi
 
-rsync -av --delete --ignore-errors                     \
+rsync -av --delete --force --ignore-errors             \
     --exclude "lost+found"                             \
     --exclude ".nfs.*"                                 \
     --exclude "/var/log"                               \
