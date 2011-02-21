@@ -1,0 +1,6 @@
+#PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin 
+
+# Backup serveur local 
+4 3 * * *     root     /usr/share/scripts/evobackup_verify on 
+8 3 * * *     root     /usr/share/scripts/evobackup_local 
+3 8 * * *     root     /usr/share/scripts/evobackup_verify off 

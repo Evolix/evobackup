@@ -1,0 +1,71 @@
+#!/bin/sh
+
+# Procedure de sauvegarde sur disque USB
+
+DATE=$(date +"%Y-%m-%d")
+MAIL=jdoe@example.com
+
+# Mounter le disque USB
+if [ "$1" = "on" ]; then
+
+    # On verifie que l'on etait bien en idle
+    STATE=`cat /etc/evobackup/lock`
+    if [ "$STATE" = "idle" ]; then
+        mount /backup 2> /dev/null
+        sleep 2
+    else
+        echo -e "La sauvegarde est bloquee (cf fichier lock)" | mail -s "[erreur] [Sauvegarde] Depart non effectuee" $MAIL
+        exit 1
+    fi
+
+    # On verifie que le montage est bien effectue
+    if df | grep /backup > /dev/null ; then
+        echo "Le disque dur USB est pret pour la sauvegarde." | mail -s "[info] EvoBackup - Disque dur USB OK" $MAIL
+        echo -n > /etc/evobackup/lock
+    else
+        echo -e "Le disque USB est mal active ou un probleme logiciel est intervenu.\nVeuillez verifier que les cables USB et alimentation sont correctement branches,\n et que le disque est bien allume (diode orange).\n\nUne fois ces verifications faites, veuillez en informer equipe@evolix.fr\n\nMerci." | mail -s "[erreur] [Sauvegarde] Probleme disque dur USB" $MAIL
+        echo error > /etc/evobackup/lock
+        exit 1
+    fi
+
+# Fin de la sauvegarde
+elif [ "$1" = "off" ]; then
+
+    # Lock ?
+    if [ ! -s /etc/evobackup/lock ]; then
+
+        # On verifie que le disque USB est toujours la
+        if df | grep /backup > /dev/null ; then
+
+            # Copie incrementale
+            cp -al /backup/last/ /backup/$DATE
+
+	    # Suppresion des vieux backups incrementaux
+            for backupdir in `ls -d /backup/20* | head -n -30`; do
+                echo "Suppression du backup $backupdir"
+                rm -rf $backupdir
+            done | mail -s "[info] EvoBackup - incrementaux" $MAIL
+
+            # On demonte et on passe en idle
+            umount /backup
+            echo idle > /etc/evobackup/lock
+
+            # On peut debrancher le disque USB
+            echo -e "La sauvegarde s'est correctement deroulee.\nBonne journee !" | mail -s "[info] EvoBackup - Debranchement du disque USB" $MAIL
+
+        else
+            # Si le disque n'est pas monte
+            echo -e "La sauvegarde n'a pas pu se terminer correctement pour une raison inconnue.\n\nMerci de ne pas debrancher le disque dur USB." | mail -s "[erreur] [Sauvegarde] Fin de sauvegarde non effectuee" $MAIL
+
+        fi
+
+    else
+            # Si la sauvegarde etait lockee
+        echo -e "La sauvegarde n'a pas pu se terminer correctement.\nCela est du a une duree trop longue de la sauvegarde ou bien a une erreur logicielle.\nL'administrateur a ete prevenu.\n\nMerci de ne pas debrancher le disque dur USB." | mail -s "[erreur] [Sauvegarde] Fin de sauvegarde non effectuee" $MAIL
+        exit 1
+    fi
+
+fi
+
+# vim: set filetype=sh expandtab shiftwidth=4 softtabstop=4 tabstop=4 :
+
