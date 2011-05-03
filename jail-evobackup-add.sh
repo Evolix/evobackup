@@ -58,7 +58,7 @@ sh chroot-ssh.sh $BACKUP_ROOT/jails/$jail
 sed -i "s/^Port 2222/Port $port/" $BACKUP_ROOT/jails/$jail/etc/ssh/sshd_config
 sed -i "s/IP/$ip/g" $BACKUP_ROOT/jails/$jail/etc/ssh/sshd_config
 
-cat $pub_key_path >> $BACKUP_ROOT/jails/$jail/root/.authorized_keys
+cat $pub_key_path >> $BACKUP_ROOT/jails/$jail/root/.ssh/authorized_keys
 chmod -R 600 $BACKUP_ROOT/jails/$jail/root/.ssh/
 chown -R root:root $BACKUP_ROOT/jails/$jail/root/.ssh/
 
