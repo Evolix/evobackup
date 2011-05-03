@@ -90,6 +90,7 @@ mount -t devpts devpts-chroot /backup/jails/$jail/dev/pts/
 chroot /backup/jails/$jail /usr/sbin/sshd
 
 
+[ -d /etc/evobackup ] || mkdir /etc/evobackup/
 cat <<EOT >/etc/evobackup/$jail
 +%Y-%m-%d.-0day
 +%Y-%m-%d.-1day
