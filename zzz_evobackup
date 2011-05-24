@@ -5,6 +5,15 @@
 # $Id: evobackup_cron_daily_client,v 1.21 2010-08-22 10:15:42 gcolpart Exp $
 #
 
+# Verification qu'un autre evobackup n'est pas deja lance
+PIDFILE=/var/run/evobackup.pid
+if [ -e $PIDFILE ]; then
+    echo "$0 tourne encore. (PID `cat $PIDFILE`)" >&2
+    exit 1
+fi
+echo "$$" > $PIDFILE
+trap "rm -f $PIDFILE" EXIT
+
 # port SSH
 SSH_PORT=2228
 
