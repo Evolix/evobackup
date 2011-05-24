@@ -21,7 +21,7 @@ NODE=$(expr `date +%d` % 2)
 mkdir -p -m 700 /home/backup
 
 # Dump LDAP
-# slapcat -l /home/backup/ldap.bak
+# slapcat -l /home/backup/ldap.bak 2>|grep -v "unclean shutdown|recovery skipped"
 
 # Dump MySQL
 # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf \
