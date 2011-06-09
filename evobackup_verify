@@ -4,6 +4,7 @@
 
 DATE=$(date +"%Y-%m-%d")
 MAIL=jdoe@example.com
+MAIL2=jdoe+critique@example.com
 
 # Mounter le disque USB
 if [ "$1" = "on" ]; then
@@ -40,7 +41,14 @@ elif [ "$1" = "off" ]; then
             # Copie incrementale
             cp -al /backup/last/ /backup/$DATE
 
-	    # Suppresion des vieux backups incrementaux
+            # Alerte si l'espace disponible sur le disque devient faible
+            df_usb0=`df -h /backup`
+            disk_usage=`echo "$df_usb0"|perl -wlne 'print $1 if /(\d+)%/'`
+            if [ "$disk_usage" -gt "90" ]; then
+               echo -e  "ATTENTION : L'espace disque maximal utilise lors de la derniere sauvegarde s'eleve a plus de 90% !!!\n\nVeuillez verifier que les backups se font correctement.\n\nUtilisation maximale : $disk_usage%\n" | mail -s "[alerte] [Sauvegarde] Occupation du disque USB critique" $MAIL2
+            fi
+
+	        # Suppresion des vieux backups incrementaux
             for backupdir in `ls -d /backup/20* | head -n -30`; do
                 echo "Suppression du backup $backupdir"
                 rm -rf $backupdir
