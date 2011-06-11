@@ -51,16 +51,13 @@ mkdir -p -m 700 /home/backup
 # mysqlhotcopy BASE /home/mysqlhotcopy/
 
 # Dump instanceS MySQL
-#oldIFS=$IFS
-#IFS=$'\n'
 #
 ## Recherche du mot de passe mysqladmin
 #mysqladminpasswd=`cat /root/.my.cnf |grep -m1 'password = .*' |cut -d" " -f3`
 #
 ## Determination des instances MySQL disponibles sur le serveur (hors 3306)
-#for instance in `cat /etc/mysql/my.cnf |grep "port\s*=\s\d*"`
-#do
-#  instance=${instance// /}
+#grep -E "^port\s*=\s*\d*" /etc/mysql/my.cnf |while read instance; do
+#  instance=$(echo $instance |tr -d '\t')
 #  instance=${instance// /}
 #  instance=${instance//port=/}
 #  if [ "$instance" != "3306" ]
@@ -68,8 +65,7 @@ mkdir -p -m 700 /home/backup
 #    mysqldump -P $instance --opt --all-databases -u mysqladmin -p$mysqladminpasswd > /home/backup/mysql.$instance.bak
 #  fi
 #done
-#
-#IFS=$old_IFS
+
 
 # Dump PostgreSQL
 # su - postgres -c "pg_dumpall > ~/pg.dump.bak"
