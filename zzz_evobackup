@@ -111,6 +111,7 @@ rsync -av --delete --force --ignore-errors             \
     --exclude "/var/log/evobackup*"                    \
     --exclude "/var/lib/mysql"                         \
     --exclude "/var/lib/postgres"                      \
+    --exclude "/var/lib/postgresql"                    \
     --exclude "/var/lib/sympa"                         \
     --exclude "/var/lib/metche"                        \
     --exclude "/var/run"                               \
