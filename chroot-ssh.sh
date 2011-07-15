@@ -123,8 +123,7 @@ echo "......OK"
 echo -n "4 - Creation des devices..."
 	cd $chrootdir/dev/
 
-	cp /dev/MAKEDEV ./
-	./MAKEDEV {null,random,urandom,pty}
+	MAKEDEV {null,random,urandom,pty}
 	mkdir pts
 	#mknod ptmx c 5 2
 

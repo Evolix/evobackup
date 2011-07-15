@@ -33,6 +33,7 @@ Avec les logiciels suivants :
 
     - OpenSSH
     - Rsync (le daemon rsync n'est pas nécessaire)
+    - Le paquet makedev
     - Commande "mail" (ou un équivalent) capable d'envoyer
       des messages à l'extérieur.
 
