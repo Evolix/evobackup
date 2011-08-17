@@ -77,6 +77,12 @@ mkdir -p -m 700 /home/backup
 # On sauvegarde uniquement certaines tables d'une base
 # pg_dump -p 5432 -h 127.0.0.1 -U USER --clean -F t --inserts -f /home/backup/pg-backup.tar -T 'TABLE1' -T 'TABLE2' BASE
 
+# Dump MongoDB
+# Creation d'un utilisateur en lecture seule :
+# > use admin
+# > db.addUser("mongobackup", "PASS", true);
+mongodump -u mongobackup -pPASS -o /home/backup/mongodump/ >/dev/null 2>|grep -v "^connected to:"
+
 # Dump MBR / table partitions
 # dd if=/dev/sda of=/home/backup/MBR bs=512 count=1 2>&1 | egrep -v "(records in|records out|512 bytes)"
 # sfdisk -d /dev/sda > /home/backup/partitions 2>&1 | egrep -v "(Warning: extended partition does not start at a cylinder boundary|DOS and Linux will interpret the contents differently)"
