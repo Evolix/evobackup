@@ -15,29 +15,13 @@ mkdir -p $TMPDIR
 
 for i in $( ls $CONFDIR ); do
 
-        mkdir -p "$INCDIR"$i
-
         # hard copy everyday
+	echo -n "hard copy $i begins at : " >> $LOGFILE
+	/bin/date +"%d-%m-%Y ; %H:%M" >> $LOGFILE
+        mkdir -p "$INCDIR"$i
         cp -alx $JAILDIR$i $INCDIR$i/$DATE
+	echo -n "hard copy $i ends at : " >> $LOGFILE
+	/bin/date +"%d-%m-%Y ; %H:%M" >> $LOGFILE
 
-        # list actual inc backups
-        for j in $( ls $INCDIR$i ); do
-                echo $j
-        done > "$TMPDIR"$i.files
-
-        # list non-obsolete inc backups
-        for j in $( cat $CONFDIR$i ); do
-                MYDATE=$( echo $j | cut -d. -f1 )
-                BEFORE=$( echo $j | cut -d. -f2 )
-                date -d "$(date $MYDATE) $BEFORE" "+%d-%m-%Y"
-        done  > "$TMPDIR"$i.keep
-
-        # delete obsolete inc backups
-        for j in $( grep -v -f "$TMPDIR"$i.keep "$TMPDIR"$i.files ); do
-                echo "Suppression du backup $j ($i)"
-                cd $INCDIR$i
-                rm -rf $j
-        done
-
-done | tee -a $LOGFILE | mail -s "[info] EvoBackup - incrementaux" $MYMAIL
+done | tee -a $LOGFILE | mail -s "[info] EvoBackup - create incs" $MYMAIL
 
