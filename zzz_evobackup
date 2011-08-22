@@ -141,7 +141,6 @@ rsync -av --delete --force --ignore-errors             \
         /var                                           \
         /home                                          \
         /srv                                           \
-        /vmlinuz                                       \
     -e "ssh -p $SSH_PORT"                              \
     root@node$NODE.backup.example.com:/var/backup/     \
     | tail -20 >> /var/log/evobackup.log
