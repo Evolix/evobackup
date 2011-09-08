@@ -81,7 +81,7 @@ mkdir -p -m 700 /home/backup
 # Creation d'un utilisateur en lecture seule :
 # > use admin
 # > db.addUser("mongobackup", "PASS", true);
-mongodump -u mongobackup -pPASS -o /home/backup/mongodump/ >/dev/null 2>|grep -v "^connected to:"
+#mongodump -u mongobackup -pPASS -o /home/backup/mongodump/ >/dev/null 2>&1 |grep -v "^connected to:"
 
 # Dump MBR / table partitions
 # dd if=/dev/sda of=/home/backup/MBR bs=512 count=1 2>&1 | egrep -v "(records in|records out|512 bytes)"
