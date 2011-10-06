@@ -169,8 +169,8 @@ Côté serveur de sauvegardes
 
     Attention, la création de ce fichier est *obligatoire* pour activer
     les copies incrémentales. Si l'on veut garder des copies advitam aeternam
-    sans jamais les supprimer, on se contentera de créer un fichier
-    etc/evobackup/$JAIL vide.
+    sans jamais les supprimer, on se contentera de ne pas lancer le script
+    evobackup-rm.sh.
 
 
 Côté serveur à sauvegarder
