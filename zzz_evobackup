@@ -97,6 +97,8 @@ mkdir -p -m 700 /home/backup
 # traceroute -n www.evolix.net > /home/backup/traceroute-www.evolix.net
 # mtr -r www.evolix.net > /home/backup/mtr-www.evolix.net
 
+# Dump des processus
+ps aux >/home/backup/ps.out
 
 HOSTNAME=$(hostname)
 
