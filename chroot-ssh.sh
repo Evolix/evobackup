@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Gregory Colpart <reg@evolix.fr>
 # chroot script for OpenSSH

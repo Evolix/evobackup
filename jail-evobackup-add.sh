@@ -52,7 +52,7 @@ if [ ! -f 'chroot-ssh.sh' ]; then
 fi
 
 
-sh chroot-ssh.sh $BACKUP_ROOT/jails/$jail
+bash chroot-ssh.sh $BACKUP_ROOT/jails/$jail
 
 
 sed -i "s/^Port 2222/Port $port/" $BACKUP_ROOT/jails/$jail/etc/ssh/sshd_config
