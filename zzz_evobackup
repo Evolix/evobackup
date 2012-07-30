@@ -34,23 +34,23 @@ mkdir -p -m 700 /home/backup
 
 # Dump MySQL
 # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf \
-# --opt --all-databases | gzip --best > /home/backup/mysql.bak.gz
+# --opt --all-databases --force | gzip --best > /home/backup/mysql.bak.gz
 
 # Dump des BDD en .sql.gz
 # mkdir -p /home/mysqldump/
 # for i in $(mysql -e 'show databases' -s --skip-column-names | egrep -v "^(Database|information_schema)"); do
-#         mysqldump $i | gzip --best > /home/mysqldump/${i}.sql.gz
+#         mysqldump --force $i | gzip --best > /home/mysqldump/${i}.sql.gz
 # done
 
 # for i in $(echo SHOW DATABASES | mysql | egrep -v "^(Database|information_schema)" ); \
 # do mkdir -p /home/mysqldump/$i ; chown -R mysql /home/mysqldump ; \
-# mysqldump --defaults-extra-file=/etc/mysql/debian.cnf -Q --opt -T \
+# mysqldump --force --defaults-extra-file=/etc/mysql/debian.cnf -Q --opt -T \
 # /home/mysqldump/$i $i; done
 
 # Dump par base
 # mkdir -p -m 700 /home/mysqldump/BASE
 # chown -R mysql /home/mysqldump/
-# mysqldump --defaults-extra-file=/etc/mysql/debian.cnf -Q \
+# mysqldump --force --defaults-extra-file=/etc/mysql/debian.cnf -Q \
 # --opt  -T /home/mysqldump/BASE BASE
 
 # mkdir -p /home/mysqlhotcopy/
