@@ -85,7 +85,7 @@ Côté serveur de sauvegardes
     - Se placer dans le bon répertoire (attention, ne pas déplacer le script car
       il a besoin du répertoire etc/ !) puis exécuter :
 
-    # sh chroot-ssh.sh /backup/jails/$JAIL
+    # bash chroot-ssh.sh /backup/jails/$JAIL
 
     Note : Ignorer une éventuelle erreur avec ld-linux-x86-64.so.2 (32bits) ou ld-linux.so.2 (64bits)
 
