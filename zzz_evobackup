@@ -50,7 +50,7 @@ mkdir -p -m 700 /home/backup
 # Dump par base
 # mkdir -p -m 700 /home/mysqldump/BASE
 # chown -R mysql /home/mysqldump/
-# mysqldump --force --defaults-extra-file=/etc/mysql/debian.cnf -Q \
+# mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -Q \
 # --opt  -T /home/mysqldump/BASE BASE
 
 # mkdir -p /home/mysqlhotcopy/
