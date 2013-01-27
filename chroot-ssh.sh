@@ -83,6 +83,8 @@ chrootdir=$1
 mkdir -p $chrootdir
 chown root:root $chrootdir
 
+umask 022
+
 # create jail
 
 echo -n "1 - Creation de la prison..."
@@ -120,16 +122,7 @@ bincopy $chrootdir
 
 echo "......OK"
 
-echo -n "4 - Creation des devices..."
-	cd $chrootdir/dev/
-
-	MAKEDEV {null,random,urandom,pty}
-	mkdir pts
-	#mknod ptmx c 5 2
-
-echo "....OK"
-
-echo -n "5 - Termine."
+echo -n "4 - Termine."
 
 # end
 
