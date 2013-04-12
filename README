@@ -27,13 +27,13 @@ plusieurs To de données incrémentales.
 Serveur de sauvegardes
 ----------------------
 
-Le serveur de sauvegardes doit être sous Debian Lenny.
-(testé sous Etch et Lenny, les instructions sont pour Lenny).
+Le serveur de sauvegardes doit être sous Debian Squeeze
+(testé sous Etch/Lenny/Squeeze, les instructions sont pour Squeeze).
 Avec les logiciels suivants :
 
     - OpenSSH
     - Rsync (le daemon rsync n'est pas nécessaire)
-    - Le paquet makedev
+    - Le paquet makedev (plus nécessaire depuis Squeeze)
     - Commande "mail" (ou un équivalent) capable d'envoyer
       des messages à l'extérieur.
 
@@ -62,6 +62,7 @@ de warnings en positionnant les paramètres Sysctl suivants :
 # sysctl kernel.grsecurity.chroot_deny_chmod=0
 # sysctl kernel.grsecurity.chroot_deny_mknod=0
 
+Note : plus nécessaire avec un noyau récent a priori
 
 Serveurs à sauvegarder
 ----------------------
@@ -103,20 +104,19 @@ Côté serveur de sauvegardes
     # chmod -R 600 /backup/jails/$JAIL/root/.ssh/
     # chown -R root:root /backup/jails/$JAIL/root/.ssh/
 
-2) Gestion du lancement des prisons en modifiant le fichier
-   de démarrage /etc/init.d/ssh (on remplacera $JAIL par sa
-   vraie valeur).
+2) Gestion du lancement des prisons en modifiant le fichier de démarrage
+   /etc/init.d/evobackup (on remplacera $JAIL par sa vraie valeur).
 
     - Ajouter à start) :
 
     mount -t proc proc-chroot /backup/jails/$JAIL/proc/
-    mount -t devpts devpts-chroot /backup/jails/$JAIL/dev/pts/
+    mount -t devtmpfs udev /backup/jails/$JAIL/dev/
     chroot /backup/jails/$JAIL /usr/sbin/sshd > /dev/null
 
     - Ajouter à stop) :
 
     umount /backup/jails/$JAIL/proc/
-    umount /backup/jails/$JAIL/dev/pts/
+    umount /backup/jails/$JAIL/dev/
     kill -9 `chroot /backup/jails/$JAIL cat /var/run/sshd.pid`
 
     - Ajouter à reload|force-reload) :
@@ -131,12 +131,12 @@ Côté serveur de sauvegardes
 3) On lance la prison :
 
     # mount -t proc proc-chroot /backup/jails/$JAIL/proc/
-    # mount -t devpts devpts-chroot /backup/jails/$JAIL/dev/pts/
+    # mount -t devtmpfs udev /backup/jails/$JAIL/dev/
     # chroot /backup/jails/$JAIL /usr/sbin/sshd > /dev/null
 
    Pour vérifier que tout est OK :
 
-    # /etc/init.d/ssh reload
+    # /etc/init.d/evobackup reload
 
 4) Gestion des sauvegardes incrémentales
 
@@ -211,5 +211,5 @@ En cas d'une mise-à-jour d'un paquet lié à SSH ou rsync côté
 serveur de sauvegardes, on mettra à jour ainsi :
 
 # sh chroot-ssh.sh updateall
-# /etc/init.d/ssh restart
+# /etc/init.d/evobackup restart
 
