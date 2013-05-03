@@ -8,7 +8,8 @@
 # Verification qu'un autre evobackup n'est pas deja lance
 PIDFILE=/var/run/evobackup.pid
 if [ -e $PIDFILE ]; then
-    echo "$0 tourne encore. (PID `cat $PIDFILE`)" >&2
+    pkill -9 -F $PIDFILE
+    echo "$0 tourne encore (PID `cat $PIDFILE`). Processus killé" >&2
     exit 1
 fi
 echo "$$" > $PIDFILE
