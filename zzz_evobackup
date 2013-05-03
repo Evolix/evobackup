@@ -45,7 +45,7 @@ mkdir -p -m 700 /home/backup
 
 # for i in $(echo SHOW DATABASES | mysql | egrep -v "^(Database|information_schema)" ); \
 # do mkdir -p /home/mysqldump/$i ; chown -R mysql /home/mysqldump ; \
-# mysqldump --force --defaults-extra-file=/etc/mysql/debian.cnf -Q --opt -T \
+# mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -Q --opt -T \
 # /home/mysqldump/$i $i; done
 
 # Dump par base
@@ -90,6 +90,9 @@ mkdir -p -m 700 /home/backup
 # > db.addUser("mongobackup", "PASS", true);
 #mongodump -u mongobackup -pPASS -o /home/backup/mongodump/ >/dev/null 2>&1 |grep -v "^connected to:"
 
+# Dump Redis
+# cp /var/lib/redis/dump.rdb /home/backup/
+
 # Dump MBR / table partitions
 # dd if=/dev/sda of=/home/backup/MBR bs=512 count=1 2>&1 | egrep -v "(records in|records out|512 bytes)"
 # sfdisk -d /dev/sda > /home/backup/partitions 2>&1 | egrep -v "(Warning: extended partition does not start at a cylinder boundary|DOS and Linux will interpret the contents differently)"
@@ -122,7 +125,7 @@ else
     rep="/bsd /bin /boot /sbin /usr"
 fi
 
-rsync -av --delete --force --ignore-errors             \
+rsync -av --delete --force --ignore-errors --partial   \
     --exclude "lost+found"                             \
     --exclude ".nfs.*"                                 \
     --exclude "/var/log"                               \
