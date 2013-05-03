@@ -10,7 +10,6 @@ PIDFILE=/var/run/evobackup.pid
 if [ -e $PIDFILE ]; then
     pkill -9 -F $PIDFILE
     echo "$0 tourne encore (PID `cat $PIDFILE`). Processus killé" >&2
-    exit 1
 fi
 echo "$$" > $PIDFILE
 trap "rm -f $PIDFILE" EXIT
