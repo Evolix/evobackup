@@ -109,6 +109,9 @@ mkdir -p -m 700 /home/backup
 # Dump des processus
 ps aux >/home/backup/ps.out
 
+# Dump des connexions reseaux en cours
+netstat -taupen >/home/backup/netstat.out
+
 # Liste des paquets installes
 dpkg -l >/home/backup/packages
 
