@@ -36,7 +36,7 @@ rsync -avz --delete --force --ignore-errors --partial \
     $rep \
     -e "ssh -p $SSHPORT -4" \
     root@${BACKUPSERVER}:/var/backup/ > $tmplog
-$status=$?
+status=$?
 
 # Keep the last 20 lines
 tail -20 $tmplog >> $LOG && rm $tmplog
