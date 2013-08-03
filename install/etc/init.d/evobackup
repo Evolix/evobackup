@@ -1,0 +1,47 @@
+#!/bin/sh
+
+### BEGIN INIT INFO
+# Provides:             evobackup
+# Required-Start:       $syslog
+# Required-Stop:        $syslog
+# Default-Start:        2
+# Default-Stop:         1
+# Short-Description:    Backup manager using rsync and OpenSSH chroot.
+### END INIT INFO
+
+set -e
+BACKUP_PATH=/backup
+
+case "$1" in
+    start)
+        for jail in ${BACKUP_PATH}/jails/*; do
+            mount -t proc proc-chroot ${jail}/proc/
+            mount -t devtmpfs udev ${jail}/dev/
+            chroot ${jail} /usr/sbin/sshd > /dev/null
+        done
+    ;;
+
+    stop)
+        for jail in ${BACKUP_PATH}/jails/*; do
+            umount ${jail}/proc/
+            umount ${jail}/dev/pts/
+            kill $(chroot $jail cat /var/run/sshd.pid)
+        done
+    ;;
+
+    reload|force-reload)
+        for jail in ${BACKUP_PATH}/jails/*; do
+            kill -HUP \
+                $(chroot $jail cat /var/run/sshd.pid)
+        done
+    ;;
+
+    restart)
+        for jail in ${BACKUP_PATH}/jails/*; do
+            kill $(chroot $jail cat /var/run/sshd.pid)
+            chroot $jail /usr/sbin/sshd > /dev/null
+        done
+    ;;
+esac
+
+exit 0

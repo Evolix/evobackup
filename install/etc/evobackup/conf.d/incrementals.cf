@@ -1,0 +1,6 @@
+CONFDIR=/etc/evobackup/conf.d/incs
+DATEDIR=$(date +"%Y-%m-%d")
+LOGFILE=/var/log/evobackup-sync.log
+JAILDIR=/backup/jails
+INCDIR=/backup/incs
+MAIL_TO=jdoe@example.com

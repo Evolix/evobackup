@@ -1,0 +1,57 @@
+#!/bin/sh
+# EvoBackup cronjob.
+
+. /etc/evobackup/conf.d/cron.cf
+
+# Verify if an EvoBackup is already launched, if true, kill it.
+if [ -e $PIDFILE ]; then
+    pkill -9 -F $PIDFILE
+    echo "$0 is running (PID $(cat $PIDFILE)). Process killed." >&2
+fi
+echo "$$" > $PIDFILE
+trap "rm -f $PIDFILE" EXIT INT
+
+# Executes tasks to do before rsync.
+run-parts /etc/evobackup/actions.d/
+
+# Handle include paths when the system OS is GNU/Linux or FreeBSD. Customize it
+# if necessary.
+system=$(uname -o)
+hostname=$(hostname -f)
+start=$(date --rfc-3339=seconds)
+tmplog=$(mktemp --tmpdir=/tmp evobackup.XXX)
+if [ "$system" = "GNU/Linux" ]; then
+    rep="/bin /boot /lib /opt /sbin /usr"
+elif [ "$system" = "FreeBSD" ]; then
+    rep="/bsd /bin /boot /sbin /usr"
+else
+    # Not GNU/Linux or FreeBSD
+    rep=""
+fi
+
+# rsync command line to backup all data.
+rsync -avz --delete --force --ignore-errors --partial \
+    --exclude-from=/etc/evobackup/conf.d/exclude.cf \
+    --include-from=/etc/evobackup/conf.d/include.cf \
+    $rep \
+    -e "ssh -p $SSHPORT -4" \
+    root@${BACKUPSERVER}:/var/backup/ > $tmplog
+$status=$?
+
+# Keep the last 20 lines
+tail -20 $tmplog >> $LOG && rm $tmplog
+
+stop=$(date --rfc-3339=seconds)
+echo "EvoBackup started at $start." >> /var/log/evobackup.log
+echo "EvoBackup finished at $stop." >> /var/log/evobackup.log
+
+# Send a report
+# Did rsync sucessfully finished?
+if [ "$status" != 0 ]; then
+    tail -10 $LOG \
+        | mailx -s "[warn] EvoBackup for $hostname did not finish correctly." \
+        $MAIL_TO
+else
+    tail -10 $LOG \
+        | mailx -s "[info] EvoBackup report for $hostname" $MAIL_TO
+fi
