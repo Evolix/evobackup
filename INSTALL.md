@@ -93,8 +93,7 @@ In /etc/evobackup:
   commented out. Un-comment or write your own code, this will be launched
   before the rsync, using run-parts.
 
-* What to include in conf.d/include.cf
-* What to exclude in conf.d/exclude.cf
+* What to backup using rsync filter rules in conf.d/include.cf
 * General config in conf.d/cron.cf
 
 6) Optional, test with sh -x.

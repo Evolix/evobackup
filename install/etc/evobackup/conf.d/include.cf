@@ -1,5 +1,33 @@
-/etc
-/root
-/var
-/home
-/srv
+# Use this file to exlude files (-) or explicit include (+).
+# Exemple, backup /home/backup/mysql.bak.gz but not what is left in /home/backup
+# + /home/backup/mysql.bak.gz
+# - /home/backup/**
+
+# General excludes.
+- lost+found
+- .nfs.*
+- /backup
+- /dev
+- /proc
+- /selinux
+- /run
+- /usr/src
+- /usr/doc
+- /usr/share/doc
+- /usr/obj
+- /var/log
+- /var/lib/mysql
+- /var/lib/postgres
+- /var/lib/postgresql
+- /var/lib/sympa
+- /var/lib/metche
+- /var/run
+- /var/lock
+- /var/state
+- /var/apt
+- /var/cache
+- /var/spool/postfix
+- /var/lib/amavis/amavisd.sock
+- /var/lib/munin/munin-update.stats.tmp
+- /var/lib/php5
+- /var/spool/squid
