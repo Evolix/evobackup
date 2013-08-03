@@ -1,0 +1,17 @@
+# Pid file
+PIDFILE="/var/run/evobackup.pid"
+
+# Port of the OpenSSH chroot on the backup server.
+SSHPORT=2222
+
+# Hostname OR adress IP of the backup server.
+BACKUPSERVER="haruna.benprobox.fr"
+
+# A mail to send the report or alert.
+MAIL_TO="jdoe@example.com"
+
+# Log file
+LOG="/var/log/evobackup.log"
+
+# Used when you have more than one backup server.
+NODE=$(( $(date +%d) % 2 ))

@@ -1,0 +1,6 @@
+#!/bin/sh
+# Dump Redis
+
+# cp /var/lib/redis/dump.rdb /home/backup/
+
+exit 0

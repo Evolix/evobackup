@@ -1,0 +1,5 @@
+#!/bin/sh
+# Prerequisites actions to do.
+
+test ! -d /home/backup && mkdir /home/backup
+exit 0

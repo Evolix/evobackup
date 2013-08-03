@@ -1,0 +1,15 @@
+#!/bin/sh
+# PostgreSQL Dump
+
+# su - postgres -c "pg_dumpall > ~/pg.dump.bak"
+# mv ~postgres/pg.dump.bak /home/backup/
+
+# Exemple de backups...
+# On sauvegarde les tables d'une base sauf des exceptions
+# pg_dump -p 5432 -h 127.0.0.1 -U USER --clean -F t --inserts -f
+#/home/backup/pg-backup.tar -t 'TABLE1' -t 'TABLE2' BASE
+# On sauvegarde uniquement certaines tables d'une base
+# pg_dump -p 5432 -h 127.0.0.1 -U USER --clean -F t --inserts -f
+#/home/backup/pg-backup.tar -T 'TABLE1' -T 'TABLE2' BASE
+
+exit 0

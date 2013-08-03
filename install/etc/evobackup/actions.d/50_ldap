@@ -1,0 +1,6 @@
+#!/bin/sh
+# Dump LDAP
+
+# slapcat -l /home/backup/ldap.bak
+
+exit 0
