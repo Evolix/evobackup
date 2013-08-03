@@ -11,12 +11,14 @@ Incrementals are stored outside of the chroot using hard links. (So incrementals
 are not available for clients). Using this method we can keep tens of backup of
 each client securely and not using too much space.
 
+```
                                     Backup server
                                     ************
 Server 1 ------ SSH/rsync ------->  * tcp/2222 *
                                     *          *
 Server 2 ------ SSH/rsync ------->  * tcp/2223 *
                                     ************
+```
 
 This method uses standard tools (ssh, rsync, cp -al). EvoBackup is used for
 many years by Evolix for back up each day hundreds of servers which uses many
