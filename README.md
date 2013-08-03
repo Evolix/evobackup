@@ -42,6 +42,6 @@ Main directories:
 
 * /backup/jails: chroot used by clients
 * /backup/incs: incrementals
-* /etc/evobackup: config file for incrementals frequency
+* /etc/evobackup: Config dir
 
-To install and configure EvoBackup read INSTALL.
+To install and configure EvoBackup read INSTALL.md
