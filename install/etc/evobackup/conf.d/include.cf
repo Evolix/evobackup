@@ -8,12 +8,15 @@
 - .nfs.*
 - /backup
 - /dev
+- /lib
 - /proc
 - /selinux
 - /run
 - /sys
-- /usr/src
+- /tmp
 - /usr/doc
+- /usr/lib
+- /usr/src
 - /usr/share/doc
 - /usr/obj
 - /var/log
