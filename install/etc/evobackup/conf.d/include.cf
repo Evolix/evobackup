@@ -11,6 +11,7 @@
 - /proc
 - /selinux
 - /run
+- /sys
 - /usr/src
 - /usr/doc
 - /usr/share/doc
