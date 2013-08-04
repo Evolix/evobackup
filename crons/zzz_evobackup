@@ -16,7 +16,6 @@ run-parts /etc/evobackup/actions.d/
 
 # Handle include paths when the system OS is GNU/Linux or FreeBSD. Customize it
 # if necessary.
-system=$(uname -o)
 hostname=$(hostname -f)
 start=$(date --rfc-3339=seconds)
 tmplog=$(mktemp --tmpdir=/tmp evobackup.XXX)

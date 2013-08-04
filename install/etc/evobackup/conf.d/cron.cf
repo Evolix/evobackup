@@ -5,7 +5,7 @@ PIDFILE="/var/run/evobackup.pid"
 SSHPORT=2222
 
 # Hostname OR adress IP of the backup server.
-BACKUPSERVER="haruna.benprobox.fr"
+BACKUPSERVER="mybackupserver.domain.tld"
 
 # A mail to send the report or alert.
 MAIL_TO="jdoe@example.com"
