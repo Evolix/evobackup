@@ -20,21 +20,11 @@ system=$(uname -o)
 hostname=$(hostname -f)
 start=$(date --rfc-3339=seconds)
 tmplog=$(mktemp --tmpdir=/tmp evobackup.XXX)
-if [ "$system" = "GNU/Linux" ]; then
-    rep="/bin /boot /lib /opt /sbin /usr"
-elif [ "$system" = "FreeBSD" ]; then
-    rep="/bsd /bin /boot /sbin /usr"
-else
-    # Not GNU/Linux or FreeBSD
-    rep=""
-fi
 
 # rsync command line to backup all data.
-rsync -avz --delete --force --ignore-errors --partial \
-    --exclude-from=/etc/evobackup/conf.d/exclude.cf \
+rsync -avz --force --ignore-errors --partial \
     --include-from=/etc/evobackup/conf.d/include.cf \
-    $rep \
-    -e "ssh -p $SSHPORT -4" \
+    --delete --delete-excluded / -e "ssh -p $SSHPORT -4" \
     root@${BACKUPSERVER}:/var/backup/ > $tmplog
 status=$?
 
