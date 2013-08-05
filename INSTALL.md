@@ -96,7 +96,13 @@ In /etc/evobackup:
 * What to backup using rsync filter rules in conf.d/include.cf
 * General config in conf.d/cron.cf
 
-6) Optional, test with sh -x.
+6) Connect to the OpenSSH chroot for the first time and accept the fingerprint.
+
+```
+root@client1:~/evobackup# ssh backupserver.mydomain.tld -p 2222
+```
+
+7) Optional, test with sh -x.
 
 ```
 root@client1:~/evobackup# sh -x /etc/cron.daily/zzz_evobackup
