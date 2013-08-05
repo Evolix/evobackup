@@ -19,8 +19,6 @@ trap "rm -f $PIDFILE" EXIT INT
 # Executes tasks to do before rsync.
 run-parts /etc/evobackup/actions.d/
 
-# Handle include paths when the system OS is GNU/Linux or FreeBSD. Customize it
-# if necessary.
 hostname=$(hostname -f)
 start=$(date --rfc-3339=seconds)
 tmplog=$(mktemp --tmpdir=/tmp evobackup.XXX)
