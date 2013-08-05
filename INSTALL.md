@@ -100,12 +100,25 @@ In /etc/evobackup:
 
 ```
 root@client1:~/evobackup# ssh backupserver.mydomain.tld -p 2222
+The authenticity of host 'backupserver.domain.tld (192.168.0.10)' can't be established.
+RSA key fingerprint is a6:da:40:ac:72:f2:41:ec:7f:ca:d3:86:f6:27:19:77.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added 'backupserver.domain.tld,192.168.0.10' (RSA) to the list of known hosts.
 ```
 
-7) Optional, test with sh -x.
+7) Optional, test with ```sh -x &```, and see if it seems to works.
 
 ```
-root@client1:~/evobackup# sh -x /etc/cron.daily/zzz_evobackup
+root@client1:~/evobackup# sh -x /etc/cron.daily/zzz_evobackup &
+root@client1:~/evobackup# tail -f /tmp/evobackup.*
+```
+
+If it works, you can wait for it to finish or cancel it.
+
+```
+root@client1:~/evobackup# ^C
+root@client1:~/evobackup# fg
+root@client1:~/evobackup# ^C
 ```
 
 Updating OpenSSH chroot
