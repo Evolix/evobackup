@@ -5,7 +5,12 @@
 
 # Verify if an EvoBackup is already launched, if true, kill it.
 if [ -e $PIDFILE ]; then
-    pkill -9 -F $PIDFILE
+    # Killing the childs of evobackup.
+    for pid in $(ps h --ppid $(cat $PIDFILE) -o pid | tr -s '\n' ' '); do
+        kill -9 $pid;
+    done
+    # Then kill the main PID.
+    kill -9 $(cat $PIDFILE)
     echo "$0 is running (PID $(cat $PIDFILE)). Process killed." >&2
 fi
 echo "$$" > $PIDFILE
