@@ -8,7 +8,12 @@
 # Verification qu'un autre evobackup n'est pas deja lance
 PIDFILE=/var/run/evobackup.pid
 if [ -e $PIDFILE ]; then
-    pkill -9 -F $PIDFILE
+    # Killing the childs of evobackup.
+    for pid in $(ps h --ppid $(cat $PIDFILE) -o pid | tr -s '\n' ' '); do
+        kill -9 $pid;
+    done
+    # Then kill the main PID.
+    kill -9 $(cat $PIDFILE)
     echo "$0 tourne encore (PID `cat $PIDFILE`). Processus killé" >&2
 fi
 echo "$$" > $PIDFILE
