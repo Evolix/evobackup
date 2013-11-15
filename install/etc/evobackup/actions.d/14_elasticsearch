@@ -1,0 +1,15 @@
+# Dump ElasticSearch
+# Disable ES translog flush
+curl -s -XPUT 'localhost:9200/_settings' -d '{"index.translog.disable_flush": true}' >/dev/null
+# Flushes translog
+curl -s 'localhost:9200/_flush' | grep -qe '"ok":true'
+# If it succeed, do an rsync of the datadir
+if [ $? -eq 0 ]; then
+    rsync -a /var/lib/elasticsearch /home/backup/
+else
+    echo "Error when flushing ES translog indexes."
+fi
+# In any case re-enable translog flush
+curl -s -XPUT 'localhost:9200/_settings' -d '{"index.translog.disable_flush": false}' > /dev/null
+
+exit 0
