@@ -97,6 +97,20 @@ mkdir -p -m 700 /home/backup
 # Dump Redis
 # cp /var/lib/redis/dump.rdb /home/backup/
 
+# Dump ElasticSearch
+# Disable ES translog flush
+curl -s -XPUT 'localhost:9200/_settings' -d '{"index.translog.disable_flush": true}' >/dev/null
+# Flushes translog
+curl -s 'localhost:9200/_flush' | grep -qe '"ok":true'
+# If it succeed, do an rsync of the datadir
+if [ $? -eq 0 ]; then
+    rsync -a /var/lib/elasticsearch /home/backup/
+else
+    echo "Error when flushing ES translog indexes."
+fi
+# In any case re-enable translog flush
+curl -s -XPUT 'localhost:9200/_settings' -d '{"index.translog.disable_flush": false}' > /dev/null
+
 # Dump MBR / table partitions
 # dd if=/dev/sda of=/home/backup/MBR bs=512 count=1 2>&1 | egrep -v "(records in|records out|512 bytes)"
 # sfdisk -d /dev/sda > /home/backup/partitions 2>&1 | egrep -v "(Warning: extended partition does not start at a cylinder boundary|DOS and Linux will interpret the contents differently)"
@@ -153,6 +167,7 @@ rsync -av --delete --force --ignore-errors --partial   \
     --exclude "/var/lib/munin/munin-update.stats.tmp"  \
     --exclude "/var/lib/php5"                          \
     --exclude "/var/spool/squid"                       \
+    --exclude "/var/lib/elasticsearch"                 \
         $rep                                           \
         /etc                                           \
         /root                                          \
