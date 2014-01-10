@@ -7,11 +7,11 @@
 
 # Dump des BDD en .sql.gz
 # mkdir -p /home/mysqldump/
-# for i in $(mysql -e 'show databases' -s --skip-column-names | egrep -v "^(Database|information_schema)"); do
+# for i in $(mysql -e 'show databases' -s --skip-column-names | egrep -v "^(Database|information_schema|performance_schema)"); do
 #         mysqldump --force --events $i | gzip --best > /home/mysqldump/${i}.sql.gz
 # done
 
-# for i in $(echo SHOW DATABASES | mysql | egrep -v "^(Database|information_schema)" ); \
+# for i in $(echo SHOW DATABASES | mysql | egrep -v "^(Database|information_schema|performance_schema)" ); \
 # do mkdir -p /home/mysqldump/$i ; chown -R mysql /home/mysqldump ; \
 # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -Q --opt --events --skip-comments -T \
 # /home/mysqldump/$i $i; done
