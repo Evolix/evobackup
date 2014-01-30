@@ -24,14 +24,14 @@ start=$(date --rfc-3339=seconds)
 tmplog=$(mktemp --tmpdir=/tmp evobackup.XXX)
 
 # rsync command line to backup all data.
-rsync -avz --force --ignore-errors --partial \
+rsync -avz --stats --force --ignore-errors --partial \
     --include-from=/etc/evobackup/conf.d/include.cf \
     --delete --delete-excluded / -e "ssh -p $SSHPORT -4" \
     root@${BACKUPSERVER}:/var/backup/ > $tmplog
 status=$?
 
-# Keep the last 20 lines
-tail -20 $tmplog >> $LOG && rm $tmplog
+# Keep the last 30 lines
+tail -30 $tmplog >> $LOG && rm $tmplog
 
 stop=$(date --rfc-3339=seconds)
 echo "EvoBackup started at $start." >> /var/log/evobackup.log
@@ -40,10 +40,10 @@ echo "EvoBackup finished at $stop." >> /var/log/evobackup.log
 # Send a report
 # Did rsync sucessfully finished?
 if [ "$status" != 0 ]; then
-    tail -10 $LOG \
+    tail -30 $LOG \
         | mailx -s "[warn] EvoBackup for $hostname did not finish correctly." \
         $MAIL_TO
 else
-    tail -10 $LOG \
+    tail -30 $LOG \
         | mailx -s "[info] EvoBackup report for $hostname" $MAIL_TO
 fi
