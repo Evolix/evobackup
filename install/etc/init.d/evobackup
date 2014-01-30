@@ -17,6 +17,7 @@ case "$1" in
         for jail in ${BACKUP_PATH}/jails/*; do
             mount -t proc proc-chroot ${jail}/proc/
             mount -t devtmpfs udev ${jail}/dev/
+            mount -t devpts devpts ${jail}/dev/pts
             chroot ${jail} /usr/sbin/sshd > /dev/null
         done
     ;;
@@ -25,6 +26,7 @@ case "$1" in
         for jail in ${BACKUP_PATH}/jails/*; do
             umount ${jail}/proc/
             umount ${jail}/dev/pts/
+            umount ${jail}/dev
             kill $(chroot $jail cat /var/run/sshd.pid)
         done
     ;;
