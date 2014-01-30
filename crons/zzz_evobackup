@@ -24,7 +24,7 @@ start=$(date --rfc-3339=seconds)
 tmplog=$(mktemp --tmpdir=/tmp evobackup.XXX)
 
 # rsync command line to backup all data.
-rsync -avz --stats --force --ignore-errors --partial \
+rsync -avzh --stats --force --ignore-errors --partial \
     --include-from=/etc/evobackup/conf.d/include.cf \
     --delete --delete-excluded / -e "ssh -p $SSHPORT -4" \
     root@${BACKUPSERVER}:/var/backup/ > $tmplog
