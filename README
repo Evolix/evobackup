@@ -111,11 +111,13 @@ Côté serveur de sauvegardes
 
     mount -t proc proc-chroot /backup/jails/$JAIL/proc/
     mount -t devtmpfs udev /backup/jails/$JAIL/dev/
+    mount -t devpts devpts /backup/jails/$JAIL/dev/pts
     chroot /backup/jails/$JAIL /usr/sbin/sshd > /dev/null
 
     - Ajouter à stop) :
 
     umount /backup/jails/$JAIL/proc/
+    umount /backup/jails/$JAIL/dev/pts
     umount /backup/jails/$JAIL/dev/
     kill -9 `chroot /backup/jails/$JAIL cat /var/run/sshd.pid`
 
@@ -132,6 +134,7 @@ Côté serveur de sauvegardes
 
     # mount -t proc proc-chroot /backup/jails/$JAIL/proc/
     # mount -t devtmpfs udev /backup/jails/$JAIL/dev/
+    # mount -t devpts devpts /backup/jails/$JAIL/dev/pts
     # chroot /backup/jails/$JAIL /usr/sbin/sshd > /dev/null
 
    Pour vérifier que tout est OK :
