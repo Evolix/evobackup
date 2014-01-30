@@ -24,10 +24,12 @@ case "$1" in
 
     stop)
         for jail in ${BACKUP_PATH}/jails/*; do
+            kill $(chroot $jail cat /var/run/sshd.pid)
             umount ${jail}/proc/
             umount ${jail}/dev/pts/
+            # Need to wait a little time before unmounting /dev
+            sleep 0.2
             umount ${jail}/dev
-            kill $(chroot $jail cat /var/run/sshd.pid)
         done
     ;;
 
