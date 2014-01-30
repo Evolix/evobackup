@@ -129,4 +129,4 @@ cat <<EOT >/etc/evobackup/conf.d/incs/${jail}
 +%Y-%m-01.-1month
 EOT
 
-echo -n "Done. OpenSSH chroot added! Restart evobackup service."
+echo "Done. OpenSSH chroot added! Restart evobackup service."
