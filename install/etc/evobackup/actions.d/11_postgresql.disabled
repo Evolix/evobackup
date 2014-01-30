@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # PostgreSQL Dump
 
 # su - postgres -c "pg_dumpall > ~/pg.dump.bak"

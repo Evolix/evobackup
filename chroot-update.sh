@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Update all OpenSSH chroot.
 
 BACKUP_PATH='/backup/jails'

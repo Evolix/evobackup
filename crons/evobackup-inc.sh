@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Handles creating incrementals backup.
 
 . /etc/evobackup/conf.d/incrementals.cf

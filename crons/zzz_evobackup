@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # EvoBackup cronjob.
 
 . /etc/evobackup/conf.d/cron.cf

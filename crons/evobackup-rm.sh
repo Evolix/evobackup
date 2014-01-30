@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Handle removing of incrementals.
 

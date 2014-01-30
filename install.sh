@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Install EvoBackup configuration and init files.
 
 # Debian or Ubuntu?
