@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Set-up and configure an OpenSSH chroot.
 
 BACKUP_PATH='/backup/jails'
