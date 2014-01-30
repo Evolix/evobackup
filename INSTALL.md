@@ -90,8 +90,9 @@ Why "zzz"? Because we want the backup cronjob to be the last one.
 In /etc/evobackup:
 
 * What to backup using shell scripts in actions.d. By default all scripts are
-  commented out. Un-comment or write your own code, this will be launched
-  before the rsync, using run-parts.
+  disabled. To enable a script, move it by clearing .disabled part.
+  You can also adapt these scripts or write your own.
+  This will be launched before the rsync, using run-parts.
 
 * What to backup using rsync filter rules in conf.d/include.cf
 * General config in conf.d/cron.cf
