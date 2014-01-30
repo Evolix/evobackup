@@ -7,6 +7,8 @@
 tmpdir=$(mktemp --tmpdir=/tmp -d evobackup.XXX)
 emptydir=$(mktemp --tmpdir=/tmp -d evobackup.XXX)
 
+# Don't return *, if bash glob don't find files/dir.
+shopt -s nullglob
 # For each client, delete needed incrementals.
 for client in ${CONFDIR}/*; do
         # Get only the name of the backup.
