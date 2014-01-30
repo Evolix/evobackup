@@ -1,12 +1,12 @@
 #!/bin/sh
 # Get system informations.
+# Dependency: dd, sfdisk, mtr, traceroute, ps, netstat, dpkg
 
 # Extract MBR / table partitions.
-# dd if=/dev/sda of=/home/backup/MBR bs=512 count=1 2>&1 | egrep -v "(records
-# in|records out|512 bytes)"
-# sfdisk -d /dev/sda > /home/backup/partitions 2>&1 | egrep -v "(Warning:
-#extended partition does not start at a cylinder boundary|DOS and Linux will
-# interpret the contents differently)"
+dd if=/dev/sda of=/home/backup/MBR bs=512 count=1 2>&1 | \
+    egrep -v "(records in|records out|512 bytes)"
+sfdisk -d /dev/sda > /home/backup/partitions 2>&1 | \
+    egrep -v "(Warning: extended partition does not start at a cylinder boundary|DOS and Linux will interpret the contents differently)"
 
 # Get routes
 for addr in 8.8.8.8 backup.evolix.net www.evolix.fr www.evolix.net; do
