@@ -39,18 +39,12 @@ newchroot() {
     umask 022
     # create jail
     echo -n "1 - Creating the chroot..."
-    mkdir -p $chrootdir/{bin,dev,etc/ssh,lib,lib64}
-    mkdir -p $chrootdir/lib/tls/i686/cmov/
-    mkdir -p $chrootdir/lib/x86_64-linux-gnu/
-    mkdir -p $chrootdir/proc
-    mkdir -p $chrootdir/root/.ssh
-    mkdir -p $chrootdir/usr/lib/i686/cmov/
-    mkdir -p $chrootdir/lib/i686/cmov/
+    mkdir -p $chrootdir/{bin,dev,etc/ssh,lib,lib64,proc}
+    mkdir -p $chrootdir/lib/{x86_64-linux-gnu,tls/i686/cmov,i686/cmov}
     mkdir -p $chrootdir/usr/{bin,lib,sbin}
-    mkdir -p $chrootdir/usr/lib/x86_64-linux-gnu/
-    mkdir -p $chrootdir/usr/lib/openssh
-    mkdir -p $chrootdir/var/log/
-    mkdir -p $chrootdir/var/run/sshd
+    mkdir -p $chrootdir/usr/lib/{x86_64-linux-gnu,openssh,i686/cmov}
+    mkdir -p $chrootdir/root/.ssh
+    mkdir -p $chrootdir/var/{log,run/sshd}
     touch $chrootdir/var/log/{authlog,lastlog,messages,syslog}
     touch $chrootdir/etc/fstab
     echo "...OK"
