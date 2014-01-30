@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Prerequisites actions to do.
 
 test ! -d /home/backup && mkdir /home/backup

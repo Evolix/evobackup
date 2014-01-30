@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Dump MongoDB
 
 # mongodump -u mongobackup -pPASS -o /home/backup/mongodump/ >/dev/null 2>&1

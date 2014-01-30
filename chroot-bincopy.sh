@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Copy essential binaries into the chroot.
 
 chrootdir=$1

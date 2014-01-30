@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Many ways of backuping MySQL/MariaDB databases.
 
 # Dump with all databases in one file.
