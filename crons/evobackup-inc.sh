@@ -11,13 +11,13 @@ shopt -s nullglob
 for client in ${CONFDIR}/*; do
     start=$(date --rfc-3339=seconds)
     backupname=${client#/etc/evobackup/conf.d/incs/}
-    echo "Incrementals of $backupname started at $start. " \
+    echo "Incrementals of $backupname started at ${start}." \
         >> $tmplog
     [[ ! -d ${INCDIR}/${backupname} ]] && mkdir -p ${INCDIR}/${backupname}
     # Do the incrementals.
     cp -alx ${JAILDIR}/${backupname} ${INCDIR}/${backupname}/${DATEDIR}
     stop=$(date --rfc-3339=seconds)
-    echo "Incrementals of $backupname ended at $stop." >> $tmplog
+    echo "Incrementals of $backupname ended at ${stop}." >> $tmplog
 done
 # Save tmplog to global log.
 cat $tmplog >> $LOGFILE
