@@ -30,7 +30,7 @@ rsync -avzh --stats --force --ignore-errors --partial \
     root@${BACKUPSERVER}:/var/backup/ > $tmplog
 status=$?
 
-# Keep the last 30 lines
+# Keep the last 30 lines & clean temporary log.
 tail -30 $tmplog >> $LOG && rm $tmplog
 
 stop=$(date --rfc-3339=seconds)
