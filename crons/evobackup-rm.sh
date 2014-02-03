@@ -32,7 +32,6 @@ for client in ${CONFDIR}/*; do
         # We use rsync to delete since it is faster than rm!
         rsync -a --delete ${emptydir}/ $inc
         rm -r $inc
-        rm -r $emptydir
         stop=$(date --rfc-3339=seconds)
         echo "Deletion of ${backupname}/${inc#${INCDIR}/${backupname}/} ended at ${stop}." >> $tmplog
     done
@@ -42,5 +41,5 @@ cat $tmplog >> $LOGFILE
 # Send mail report.
 < $tmplog mailx -s "[info] EvoBackup - deletion of obsolete incrementals" $MAIL_TO
 # Cleaning
-rm -rf $tmpdir
+rm -rf $tmpdir $emptydir
 rm $tmplog
