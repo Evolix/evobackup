@@ -31,15 +31,17 @@ for client in ${CONFDIR}/*; do
         echo "Deletion of ${backupname}/${inc#${INCDIR}/${backupname}/} started at ${start}." >> $tmplog
         # We use rsync to delete since it is faster than rm!
         rsync -a --delete ${emptydir}/ $inc
-        rm -r $inc
+        rmdir $inc
         stop=$(date --rfc-3339=seconds)
         echo "Deletion of ${backupname}/${inc#${INCDIR}/${backupname}/} ended at ${stop}." >> $tmplog
     done
 done
-# Save tmplog to global log.
-cat $tmplog >> $LOGFILE
-# Send mail report.
-< $tmplog mailx -s "[info] EvoBackup - deletion of obsolete incrementals" $MAIL_TO
+
+# Send mail report only if incrementals where deleted.
+if [ -s $tmplog ]; then
+    # Save tmplog to global log & send mail.
+    cat $tmplog >> $LOGFILE
+    < $tmplog mailx -s "[info] EvoBackup - deletion of obsolete incrementals" $MAIL_TO
+fi
 # Cleaning
-rm -rf $tmpdir $emptydir
-rm $tmplog
+rm -rf $tmpdir $emptydir $tmplog
