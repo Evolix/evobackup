@@ -14,4 +14,4 @@ MAIL_TO="jdoe@example.com"
 LOG="/var/log/evobackup.log"
 
 # Used when you have more than one backup server.
-NODE=$(( $(date +%d) % 2 ))
+NODE=$(( $(date +%-d) % 2 ))
