@@ -1,15 +1,29 @@
-# Dump ElasticSearch
-# Disable ES translog flush
-curl -s -XPUT 'localhost:9200/_settings' -d '{"index.translog.disable_flush": true}' >/dev/null
-# Flushes translog
-curl -s 'localhost:9200/_flush' | grep -qe '"ok":true'
-# If it succeed, do an rsync of the datadir
-if [ $? -eq 0 ]; then
-    rsync -a /var/lib/elasticsearch /home/backup/
-else
-    echo "Error when flushing ES translog indexes."
-fi
-# In any case re-enable translog flush
-curl -s -XPUT 'localhost:9200/_settings' -d '{"index.translog.disable_flush": false}' > /dev/null
+#!/bin/bash
+# Dump/Snapshots for Elasticsearch 1.0
+
+## Yout need to register a repository, this action need to be only done one time,
+## but you must register a repository on all nodes!
+## $ curl -XPUT 'http://localhost:9200/_snapshot/backup' -d '{
+##  "type": "fs",
+##  "settings": {
+##    "location": "/home/backup-elasticsearch",
+##    "compress": true
+##  }
+## }'
+
+## Delete old snapshots. Handled in EvoBackup.
+# rm -rf /home/backup/elasticsearch/*
+
+## Take a snapshot on master node.
+# date=$(date +%Y%m%d%H%M)
+# curl -XPUT "localhost:9200/_snapshot/backup/snapshot_${date}?wait_for_completion=true"
+
+## To restore: List snapshots, close all indexes & restore one snapshot.
+## curl -XGET "localhost:9200/_snapshot/backup/_all?pretty=true"
+## curl -XPOST "localhost:9200/_all/_close"
+## rsync master node:/home/backup/elasticsearch to slaves nodes
+## example : rsync -av --delete /home/backup/elasticsearch node:/home/backup/elasticsearch
+## restore snapshots
+## curl -XPOST "localhost:9200/_snapshot/backup/snapshot_DATE/_restore?wait_for_completion=true"
 
 exit 0
