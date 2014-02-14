@@ -34,8 +34,8 @@ status=$?
 tail -30 $tmplog >> $LOG && rm $tmplog
 
 stop=$(date --rfc-3339=seconds)
-echo "EvoBackup started at $start." >> /var/log/evobackup.log
-echo "EvoBackup finished at $stop." >> /var/log/evobackup.log
+echo "EvoBackup started at $start." >> $LOG
+echo "EvoBackup finished at $stop." >> $LOG
 
 # Send a report
 # Did rsync sucessfully finished?
