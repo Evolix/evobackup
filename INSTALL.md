@@ -54,6 +54,8 @@ Set this in the root crontab
 ```
 29 10 * * * pkill evobackup-rm.sh && echo "Kill evobackup-rm.sh done" | mail -s "[warn] EvoBackup - purge incs interrupted" root
 30 10 * * * /usr/share/scripts/evobackup-inc.sh && /usr/share/scripts/evobackup-rm.sh
+
+Edit the configuration in /etc/evobackup/conf.d/incrementals.cf at least for MAIL_TO.
 ````
 
 Client side
@@ -132,4 +134,4 @@ that launch update-chroot.sh.
 root@backupserver:~/evobackup# chroot-update.sh
 ```
 
-Then reload sshd daemons.
+Then restart evobackup using init script.
