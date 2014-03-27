@@ -47,3 +47,5 @@ Main directories:
 * /etc/evobackup: Config dir
 
 To install and configure EvoBackup read INSTALL.md
+
+TEST
