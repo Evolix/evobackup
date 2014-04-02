@@ -21,13 +21,24 @@ run-parts /etc/evobackup/actions.d/
 
 hostname=$(hostname -f)
 start=$(date --rfc-3339=seconds)
+date=$(date +%Y-%m-%d)
 tmplog=$(mktemp --tmpdir=/tmp evobackup.XXX)
 
-# rsync command line to backup all data.
-rsync -avzh --stats --force --ignore-errors --partial \
-    --include-from=/etc/evobackup/conf.d/include.cf \
-    --delete --delete-excluded / -e "ssh -p $SSHPORT -4" \
-    root@${BACKUPSERVER}:/var/backup/ > $tmplog
+args="-avzh --stats --force --ignore-errors --partial "\
+"--include-from=/etc/evobackup/conf.d/include.cf "\
+"--delete --delete-excluded"
+dst="rsync://${RSYNC_USERNAME}@${BACKUPSERVER}/${RSYNC_PATH}"
+
+# Is there a current version? If no create it.
+rsync --list-only ${dst}/current >/dev/null 2>&1
+status=$?
+if [ "$status" != 0 ]; then
+    # First backup.
+    rsync $args / ${dst}/current > $tmplog
+else
+    # Backups with incrementials.
+    rsync $args --link-dest=/current/ / ${dst}/${date} > $tmplog
+fi
 status=$?
 
 # Keep the last 30 lines & clean temporary log.

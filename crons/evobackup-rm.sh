@@ -2,45 +2,43 @@
 
 # Handle removing of incrementals.
 
-. /etc/evobackup/conf.d/incrementals.cf
+. /etc/evobackup/conf.d/cron.cf
 
 tmpdir=$(mktemp --tmpdir=/tmp -d evobackup.tmpdir.XXX)
 emptydir=$(mktemp --tmpdir=/tmp -d evobackup.empty.XXX)
 tmplog=$(mktemp --tmpdir=/tmp evobackup.tmplog.XXX)
-# Don't return *, if bash glob don't find files/dir.
-shopt -s nullglob
+dst="rsync://${RSYNC_USERNAME}@${BACKUPSERVER}/${RSYNC_PATH}"
 
-# For each client (machine to backup), delete old incrementals according to the
-# config file.
-for client in ${CONFDIR}/*; do
-    # Get only the name of the backup.
-    backupname=${client#${CONFDIR}/}
-    # List actual incrementals backup.
-    for inc in ${INCDIR}/${backupname}/*; do
-        echo $inc
-    done > ${tmpdir}/${backupname}.files
-    # List non-obsolete incrementals backup.
-    for incConf in $(cat ${CONFDIR}/${backupname}); do
-        mydate=$(echo $incConf | cut -d. -f1)
-        before=$(echo $incConf | cut -d. -f2)
-        date -d "$(date $mydate) $before" "+%Y-%m-%d"
-    done > ${tmpdir}/${backupname}.keep
-    # Delete obsolete incrementals backup
-    for inc in $(grep -v -f ${tmpdir}/${backupname}.keep ${tmpdir}/${backupname}.files); do
-        start=$(date --rfc-3339=seconds)
-        echo "Deletion of ${backupname}/${inc#${INCDIR}/${backupname}/} started at ${start}." >> $tmplog
-        # We use rsync to delete since it is faster than rm!
-        rsync -a --delete ${emptydir}/ $inc
-        rmdir $inc
-        stop=$(date --rfc-3339=seconds)
-        echo "Deletion of ${backupname}/${inc#${INCDIR}/${backupname}/} ended at ${stop}." >> $tmplog
-    done
+
+# List actual incrementals backup.
+# RSYNC_PASSWORD=ojvafnabOn5 rsync --list-only 
+# rsync://evolix-1vhqa@localhost:8873/evolix-1vhqa_backup/ | sed -E 's#^([^\s]+\s+){4}##'
+listincs=$(rsync --list-only ${dst} |
+    sed -E 's#^([^\s]+\s+){4}##' | sed -e '/\./d' -e '/current/d' | tr -s '\n' ' '
+)
+for inc in $listincs; do
+    echo $inc >> ${tmpdir}/incs.files
+done
+# List non-obsolete incrementals backup.
+for incConf in $(cat ${CONFDIR}/incs.cf); do
+    mydate=$(echo $incConf | cut -d. -f1)
+    before=$(echo $incConf | cut -d. -f2)
+    date -d "$(date $mydate) $before" "+%Y-%m-%d"
+done > ${tmpdir}/incs.keep
+# Delete obsolete incrementals backup
+for inc in $(grep -v -f ${tmpdir}/incs.keep ${tmpdir}/incs.files); do
+    start=$(date --rfc-3339=seconds)
+    echo "Deletion of $inc started at ${start}." >> $tmplog
+    echo rsync -a --delete ${emptydir}/ ${dst}/${inc}
+    echo rsync -a --delete --include="${inc}" --exclude="*" ${emptydir}/ $dst 
+    stop=$(date --rfc-3339=seconds)
+    echo "Deletion of $inc ended at ${stop}." >> $tmplog
 done
 
 # Send mail report only if incrementals where deleted.
 if [ -s $tmplog ]; then
     # Save tmplog to global log & send mail.
-    cat $tmplog >> $LOGFILE
+    cat $tmplog >> $LOG
     < $tmplog mailx -s "[info] EvoBackup - deletion of obsolete incrementals" $MAIL_TO
 fi
 # Cleaning

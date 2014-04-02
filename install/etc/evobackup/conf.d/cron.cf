@@ -1,11 +1,20 @@
 # Pid file
 PIDFILE="/var/run/evobackup.pid"
 
-# Port of the OpenSSH chroot on the backup server.
-SSHPORT=2222
+# Port of the rsync backup server. Default is 837.
+PORT=837
 
 # Hostname OR adress IP of the backup server.
 BACKUPSERVER="mybackupserver.domain.tld"
+
+# Username, if any.
+RSYNC_USERNAME=""
+
+# Password, if any.
+export RSYNC_PASSWORD=""
+
+# Path used by rsync server.
+RSYNC_PATH="backup"
 
 # A mail to send the report or alert.
 MAIL_TO="jdoe@example.com"
@@ -15,3 +24,5 @@ LOG="/var/log/evobackup.log"
 
 # Used when you have more than one backup server.
 NODE=$(( $(date +%-d) % 2 ))
+
+CONFDIR=/etc/evobackup/conf.d
