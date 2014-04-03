@@ -11,8 +11,6 @@ dst="rsync://${RSYNC_USERNAME}@${BACKUPSERVER}/${RSYNC_PATH}"
 
 
 # List actual incrementals backup.
-# RSYNC_PASSWORD=ojvafnabOn5 rsync --list-only 
-# rsync://evolix-1vhqa@localhost:8873/evolix-1vhqa_backup/ | sed -E 's#^([^\s]+\s+){4}##'
 listincs=$(rsync --list-only ${dst} |
     sed -E 's#^([^\s]+\s+){4}##' | sed -e '/\./d' -e '/current/d' | tr -s '\n' ' '
 )
