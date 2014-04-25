@@ -28,6 +28,7 @@ for inc in $(grep -v -f ${tmpdir}/incs.keep ${tmpdir}/incs.files); do
     start=$(date --rfc-3339=seconds)
     echo "Deletion of $inc started at ${start}." >> $tmplog
     rsync -a --delete ${emptydir}/ ${dst}/${inc}
+    sleep 5
     rsync -a --delete --include="${inc}" --exclude="*" ${emptydir}/ $dst 
     stop=$(date --rfc-3339=seconds)
     echo "Deletion of $inc ended at ${stop}." >> $tmplog
