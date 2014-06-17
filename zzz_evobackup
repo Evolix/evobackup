@@ -48,13 +48,13 @@ mkdir -p -m 700 /home/backup
 # done
 
 # for i in $(echo SHOW DATABASES | mysql | egrep -v "^(Database|information_schema|performance_schema)" ); \
-# do mkdir -p /home/mysqldump/$i ; chown -R mysql /home/mysqldump ; \
+# do mkdir -p /home/mysqldump/$i ; chown -RL mysql /home/mysqldump ; \
 # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -Q --opt --events --skip-comments -T \
 # /home/mysqldump/$i $i; done
 
 # Dump par base
 # mkdir -p -m 700 /home/mysqldump/BASE
-# chown -R mysql /home/mysqldump/
+# chown -RL mysql /home/mysqldump/
 # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -Q \
 # --opt --events --skip-comments -T /home/mysqldump/BASE BASE
 
