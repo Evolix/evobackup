@@ -1,6 +1,32 @@
 EvoBackup
 =========
 
+en :
+
+EvoBackup is a bunch of shell scripts to create a backup server which will
+handle the backup of many servers (clients). Licence is GPLv2.
+
+The main principle uses SSH chroot (called "jails" in the FreeBSD
+world) for each client to backup. Each client will upload his data every day
+using rsync in his chroot (using root account).
+Incrementals are stored outside of the chroot using hard links. (So incrementals
+are not available for clients). Using this method we can keep tens of backup of
+each client securely and not using too much space.
+
+                                    Backup server
+                                    ************
+Server 1 ------ SSH/rsync ------->  * tcp/2222 *
+                                    *          *
+Server 2 ------ SSH/rsync ------->  * tcp/2223 *
+                                    ************
+
+This method uses standard tools (ssh, rsync, cp -al). EvoBackup is used for
+many years by Evolix for back up each day hundreds of servers which uses many
+terabytes of data.
+
+
+fr :
+
 EvoBackup est un ensemble de scripts permettant de mettre en place
 un service de backups gérant les sauvegardes de plusieurs machines.
 Le principe est d'installer des prisons/chroot contenant un service
@@ -10,7 +36,6 @@ dans sa propre prison. Les prisons sont ensuite copiées en dehors des
 prisons (donc inacccessible par les serveurs) de façon incrémentale
 grâce à des "hard links". On peut ainsi conserver des dizaines de
 sauvegardes de chaque serveur de façon sécurisé et avec peu de place.
-
 
                                    **************************
 Serveur 1 ------SSH/rsync -------> * tcp/2222  Serveur      *
@@ -23,12 +48,12 @@ standards. Elle est utilisée depuis plusieurs années par Evolix
 pour sauvegarder chaque jour des centaines de serveurs représentant
 plusieurs To de données incrémentales.
 
-
 Serveur de sauvegardes
 ----------------------
 
-Le serveur de sauvegardes doit être sous Debian Squeeze
-(testé sous Etch/Lenny/Squeeze, les instructions sont pour Squeeze).
+Le serveur de sauvegardes doit être sous Debian Wheezy (voire Ubuntu 13.04)
+(testé aussi sous Etch/Lenny/Squeeze, mais les instructions sont pour Wheez
+y).
 Avec les logiciels suivants :
 
     - OpenSSH
@@ -45,30 +70,12 @@ On créera ensuite les répertoires suivants :
 - /backup/incs   : pour les copies incrémentales des prisons
 - /etc/evobackup : config des fréquences des copies incrémentales
 
-Pour la mise en place des backups incrémentaux sur le serveur :
-- Mettre en place les scripts evobackup-inc.sh et evobackup-rm.sh dans /usr/share/scripts
-- Mettre les droits d'exécution : chmod u+x /usr/share/scripts/evobackup-{inc,rm}.sh
-- Activer le crontab suivant (ajuster éventuellement les heures) :
-  29 10 * * * pkill evobackup-rm.sh && echo "Kill evobackup-rm.sh done" | mail -s "[warn] EvoBackup - purge incs interrupted" root 
-  30 10 * * * /usr/share/scripts/evobackup-inc.sh && /usr/share/scripts/evobackup-rm.sh
-
-Note : si l'on ne veut *jamais* supprimer les backups incrémentaux, on pourra se contenter
-de ne jamais lancer le script evobackup-rm.sh
-
-
-Si le noyau du serveur est patché avec GRSEC, on évitera pas mal
-de warnings en positionnant les paramètres Sysctl suivants :
-
-# sysctl kernel.grsecurity.chroot_deny_chmod=0
-# sysctl kernel.grsecurity.chroot_deny_mknod=0
-
-Note : plus nécessaire avec un noyau récent a priori
 
 Serveurs à sauvegarder
 ----------------------
 
 On peut sauvegarder différents systèmes : Linux, BSD, Windows, MacOSX.
-L'un des seuls prérequis est d'avoir rsync.
+L'un des seuls réels prérequis est d'avoir rsync.
 
 
 Installation d'une sauvegarde
@@ -77,7 +84,34 @@ Installation d'une sauvegarde
 Côté serveur de sauvegardes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1) On récupère les sources via http://git.evolix.org/git/evolinux/evobackup.git
+0) On récupère les sources via http://git.evolix.org/git/evolinux/evobackup.git
+
+   # umask 007 && mkdir /etc/evobackup && cp -v evobackup /etc/init.d/evobackup
+
+   Et on mettra en place des backups incrémentaux sur le serveur :
+
+  - Mettre en place les scripts evobackup-inc.sh et evobackup-rm.sh dans /usr/share/scripts
+  - Mettre les droits d'exécution : chmod u+x /usr/share/scripts/evobackup-{inc,rm}.sh
+  - Activer le crontab suivant (ajuster éventuellement les heures) :
+  29 10 * * * pkill evobackup-rm.sh && echo "Kill evobackup-rm.sh done" | mail -s "[warn] EvoBackup - purge incs interrupted" root 
+  30 10 * * * /usr/share/scripts/evobackup-inc.sh && /usr/share/scripts/evobackup-rm.sh
+
+  Note 1 : si l'on veut plusieurs backups dans la journée (1 par heure maximum),
+  on pourra lancer /usr/share/scripts/evobackup-inc.sh à plusieurs reprises...
+  ce qui fonctionnera sous réserve qu'entre temps les données ont bien changé !
+
+  Note 2 : si l'on ne veut *jamais* supprimer les backups incrémentaux, on pourra se contenter
+  de ne jamais lancer le script evobackup-rm.sh
+
+  Si le noyau du serveur est patché avec GRSEC, on évitera pas mal
+  de warnings en positionnant les paramètres Sysctl suivants :
+  
+  # sysctl kernel.grsecurity.chroot_deny_chmod=0
+  # sysctl kernel.grsecurity.chroot_deny_mknod=0
+  
+  Note : plus nécessaire avec un noyau récent a priori
+
+1) Pour installer une "prison" :
 
     - Exporter la variable $JAIL avec le nom d'hôte saisit dans la grille :
       
@@ -86,51 +120,20 @@ Côté serveur de sauvegardes
     - Se placer dans le bon répertoire (attention, ne pas déplacer le script car
       il a besoin du répertoire etc/ !) puis exécuter :
 
-    # bash chroot-ssh.sh /backup/jails/$JAIL
+    # bash chroot-ssh.sh -n /backup/jails/$JAIL -i <ip> -p <port> -k <pub-key-path>
 
-    Note : Ignorer une éventuelle erreur avec ld-linux-x86-64.so.2 (32bits) ou ld-linux.so.2 (64bits)
+    Note 1 : Ignorer une éventuelle erreur avec ld-linux-x86-64.so.2 (32bits) ou ld-linux.so.2 (64bits)
+    Note 2 : -i <ip> et -p <port> sont optionnels, vous pouvez ajuster /backup/jails/$JAIL/etc/ssh/sshd_config
+    Note 3 : si une prison a déjà été crée, -p guess vous permettra de deviner le prochain port disponible
+    Note 4 : -k <pub-key-path> est optionnel, vous pouvez ajouter la clé publique du client ainsi :
 
-    - Editer le fichier /backup/jails/$JAIL/etc/ssh/sshd_config
-      et remplacer le port SSH utilisé par le prochain disponible
-      (ou garder celui assigné si c'est la première prison).
-      Ajouter également la restriction d'IP si possible via "AllowUsers" :
-      AllowUsers root@IP root@::ffff:IP
-   
     - Ajouter la clé publique du client à sauvegarder dans
       /backup/jails/$JAIL/root/.ssh/authorized_keys
+      Puis corrigez les droits SSH :
+      # chmod -R 600 /backup/jails/$JAIL/root/.ssh/
+      # chown -R root:root /backup/jails/$JAIL/root/.ssh/
 
-    - Puis corrigez les droits SSH :
-
-    # chmod -R 600 /backup/jails/$JAIL/root/.ssh/
-    # chown -R root:root /backup/jails/$JAIL/root/.ssh/
-
-2) Gestion du lancement des prisons en modifiant le fichier de démarrage
-   /etc/init.d/evobackup (on remplacera $JAIL par sa vraie valeur).
-
-    - Ajouter à start) :
-
-    mount -t proc proc-chroot /backup/jails/$JAIL/proc/
-    mount -t devtmpfs udev /backup/jails/$JAIL/dev/
-    mount -t devpts devpts /backup/jails/$JAIL/dev/pts
-    chroot /backup/jails/$JAIL /usr/sbin/sshd > /dev/null
-
-    - Ajouter à stop) :
-
-    umount /backup/jails/$JAIL/proc/
-    umount /backup/jails/$JAIL/dev/pts
-    umount /backup/jails/$JAIL/dev/
-    kill -9 `chroot /backup/jails/$JAIL cat /var/run/sshd.pid`
-
-    - Ajouter à reload|force-reload) :
-
-    kill -HUP `chroot /backup/jails/$JAIL cat /var/run/sshd.pid`
-
-    - Ajouter à restart) :
-
-    kill -9 `chroot /backup/jails/$JAIL cat /var/run/sshd.pid`
-    chroot /backup/jails/$JAIL /usr/sbin/sshd > /dev/null
-
-3) On lance la prison :
+2) On lance la prison :
 
     # mount -t proc proc-chroot /backup/jails/$JAIL/proc/
     # mount -t devtmpfs udev /backup/jails/$JAIL/dev/
@@ -141,7 +144,7 @@ Côté serveur de sauvegardes
 
     # /etc/init.d/evobackup reload
 
-4) Gestion des sauvegardes incrémentales
+3) Gestion des sauvegardes incrémentales
 
     Pour activer les gestions des copies incrémentales,
     créer le fichier /etc/evobackup/$JAIL contenant par
@@ -179,6 +182,8 @@ Côté serveur de sauvegardes
 Côté serveur à sauvegarder
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+0) On récupère les sources via http://git.evolix.org/git/evolinux/evobackup.git
+
 1) Générez une clé SSH pour l'utilisateur "root" :
 
    # ssh-keygen
@@ -200,6 +205,8 @@ Côté serveur à sauvegarder
    ajouter/supprimer les lignes en dessous pour sauvegarder les bons répertoires.
    ($rep désigne les données systèmes). Vous pouvez donc choisir librement ce
    que vous désirez sauvegarder.
+   Vous devez aussi décommenter les lignes spécifiques pour les services (MySQL, LDAP,
+   MongoDB, etc.) en les ajustant si nécessaire.
 
 4) Une fois que tout en place au niveau du serveur de sauvegardes,
    on doit initier la première connexion :

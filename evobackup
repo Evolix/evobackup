@@ -6,24 +6,52 @@
 # Required-Stop:        $syslog
 # Default-Start:        2
 # Default-Stop:         1
-# Short-Description:    evobackup jails
+# Short-Description:    Backup manager using rsync and OpenSSH chroot.
 ### END INIT INFO
 
 set -e
+BACKUP_PATH=/backup
 
 case "$1" in
     start)
+        for jail in $(ls -1 ${BACKUP_PATH}/jails/* |grep -v \.bak); do
+            mount -t proc proc-chroot ${jail}/proc/
+            mount -t devtmpfs udev ${jail}/dev/
+            mount -t devpts devpts ${jail}/dev/pts
+            chroot ${jail} /usr/sbin/sshd > /dev/null
+        done
     ;;
 
     stop)
+        for jail in $(ls -1 ${BACKUP_PATH}/jails/* |grep -v \.bak); do
+            kill $(chroot $jail cat /var/run/sshd.pid)
+            umount ${jail}/proc/
+            umount ${jail}/dev/pts/
+            # Need to wait a little time before unmounting /dev
+            sleep 0.2
+            umount ${jail}/dev
+        done
     ;;
 
     reload|force-reload)
+        for jail in $(ls -1 ${BACKUP_PATH}/jails/* |grep -v \.bak); do
+            kill -HUP \
+                $(chroot $jail cat /var/run/sshd.pid)
+        done
     ;;
 
     restart)
+        for jail in $(ls -1 ${BACKUP_PATH}/jails/* |grep -v \.bak); do
+            kill $(chroot $jail cat /var/run/sshd.pid)
+            chroot $jail /usr/sbin/sshd > /dev/null
+        done
     ;;
+
+  *)
+
+    echo "Usage: $0 {start|stop|restart|reload}"
+    exit 1
+
 esac
 
 exit 0
-

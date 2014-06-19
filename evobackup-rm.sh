@@ -6,14 +6,14 @@
 CONFDIR=/etc/evobackup/
 DATE=$(date +"%Y-%m-%d")
 LOGFILE=/var/log/evobackup-sync.log
-TMPDIR=/tmp/evobackup/
 JAILDIR=/backup/jails/
 INCDIR=/backup/incs/
 MYMAIL=jdoe@example.com
 
-mkdir -p $TMPDIR
+TMPDIR=$(mktemp --tmpdir=/tmp -d evobackup.tmpdir.XXX)
+EMPTYDIR=$(mktemp --tmpdir=/tmp -d evobackup.empty.XXX)
 
-for i in $( ls $CONFDIR ); do
+for i in $( ls -1 $CONFDIR ); do
 
         # list actual inc backups
         for j in $( ls $INCDIR$i ); do
@@ -31,11 +31,12 @@ for i in $( ls $CONFDIR ); do
         for j in $( grep -v -f "$TMPDIR"$i.keep "$TMPDIR"$i.files ); do
         echo -n "Delete $i/$j begins at : " >> $LOGFILE
         /bin/date +"%d-%m-%Y ; %H:%M" >> $LOGFILE
-                cd $INCDIR$i
-                [ -n "$j" ] && rm -rf $j*
+        cd $INCDIR$i
+        [ -n "$j" ] && rsync -a --delete $EMPTYDIR/ $j*
+        [ -n "$j" ] && rmdir $j* && touch /tmp/evobackup-rm.txt
         echo -n "Delete $i/$j ends at : " >> $LOGFILE
         /bin/date +"%d-%m-%Y ; %H:%M" >> $LOGFILE
         done
+done | tee -a $LOGFILE | ( [ -e "/tmp/evobackup-rm.txt" ] && mail -s "[info] EvoBackup - purge incs" $MYMAIL && rm /tmp/evobackup-rm.txt )
 
-done | tee -a $LOGFILE | mail -s "[info] EvoBackup - purge incs" $MYMAIL
-
+rm -rf $TMPDIR $EMPTYDIR

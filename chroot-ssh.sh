@@ -7,6 +7,7 @@
 # new version tested only on Debian Wheezy amd64
 # Start :
 #  chroot /backup/jails/myserver mount -t proc proc-chroot /proc/
+#  chroot /backup/jails/myserver mount -t devtmpfs udev /dev/
 #  chroot /backup/jails/myserver mount -t devpts devpts-chroot /dev/pts/
 #  chroot /backup/jails/myserver /usr/sbin/sshd > /dev/null
 # Reload: kill -HUP `chroot /backup/jails/myserver cat /var/run/sshd.pid`
