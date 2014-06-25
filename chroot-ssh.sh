@@ -156,7 +156,7 @@ echo -n "1 - Creating the chroot..."
     mkdir -p $chrootdir/lib/{x86_64-linux-gnu,tls/i686/cmov,i686/cmov}
     mkdir -p $chrootdir/usr/{bin,lib,sbin}
     mkdir -p $chrootdir/usr/lib/{x86_64-linux-gnu,openssh,i686/cmov}
-    mkdir -p $chrootdir/root/.ssh
+    mkdir -p $chrootdir/root/.ssh && chmod 700 $chrootdir/root/.ssh
     mkdir -p $chrootdir/var/{log,run/sshd}
     touch $chrootdir/var/log/{authlog,lastlog,messages,syslog}
     touch $chrootdir/etc/fstab
@@ -185,8 +185,8 @@ echo -n "4 - Configuring the chroot..."
 
     [ -n "$port" ] && [ "$port" != "guess" ] && sed -i "s/^Port 2222/Port ${port}/" ${jail}/etc/ssh/sshd_config
     [ -n "$ip" ] && sed -i "s/IP/$ip/g" ${jail}/etc/ssh/sshd_config
-    [ -n "$pub_key_path" ] && cat $pub_key_path > ${jail}/root/.ssh/authorized_keys \
-     &&  chmod -R 600 ${jail}/root/.ssh/ && chown -R root:root ${jail}/root/.ssh/
+    touch ${jail}/root/.ssh/authorized_keys && chmod 600 ${jail}/root/.ssh/authorized_keys && chown -R root:root ${jail}/root/.ssh/
+    [ -n "$pub_key_path" ] && cat $pub_key_path >> ${jail}/root/.ssh/authorized_keys
 
 echo "...OK"
 
