@@ -125,13 +125,8 @@ Côté serveur de sauvegardes
     Note 1 : Ignorer une éventuelle erreur avec ld-linux-x86-64.so.2 (32bits) ou ld-linux.so.2 (64bits)
     Note 2 : -i <ip> et -p <port> sont optionnels, vous pouvez ajuster /backup/jails/$JAIL/etc/ssh/sshd_config
     Note 3 : si une prison a déjà été crée, -p guess vous permettra de deviner le prochain port disponible
-    Note 4 : -k <pub-key-path> est optionnel, vous pouvez ajouter la clé publique du client ainsi :
-
-    - Ajouter la clé publique du client à sauvegarder dans
-      /backup/jails/$JAIL/root/.ssh/authorized_keys
-      Puis corrigez les droits SSH :
-      # chmod -R 600 /backup/jails/$JAIL/root/.ssh/
-      # chown -R root:root /backup/jails/$JAIL/root/.ssh/
+    Note 4 : -k <pub-key-path> est optionnel, vous pouvez ajouter la clé publique du client dans le fichier
+             /backup/jails/$JAIL/root/.ssh/authorized_keys déjà existant
 
 2) On lance la prison :
 
