@@ -187,11 +187,19 @@ Côté serveur à sauvegarder
     va l'entrer manuellement à chaque sauvegarde effectuée)
 
    (La clé générée doit être de type RSA et non DSA !!)
+ 
+   Notes pour les serveurs sous Windows :
+   * téléchargez et installez CygWin : http://cygwin.com/setup-x86.exe
+   * choisissez le mirroir http://mirrors.kernel.org
+   * choisissez les paquets "rsync" et "openssh" grâce à la recherche,
+     ils sont dans la catégorie "Net", vous devez les cocher.
+   * ouvrez CygWin. Dans le terminal, tapez : ssh-keygen.exe
+   * la clé générée se trouve dans C:\cygwin\home\USER\.ssh\
 
-2) Envoyez "/root/.ssh/id_rsa.pub" au responsable du serveur de
+2) Envoyez le fichier "id_rsa.pub" au responsable du serveur de
    sauvegarde, ainsi que l'adresse IP de la machine.
 
-3) Ajoutez à la crontab le fichier "zzz_evobackup"
+3) Ajoutez à la crontab le fichier "zzz_evobackup" pour Linux / BSD.
    Pour une sauvegarde quotidienne (conseillé), utilisez le répertoire
    "/etc/cron.daily/" (sous Linux) ou "/etc/periodic/daily" (sous FreeBSD).
 
@@ -202,6 +210,9 @@ Côté serveur à sauvegarder
    que vous désirez sauvegarder.
    Vous devez aussi décommenter les lignes spécifiques pour les services (MySQL, LDAP,
    MongoDB, etc.) en les ajustant si nécessaire.
+
+   Note pour les serveurs sous Windows : vous devrez créer un tâche planifiée avec une
+   commande "rsync" installé via CygWin.
 
 4) Une fois que tout en place au niveau du serveur de sauvegardes,
    on doit initier la première connexion :
