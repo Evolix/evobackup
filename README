@@ -87,6 +87,7 @@ Côté serveur de sauvegardes
 0) On récupère les sources via http://git.evolix.org/git/evolinux/evobackup.git
 
    # umask 007 && mkdir /etc/evobackup && cp -v evobackup /etc/init.d/evobackup
+   # cd /etc/init.d/ && insserv evobackup
 
    Et on mettra en place des backups incrémentaux sur le serveur :
 
