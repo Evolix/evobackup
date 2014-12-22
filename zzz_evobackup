@@ -168,6 +168,7 @@ rsync -avzh --stats --delete --delete-excluded --force --ignore-errors --partial
     --exclude "/var/lib/php5"                          \
     --exclude "/var/spool/squid"                       \
     --exclude "/var/lib/elasticsearch"                 \
+    --exclude "/var/lib/amavis/tmp"                    \
         $rep                                           \
         /etc                                           \
         /root                                          \
