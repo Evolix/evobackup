@@ -164,7 +164,7 @@ rsync -avzh --stats --delete --delete-excluded --force --ignore-errors --partial
     --exclude "dev"                                    \
     --exclude "/var/spool/postfix"                     \
     --exclude "/var/lib/amavis/amavisd.sock"           \
-    --exclude "/var/lib/munin/munin-update.stats.tmp"  \
+    --exclude "/var/lib/munin/*.tmp"                   \
     --exclude "/var/lib/php5"                          \
     --exclude "/var/spool/squid"                       \
     --exclude "/var/lib/elasticsearch"                 \
