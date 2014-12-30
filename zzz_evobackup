@@ -39,24 +39,24 @@ mkdir -p -m 700 /home/backup
 
 # Dump MySQL
 # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf \
-# --opt --all-databases --force --events | gzip --best > /home/backup/mysql.bak.gz
+# --opt --all-databases --force --events --hex-blob | gzip --best > /home/backup/mysql.bak.gz
 
 # Dump des BDD en .sql.gz
 # mkdir -p /home/mysqldump/
 # for i in $(mysql -e 'show databases' -s --skip-column-names | egrep -v "^(Database|information_schema|performance_schema)"); do
-#         mysqldump --force --events $i | gzip --best > /home/mysqldump/${i}.sql.gz
+#         mysqldump --force --events --hex-blob $i | gzip --best > /home/mysqldump/${i}.sql.gz
 # done
 
 # for i in $(echo SHOW DATABASES | mysql | egrep -v "^(Database|information_schema|performance_schema)" ); \
 # do mkdir -p /home/mysqldump/$i ; chown -RL mysql /home/mysqldump ; \
-# mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -Q --opt --events --skip-comments -T \
+# mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -Q --opt --events --hex-blob --skip-comments -T \
 # /home/mysqldump/$i $i; done
 
 # Dump par base
 # mkdir -p -m 700 /home/mysqldump/BASE
 # chown -RL mysql /home/mysqldump/
 # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -Q \
-# --opt --events --skip-comments -T /home/mysqldump/BASE BASE
+# --opt --events --hex-blob --skip-comments -T /home/mysqldump/BASE BASE
 
 # mkdir -p /home/mysqlhotcopy/
 # mysqlhotcopy BASE /home/mysqlhotcopy/
@@ -73,7 +73,7 @@ mkdir -p -m 700 /home/backup
 #  instance=${instance//port=/}
 #  if [ "$instance" != "3306" ]
 #  then
-#    mysqldump -P $instance --opt --all-databases -u mysqladmin -p$mysqladminpasswd > /home/backup/mysql.$instance.bak
+#    mysqldump -P $instance --opt --all-databases --hex-blob -u mysqladmin -p$mysqladminpasswd > /home/backup/mysql.$instance.bak
 #  fi
 #done
 
