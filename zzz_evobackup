@@ -5,6 +5,10 @@
 # $Id: evobackup_cron_daily_client,v 1.21 2010-08-22 10:15:42 gcolpart Exp $
 #
 
+# lang = C pour gerer les outputs en anglais
+LANGUAGE=C
+LANG=C
+
 # Verification qu'un autre evobackup n'est pas deja lance
 PIDFILE=/var/run/evobackup.pid
 if [ -e $PIDFILE ]; then
@@ -25,7 +29,7 @@ SSH_PORT=2228
 # systeme de la machine ("linux" ou "bsd")
 SYSTEME=linux
 
-# mail de remontee Evolix
+# mail de remontee
 MAIL=jdoe@example.com
 
 NODE=$(expr `date +%d` % 2)
