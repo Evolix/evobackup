@@ -173,6 +173,7 @@ rsync -avzh --stats --delete --delete-excluded --force --ignore-errors --partial
     --exclude "/var/spool/squid"                       \
     --exclude "/var/lib/elasticsearch"                 \
     --exclude "/var/lib/amavis/tmp"                    \
+    --exclude "/var/lib/clamav/*.tmp"                  \
     --exclude "/home/mysqltmp"                         \
         $rep                                           \
         /etc                                           \
