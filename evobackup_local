@@ -20,11 +20,11 @@ mkdir -p -m 700 /home/backup
 
 # Dump MySQL
 #mysqldump --defaults-extra-file=/etc/mysql/debian.cnf \
-# --opt --all-databases | gzip --best > /home/backup/mysql.bak.gz
+# --opt --all-databases --events | gzip --best > /home/backup/mysql.bak.gz
 
-# for i in $(echo SHOW DATABASES | mysql | egrep -v "^(Database|information_schema)" ); \
+# for i in $(echo SHOW DATABASES | mysql | egrep -v "^(Database|information_schema|performance_schema)" ); \
 # do mkdir -p /home/mysqldump/$i ; chown -R mysql /home/mysqldump ; \
-# mysqldump --defaults-extra-file=/etc/mysql/debian.cnf -Q --opt -T \
+# mysqldump --defaults-extra-file=/etc/mysql/debian.cnf -Q --opt --skip-comments --events -T \
 # /home/mysqldump/$i $i; done
 
 # Dump par base
