@@ -1,15 +1,15 @@
 #!/bin/sh
 
 #
-# Script evobackup client
-# $Id: evobackup_cron_daily_client,v 1.21 2010-08-22 10:15:42 gcolpart Exp $
-#
+# Script Evobackup client
+# See https://forge.evolix.org/projects/evobackup
+# 
 
-# lang = C pour gerer les outputs en anglais
+## lang = C for english outputs
 LANGUAGE=C
 LANG=C
 
-# Verification qu'un autre evobackup n'est pas deja lance
+## Verify other evobackup process and kill if needed
 PIDFILE=/var/run/evobackup.pid
 if [ -e $PIDFILE ]; then
     # Killing the childs of evobackup.
@@ -24,115 +24,120 @@ echo "$$" > $PIDFILE
 trap "rm -f $PIDFILE" EXIT
 
 # port SSH
-SSH_PORT=2228
+SSH_PORT=2XXX
 
-# systeme de la machine ("linux" ou "bsd")
+# choose "linux" or "bsd"
 SYSTEME=linux
 
-# mail de remontee
+# email adress for notifications
 MAIL=jdoe@example.com
 
+# Variable to choose different backup server with date
 NODE=$(expr `date +%d` % 2)
 
-# operations specifiques
 
+## We use /home/backup : feel free to use your own dir
 mkdir -p -m 700 /home/backup
 
-# Dump LDAP
+## OpenLDAP : example with slapcat
 # slapcat -l /home/backup/ldap.bak
 
-# Dump MySQL
-# mysqldump --defaults-extra-file=/etc/mysql/debian.cnf \
+### MySQL
+
+## example with global and compressed mysqldump
+# mysqldump --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
 # --opt --all-databases --force --events --hex-blob | gzip --best > /home/backup/mysql.bak.gz
 
-# Dump des BDD en .sql.gz
-# mkdir -p /home/mysqldump/
-# for i in $(mysql -e 'show databases' -s --skip-column-names | egrep -v "^(Database|information_schema|performance_schema)"); do
-#         mysqldump --force --events --hex-blob $i | gzip --best > /home/mysqldump/${i}.sql.gz
-# done
-
-# for i in $(echo SHOW DATABASES | mysql | egrep -v "^(Database|information_schema|performance_schema)" ); \
+## example with two dumps for each table (.sql/.txt) for all databases
+# for i in $(echo SHOW DATABASES | mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
+# | egrep -v "^(Database|information_schema|performance_schema)" ); \
 # do mkdir -p /home/mysqldump/$i ; chown -RL mysql /home/mysqldump ; \
-# mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -Q --opt --events --hex-blob --skip-comments -T \
+# mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 -Q --opt --events --hex-blob --skip-comments -T \
 # /home/mysqldump/$i $i; done
 
-# Dump par base
-# mkdir -p -m 700 /home/mysqldump/BASE
+## example with compressed SQL dump for each databases
+# mkdir -p /home/mysqldump/
+# for i in $(mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 -e 'show databases' -s --skip-column-names \
+# | egrep -v "^(Database|information_schema|performance_schema)"); do
+#     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --events --hex-blob $i | gzip --best > /home/mysqldump/${i}.sql.gz
+# done
+
+## example with *one* uncompressed SQL dump for *one* database (MYBASE)
+# mkdir -p -m 700 /home/mysqldump/MYBASE
 # chown -RL mysql /home/mysqldump/
 # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -Q \
-# --opt --events --hex-blob --skip-comments -T /home/mysqldump/BASE BASE
+# --opt --events --hex-blob --skip-comments -T /home/mysqldump/MYBASE MYBASE
 
+## example with mysqlhotcopy
 # mkdir -p /home/mysqlhotcopy/
 # mysqlhotcopy BASE /home/mysqlhotcopy/
 
-# Dump instanceS MySQL
-#
-## Recherche du mot de passe mysqladmin
-#mysqladminpasswd=`cat /root/.my.cnf |grep -m1 'password = .*' |cut -d" " -f3`
-#
-## Determination des instances MySQL disponibles sur le serveur (hors 3306)
-#grep -E "^port\s*=\s*\d*" /etc/mysql/my.cnf |while read instance; do
-#  instance=$(echo $instance |tr -d '\t')
-#  instance=${instance// /}
-#  instance=${instance//port=/}
-#  if [ "$instance" != "3306" ]
-#  then
-#    mysqldump -P $instance --opt --all-databases --hex-blob -u mysqladmin -p$mysqladminpasswd > /home/backup/mysql.$instance.bak
-#  fi
-#done
+## example for multiples MySQL instances
+# mysqladminpasswd=`cat /root/.my.cnf |grep -m1 'password = .*' |cut -d" " -f3`
+# grep -E "^port\s*=\s*\d*" /etc/mysql/my.cnf |while read instance; do
+#     instance=$(echo $instance |tr -d '\t')
+#     instance=${instance// /}
+#     instance=${instance//port=/}
+#     if [ "$instance" != "3306" ]
+#     then
+#         mysqldump -P $instance --opt --all-databases --hex-blob -u mysqladmin -p$mysqladminpasswd > /home/backup/mysql.$instance.bak
+#     fi
+# done
 
+### PostgreSQL
 
-# Dump PostgreSQL
+## example with pg_dumpall (warning: you need space in ~postgres)
 # su - postgres -c "pg_dumpall > ~/pg.dump.bak"
 # mv ~postgres/pg.dump.bak /home/backup/
 
-# Exemple de backups...
-# On sauvegarde les tables d'une base sauf des exceptions
-# pg_dump -p 5432 -h 127.0.0.1 -U USER --clean -F t --inserts -f /home/backup/pg-backup.tar -t 'TABLE1' -t 'TABLE2' BASE
-# On sauvegarde uniquement certaines tables d'une base
-# pg_dump -p 5432 -h 127.0.0.1 -U USER --clean -F t --inserts -f /home/backup/pg-backup.tar -T 'TABLE1' -T 'TABLE2' BASE
+## example with all tables from MYBASE excepts TABLE1 and TABLE2
+# pg_dump -p 5432 -h 127.0.0.1 -U USER --clean -F t --inserts -f /home/backup/pg-backup.tar -t 'TABLE1' -t 'TABLE2' MYBASE
 
-# Dump MongoDB
-# Creation d'un utilisateur en lecture seule :
-# > use admin
-# > db.addUser("mongobackup", "PASS", true);
-#mongodump -u mongobackup -pPASS -o /home/backup/mongodump/ >/dev/null 2>&1 |grep -v "^connected to:"
+## example with only TABLE1 and TABLE2 from MYBASE
+# pg_dump -p 5432 -h 127.0.0.1 -U USER --clean -F t --inserts -f /home/backup/pg-backup.tar -T 'TABLE1' -T 'TABLE2' MYBASE
 
-# Dump Redis
+## MongoDB : example with mongodump
+## don't forget to create use with read-only access
+## > use admin
+## > db.addUser("mongobackup", "PASS", true);
+# mongodump -u mongobackup -pPASS -o /home/backup/mongodump/ >/dev/null 2>&1 |grep -v "^connected to:"
+
+## Redis : example with copy .rdb file
 # cp /var/lib/redis/dump.rdb /home/backup/
 
-## Dump ElasticSearch
+## ElasticSearch : example with rsync (warning: don't forget to use NFS if you have a cluster)
 ## Disable ES translog flush
-#curl -s -XPUT 'localhost:9200/_settings' -d '{"index.translog.disable_flush": true}' >/dev/null
+# curl -s -XPUT 'localhost:9200/_settings' -d '{"index.translog.disable_flush": true}' >/dev/null
 ## Flushes translog
-#curl -s 'localhost:9200/_flush' | grep -qe '"ok":true'
+# curl -s 'localhost:9200/_flush' | grep -qe '"ok":true'
 ## If it succeed, do an rsync of the datadir
-#if [ $? -eq 0 ]; then
-#    rsync -a /var/lib/elasticsearch /home/backup/
-#else
-#    echo "Error when flushing ES translog indexes."
-#fi
+# if [ $? -eq 0 ]; then
+#     rsync -a /var/lib/elasticsearch /home/backup/
+# else
+#     echo "Error when flushing ES translog indexes."
+# fi
 ## In any case re-enable translog flush
-#curl -s -XPUT 'localhost:9200/_settings' -d '{"index.translog.disable_flush": false}' > /dev/null
+# curl -s -XPUT 'localhost:9200/_settings' -d '{"index.translog.disable_flush": false}' > /dev/null
 
-# Dump MBR / table partitions
+## Dump MBR / table partitions with dd and sfdisk
 # dd if=/dev/sda of=/home/backup/MBR bs=512 count=1 2>&1 | egrep -v "(records in|records out|512 bytes)"
 # sfdisk -d /dev/sda > /home/backup/partitions 2>&1 | egrep -v "(Warning: extended partition does not start at a cylinder boundary|DOS and Linux will interpret the contents differently)"
 
-# Dump routes
+## Dump network routes with mtr and traceroute (warning: could be long with aggressive firewalls)
 for addr in 8.8.8.8 backup.evolix.net www.evolix.fr www.evolix.net; do
     mtr -r $addr > /home/backup/mtr-${addr}
     traceroute -n $addr > /home/backup/traceroute-${addr}
 done
 
-# Dump des processus
+## Dump process with ps
 ps aux >/home/backup/ps.out
 
-# Dump des connexions reseaux en cours
+## Dump network connections with netstat
 netstat -taupen >/home/backup/netstat.out
 
-# Liste des paquets installes
+## List Debian packages
 dpkg -l >/home/backup/packages
+
 
 HOSTNAME=$(hostname)
 
