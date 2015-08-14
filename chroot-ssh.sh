@@ -17,12 +17,14 @@
 #  kill -9 $(chroot /backup/jails/myserver cat /var/run/sshd.pid)
 #  chroot /backup/jails/myserver /usr/sbin/sshd > /dev/null
 
-# After *each* ssh upgrade or libs upgrade:
+# *Warning* : this setting is specific EvoBackup but used *only*
+# for guessing SSH port and updating all the chroot
+BACKUP_PATH='/backup/jails'
+# With all your jails in $BACKUP_PATH, after *each* ssh upgrade
+# or libs upgrade, you can upgrade all your chroots with:
 #  sh chroot-ssh.sh updateall
 # And restart all sshd daemons
 
-# We suppose jails are all in /backup/jails...
-BACKUP_PATH='/backup/jails'
 
 # Are we root?
 id=$(id -u)
@@ -36,16 +38,18 @@ usage() {
     cat <<EOT
 
 Add an OpenSSH chroot.
-Usage: $0 -n chroot-name -i ip -p port -k pub-key-path
+Usage: $0 -n chroot-dir -i ip -p port -k pub-key-path
 
 Mandatory parameters:
--n: name of chroot
+-n: directory of chroot
+
 
 Optional parameters:
 -i: IP address of the client machine.
 -k: Path to the SSH public key of the client machine.
 -p: SSH port which chroot/jail will listen on.
-    If you set "guess", port will be guessed if there is already one chroot.
+    If you set "guess", port will be guessed if there is already one chroot
+    and all your chroots are in $BACKUP_PATH
 
 EOT
 
@@ -87,7 +91,7 @@ done
 while getopts ':n:i:p:k:' opt; do
     case $opt in
     n)
-        jail=$OPTARG
+        chrootdir=$OPTARG
     ;;
     i)
         ip=$OPTARG
@@ -105,11 +109,8 @@ while getopts ':n:i:p:k:' opt; do
     esac
 done
 
-# Complete path to chroot dir.
-chrootdir=${BACKUP_PATH}/${jail}
-
 # Verify parameters.
-if [ -z $jail ];
+if [ -z $chrootdir ];
 then
     usage
     exit 1
@@ -135,8 +136,8 @@ if [ "$port" = "guess" ]; then
     fi
 fi
 
-# Used for updating jails.
-if [ "$jail" = "updateall" ]; then
+# specific EvoBackup (use ${BACKUP_PATH}) : updating jails in /backup/jails
+if [ "$chrootdir" = "updateall" ]; then
 
     for i in $(ls -1 ${BACKUP_PATH}/*/lib/x86_64-linux-gnu/libnss_compat.so.2); do
         chrootdir=$(echo $i | cut -d"/" -f1,2,3,4)
