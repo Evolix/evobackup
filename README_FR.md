@@ -1,5 +1,3 @@
-[TOC]
-
 Présentation d'EvoBackup
 ===
 
@@ -13,11 +11,11 @@ prisons (donc inaccessible par les serveurs) de façon incrémentale
 grâce à des "hard links". On peut ainsi conserver des dizaines de
 sauvegardes de chaque serveur de façon sécurisé et avec peu de place.
 
-                                                    **************************
-    Serveur 1 ------SSH/rsync ------->              * tcp/2222  Serveur      *
-                                                    *           de           *
-    Serveur 2 ------SSH/rsync ------->              * tcp/2223  Sauvegardes  *
-                                                    **************************
+                                      **************************
+    Serveur 1 ------SSH/rsync ------->* tcp/2222  Serveur      *
+                                      *           de           *
+    Serveur 2 ------SSH/rsync ------->* tcp/2223  Sauvegardes  *
+                                      **************************
 
 Cette technique de sauvegarde s'appuient sur des technologies
 standards. Elle est utilisée depuis plusieurs années par Evolix
@@ -28,13 +26,12 @@ Evobackup a été testé pour les serveurs sous Debian (Wheezy/Jessie).
 Cela peut fonctionner pour d'autres distributions tel Ubuntu.
 La documentation se concentre sur une mise en place pour Debian Jessie.
 
-Logiciels nécessaires :
-
-    - OpenSSH
-    - Rsync (le daemon rsync n'est pas nécessaire)
-    - Le paquet makedev (plus nécessaire depuis Squeeze)
-    - Commande "mail" (ou un équivalent) capable d'envoyer
-      des messages à l'extérieur.
+> **Logiciels nécessaires :**
+> - OpenSSH
+> - Rsync (le daemon rsync n'est pas nécessaire)
+> - Le paquet makedev (plus nécessaire depuis Squeeze)
+> - Commande "mail" (ou un équivalent) capable d'envoyer
+des messages à l'extérieur.
 
 Un volume d'une taille importante doit être monté sur /backup
 Pour des raisons de sécurité on pourra chiffrer ce volume.
@@ -70,7 +67,6 @@ On récupère les sources via https://forge.evolix.org/projects/evobackup/reposi
 30 10 * * * /usr/share/scripts/evobackup-inc.sh && /usr/share/scripts/evobackup-rm.sh
 ```
 > **Notes :**
-
 > - Si l'on veut plusieurs backups dans la journée (1 par heure maximum),
   on pourra lancer `/usr/share/scripts/evobackup-inc.sh` à plusieurs reprises…
   Ce qui fonctionnera sous réserve qu'entre temps les données ont bien changés !
@@ -98,7 +94,6 @@ Créer une prison
     # bash chroot-ssh.sh -n /backup/jails/$JAIL -i <ip> -p <port> -k <pub-key-path>
 
 > **Notes :**
-
 > - Ignorer une éventuelle erreur avec `ld-linux-x86-64.so.2` (32bits) ou `ld-linux.so.2` (64bits).
 > - `-i <ip>` et `-p <port>` sont optionnels, vous pouvez ajuster `/backup/jails/$JAIL/etc/ssh/sshd_config`.
 > - Si une prison a déjà été crée, `-p guess` vous permettra de deviner le prochain port disponible.
@@ -131,18 +126,17 @@ exemple :
     +%Y-%m-01.-1month
 
 > **Quelques explications sur cette syntaxe particulière.**
-
 > - Par exemple, la ligne ci-dessous signifie "garder la sauvegarde du
 jour actuel" (à toujours mettre sur la première ligne a priori) :
-`+%Y-%m-%d.-0day`
+> > `+%Y-%m-%d.-0day`
 > - La ligne ci-dessous signifie "garder la sauvegarde d'hier" :
-`+%Y-%m-%d.-1day`
+> > `+%Y-%m-%d.-1day`
 > - La ligne ci-dessous signifie "garder la sauvegarde du 1er jour du
 mois courant" :
-`+%Y-%m-01.-0month`
+> > `+%Y-%m-01.-0month`
 >- Toujours le même principe, on peut garder celle du 1er jours du
 mois dernier :
-    `+%Y-%m-01.-1month`
+> > `+%Y-%m-01.-1month`
 
 Et bien sûr, on peut garder aussi le 15e jour (pour avoir une sauvegarde
 toutes les 15 jours, le 1er janvier de chaque année, etc.)
@@ -186,15 +180,12 @@ Installation EvoBackup côté client
 
     # ssh-keygen
  
-> **Notes : **
-
+> **Notes :**
 > - Ne pas la protéger par une passphrase, sauf si un humain
 va l'entrer manuellement à chaque sauvegarde effectuée.
 > - La clé générée doit être de type RSA et non DSA !!
 
-
-> **Notes pour les machines sous Windows : **
-
+> **Notes pour les machines sous Windows :**
 > - Téléchargez et installer CygWin : http://cygwin.com/setup-x86.exe
 > - Choisissez le mirroir http://mirrors.kernel.org
  choisissez les paquets "rsync" et "openssh" grâce à la recherche,
