@@ -197,23 +197,33 @@ ils sont dans la catégorie "Net", vous devez les cocher.
    sauvegarde, ainsi que l'adresse IP de la machine.
    Ou bien reportez-vous à la création d'une prison sur le serveur de sauvegarde.
 
+− Éditer le script de sauvegarde `zzz_evobackup`.
+> - `SSH_PORT` Port de la prison SSH correspondante ;
+> - `SYSTEME` Linux ou BSD ;
+> - `MAIL` Adresse e-mail pour les rapports ;
+> - `NODE` Technique utilisée pour « calculer » sur quel nœud faire une sauvegarde.
+Utilisée seulement quand on a plusieurs serveurs de sauvegardes.
+La valeur par défaut permet de sauvegarder sur le nœud 0 les jours pairs, et
+sur le nœud 1 les jours impairs ;
+> - Dé-commenter / Ajuster / Ajouter la partie qui sauvegarde les applicatifs MySQL / LDAP /  … ;
+> - Ajouter ou enlever des exclusions avec `--exclude`.
+`$REP` contient les répertoires systèmes ;
+> - `root@node$NODE.backup.example.com:/var/backup/` Indiquer l'adresse de votre
+serveur de backup.
+
 − Ajouter à la crontab le fichier `zzz_evobackup` pour Linux / BSD :
 
 Pour une sauvegarde quotidienne (conseillé), utilisez le répertoire
 `/etc/cron.daily/` (sous Linux) ou `/etc/periodic/daily` (sous FreeBSD).
-
-    # install -v -m700 zzz_evobackup /etc/cron.daily/
-
-Il faut éventuellement ajuster le script en supprimant les lignes `--exclude`
-si l'on ne souhaite pas exclure les fichiers/répertoires de cette ligne et
-ajouter/supprimer les lignes en dessous pour sauvegarder les bons répertoires.
-(`$rep` désigne les données systèmes). Vous pouvez donc choisir librement ce
-que vous désirez sauvegarder.
-Vous devez aussi dé-commenter les lignes spécifiques pour les services (MySQL, LDAP,
-MongoDB, etc.) en les ajustant si nécessaire.
-
-Note pour les serveurs sous Windows : vous devrez créer un tâche planifiée avec une
+```
+# install -v -m700 zzz_evobackup /etc/cron.daily/
+## OU
+# install -v -m700 zzz_evobackup /etc/periodic/daily/
+```
+> **Note :**
+> Pour les serveurs sous Windows, vous devrez créer une tâche planifiée avec une
 commande "rsync" installé via CygWin.
+
 
 − Une fois que tout en place au niveau du serveur de sauvegardes,
    on doit initier la première connexion et valider l'empreinte SSH du serveur :
