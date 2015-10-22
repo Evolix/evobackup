@@ -153,7 +153,7 @@ mode nœuds, il est recommandé de créer la prison sur un nœud puis la copier 
 On utilisera rsync pour faire ceci.
 ```
 # rsync -av --exclude='var/backup/**' --exclude='proc/**' --exclude='dev/**' \
-    /backup/jails/$JAIL/ ${AutreNœud}:/backups/jails/$JAIL/
+    /backup/jails/$JAIL/ ${AutreNœud}:/backup/jails/$JAIL/
 # rsync -av /etc/evobackup/$JAIL ${AutreNœud}:/etc/evobackup/
 ```
 Ainsi le second nœud aura exactement la même prison (et même empreinte SSH).
