@@ -120,8 +120,11 @@ mkdir -p -m 700 /home/backup
 # curl -s -XPUT 'localhost:9200/_settings' -d '{"index.translog.disable_flush": false}' > /dev/null
 
 ## Dump MBR / table partitions with dd and sfdisk
+## Linux
 # dd if=/dev/sda of=/home/backup/MBR bs=512 count=1 2>&1 | egrep -v "(records in|records out|512 bytes)"
 # sfdisk -d /dev/sda > /home/backup/partitions 2>&1 | egrep -v "(Warning: extended partition does not start at a cylinder boundary|DOS and Linux will interpret the contents differently)"
+## OpenBSD
+# disklabel sd0 > /home/backup/partitions
 
 ## Dump network routes with mtr and traceroute (warning: could be long with aggressive firewalls)
 for addr in 8.8.8.8 backup.evolix.net www.evolix.fr www.evolix.net; do
@@ -132,12 +135,19 @@ done
 ## Dump process with ps
 ps aux >/home/backup/ps.out
 
-## Dump network connections with netstat
-netstat -taupen >/home/backup/netstat.out
+if [ $SYSTEME = "linux" ]; then
+	## Dump network connections with netstat
+	netstat -taupen >/home/backup/netstat.out
 
-## List Debian packages
-dpkg -l >/home/backup/packages
+	## List Debian packages
+	dpkg -l >/home/backup/packages
+else
+	## Dump network connections with netstat
+	netstat -finet -atn >/home/backup/netstat.out
 
+	## List OpenBSD packages
+	pkg_info -m >/home/backup/packages
+fi
 
 HOSTNAME=$(hostname)
 
