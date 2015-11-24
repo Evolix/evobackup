@@ -9,6 +9,9 @@
 LANGUAGE=C
 LANG=C
 
+## Force umask
+umask 077
+
 ## Verify other evobackup process and kill if needed
 PIDFILE=/var/run/evobackup.pid
 if [ -e $PIDFILE ]; then
