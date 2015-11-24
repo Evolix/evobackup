@@ -139,17 +139,17 @@ done
 ps aux >/home/backup/ps.out
 
 if [ $SYSTEME = "linux" ]; then
-	## Dump network connections with netstat
-	netstat -taupen >/home/backup/netstat.out
+    ## Dump network connections with netstat
+    netstat -taupen >/home/backup/netstat.out
 
-	## List Debian packages
-	dpkg -l >/home/backup/packages
+    ## List Debian packages
+    dpkg -l >/home/backup/packages
 else
-	## Dump network connections with netstat
-	netstat -finet -atn >/home/backup/netstat.out
+    ## Dump network connections with netstat
+    netstat -finet -atn >/home/backup/netstat.out
 
-	## List OpenBSD packages
-	pkg_info -m >/home/backup/packages
+    ## List OpenBSD packages
+    pkg_info -m >/home/backup/packages
 fi
 
 HOSTNAME=$(hostname)
