@@ -102,7 +102,7 @@ mkdir -p -m 700 /home/backup
 ## MongoDB : example with mongodump
 ## don't forget to create use with read-only access
 ## > use admin
-## > db.addUser("mongobackup", "PASS", true);
+## > db.createUser( { user: "mongobackup", pwd: "PASS", roles: [ "backup", ] } )
 # mongodump -u mongobackup -pPASS -o /home/backup/mongodump/ >/dev/null 2>&1 |grep -v "^connected to:"
 
 ## Redis : example with copy .rdb file
