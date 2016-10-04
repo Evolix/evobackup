@@ -3,7 +3,7 @@
 #
 # Script Evobackup client
 # See https://forge.evolix.org/projects/evobackup
-# 
+#
 
 ## lang = C for english outputs
 LANGUAGE=C
@@ -135,7 +135,7 @@ mkdir -p -m 700 /home/backup
 ## Dump network routes with mtr and traceroute (warning: could be long with aggressive firewalls)
 for addr in 8.8.8.8 www.evolix.fr travaux.evolix.net; do
     mtr -r $addr > /home/backup/mtr-${addr}
-    traceroute -n $addr > /home/backup/traceroute-${addr}
+    traceroute -n $addr > /home/backup/traceroute-${addr} 2>&1
 done
 
 ## Dump process with ps
