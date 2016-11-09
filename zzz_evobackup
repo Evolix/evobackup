@@ -122,6 +122,9 @@ mkdir -p -m 700 /home/backup
 ## In any case re-enable translog flush
 # curl -s -XPUT 'localhost:9200/_settings' -d '{"index.translog.disable_flush": false}' > /dev/null
 
+## RabbitMQ : export config
+#rabbitmqadmin export /home/backup/rabbitmq.config >> /var/log/evobackup.log
+
 ## Dump MBR / table partitions with dd and sfdisk
 ## Linux
 # dd if=/dev/sda of=/home/backup/MBR bs=512 count=1 2>&1 | egrep -v "(records in|records out|512 bytes)"
