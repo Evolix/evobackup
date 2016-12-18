@@ -10,46 +10,32 @@
 ### END INIT INFO
 
 set -e
-BACKUP_PATH=/backup
+. /etc/default/evobackup
 
 case "$1" in
     start)
-        for jail in $(ls -1 ${BACKUP_PATH}/jails |grep -v \.bak); do
-            mount -t proc proc-chroot ${BACKUP_PATH}/jails/${jail}/proc/
-            mount -t devtmpfs udev ${BACKUP_PATH}/jails/${jail}/dev/
-            mount -t devpts devpts ${BACKUP_PATH}/jails/${jail}/dev/pts
-            chroot ${BACKUP_PATH}/jails/${jail} /usr/sbin/sshd > /dev/null
-        done
+	bkctl start all
     ;;
 
     stop)
-        for jail in $(ls -1 ${BACKUP_PATH}/jails |grep -v \.bak); do
-            kill $(chroot ${BACKUP_PATH}/jails/${jail} cat /var/run/sshd.pid)
-            umount ${BACKUP_PATH}/jails/${jail}/proc/
-            umount ${BACKUP_PATH}/jails/${jail}/dev/pts/
-            # Need to wait a little time before unmounting /dev
-            sleep 0.2
-            umount ${BACKUP_PATH}/jails/${jail}/dev
-        done
+	bkctl stop all
     ;;
 
     reload|force-reload)
-        for jail in $(ls -1 ${BACKUP_PATH}/jails |grep -v \.bak); do
-            kill -HUP \
-                $(chroot ${BACKUP_PATH}/jails/${jail} cat /var/run/sshd.pid)
-        done
+        bkctl reload all
     ;;
 
     restart)
-        for jail in $(ls -1 ${BACKUP_PATH}/jails |grep -v \.bak); do
-            kill $(chroot ${BACKUP_PATH}/jails/${jail} cat /var/run/sshd.pid)
-            chroot ${BACKUP_PATH}/jails/${jail} /usr/sbin/sshd > /dev/null
-        done
+	bkctl restart all
+    ;;
+
+    status)
+	bkctl status
     ;;
 
   *)
 
-    echo "Usage: $0 {start|stop|restart|reload}"
+    echo "Usage: $0 {start|stop|restart|reload|status}"
     exit 1
 
 esac

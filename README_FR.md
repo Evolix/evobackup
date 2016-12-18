@@ -52,26 +52,15 @@ On récupère les sources via https://forge.evolix.org/projects/evobackup/reposi
 ```
 # git clone https://forge.evolix.org/evobackup.git
 # cd evobackup
-# mkdir -m750 /etc/evobackup
-# install -v -m700 evobackup /etc/init.d/
-# cd /etc/init.d/ && insserv evobackup
+# ./install.sh
 ```
 
-− Mettre en place les scripts evobackup-inc.sh et evobackup-rm.sh dans /usr/share/scripts
-``` 
-# install -v -m 700 evobackup-{rm,inc}.sh /usr/share/scripts/
-```
-− Activer la crontab suivante (ajuster éventuellement les heures) :
-```
-29 10 * * * pkill evobackup-rm.sh && echo "Kill evobackup-rm.sh done" | mail -s "[warn] EvoBackup - purge incs interrupted" root 
-30 10 * * * /usr/share/scripts/evobackup-inc.sh && /usr/share/scripts/evobackup-rm.sh
-```
 > **Notes :**
 > - Si l'on veut plusieurs backups dans la journée (1 par heure maximum),
-  on pourra lancer `/usr/share/scripts/evobackup-inc.sh` à plusieurs reprises…
+  on pourra lancer `bkctl inc` à plusieurs reprises…
   Ce qui fonctionnera sous réserve qu'entre temps les données ont bien changés !
 > - Si l'on ne veut **jamais** supprimer les backups incrémentaux, on pourra se contenter
-  de ne jamais lancer le script `evobackup-rm.sh`.
+  de ne jamais lancer la coomande `bkctl rm`.
 
   Si le noyau du serveur est patché avec *GRSEC*, on évitera pas mal
   de warnings en positionnant les paramètres Sysctl suivants :
@@ -83,34 +72,25 @@ On récupère les sources via https://forge.evolix.org/projects/evobackup/reposi
 
 Créer une prison
 ---
+    Cr�er la prison :
 
-  − Exporter la variable `$JAIL` avec le nom d'hôte de la machine a sauvegarder :
-    
-    # export JAIL=<nom d'hote>
+    # bkctl init <hostname>
 
-  − Se placer dans le répertoire racine de EvoBackup (attention, ne pas déplacer le script `chroot-ssh` car
-  il a besoin du répertoire etc/ !) puis exécuter :
-    
-    # bash chroot-ssh.sh -n /backup/jails/$JAIL -i <ip> -p <port> -k <pub-key-path>
+    Changer le port d'�coute (defaut: 2222) :
 
-> **Notes :**
-> - Ignorer une éventuelle erreur avec `ld-linux-x86-64.so.2` (32bits) ou `ld-linux.so.2` (64bits).
-> - `-i <ip>` et `-p <port>` sont optionnels, vous pouvez ajuster `/backup/jails/$JAIL/etc/ssh/sshd_config`.
-> - Si une prison a déjà été crée, `-p guess` vous permettra de deviner le prochain port disponible.
-> - `-k <pub-key-path>` est optionnel, vous pouvez ajouter la clé publique du client dans le fichier
-`/backup/jails/$JAIL/root/.ssh/authorized_keys` déjà existant.
+    # bkctl port <hostname> <port>
 
-− Lancer la prison :
-```
-# mount -t proc proc-chroot /backup/jails/$JAIL/proc/
-# mount -t devtmpfs udev /backup/jails/$JAIL/dev/
-# mount -t devpts devpts /backup/jails/$JAIL/dev/pts
-# chroot /backup/jails/$JAIL /usr/sbin/sshd > /dev/null
-```
+    Autoriser une cl� publique :
 
-− Vérifier que tout est OK :
+    # bkctl key <hostname> <pubkeyfile>
 
-    # /etc/init.d/evobackup reload
+    Lancer la prison :
+
+    # bkctl start <hostname>
+
+    V�rifier que tout est OK :
+
+    # bkctl status <hostname>
 
 − Gestion des sauvegardes incrémentales :
 
@@ -144,7 +124,7 @@ toutes les 15 jours, le 1er janvier de chaque année, etc.)
 Attention, la création de ce fichier est **obligatoire** pour activer
 les copies incrémentales. Si l'on veut garder des copies *advitam aeternam*
 sans jamais les supprimer, on se contentera de ne pas lancer le script
-`evobackup-rm.sh`.
+`bkctl rm`.
 
 − Copier une prison sur un second serveur :
 
@@ -157,16 +137,6 @@ On utilisera rsync pour faire ceci.
 # rsync -av /etc/evobackup/$JAIL ${AutreNœud}:/etc/evobackup/
 ```
 Ainsi le second nœud aura exactement la même prison (et même empreinte SSH).
-
-Mise-à-jour du serveur de sauvegardes
----
-
-En cas d'une mise-à-jour d'un paquet lié à SSH ou rsync côté
-serveur de sauvegardes, on mettra à jour les prisons ainsi :
-```
-# ./chroot-ssh.sh -n updateall
-# /etc/init.d/evobackup restart
-```
 
 Installation EvoBackup côté client
 ===

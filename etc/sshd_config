@@ -32,4 +32,5 @@ UseLogin no
 
 Subsystem sftp /usr/lib/openssh/sftp-server
 
-AllowUsers root@IP root@::ffff:IP
+AllowUsers root
+#AllowUsers root@IP root@::ffff:IP
