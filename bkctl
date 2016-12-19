@@ -82,8 +82,24 @@ sub_start() {
 		exit 1
 	fi
 	mount -t proc proc-chroot ${JAILDIR}/${jail}/proc/
-	mount -t devtmpfs udev ${JAILDIR}/${jail}/dev/
-        mount -t devpts devpts ${JAILDIR}/${jail}/dev/pts
+	mount -nt tmpfs none ${JAILDIR}/${jail}/dev
+	mknod -m 622 ${JAILDIR}/${jail}/dev/console c 5 1
+	mknod -m 666 ${JAILDIR}/${jail}/dev/null c 1 3
+	mknod -m 666 ${JAILDIR}/${jail}/dev/zero c 1 5
+	mknod -m 666 ${JAILDIR}/${jail}/dev/ptmx c 5 2
+	mknod -m 666 ${JAILDIR}/${jail}/dev/tty c 5 0
+	mknod -m 444 ${JAILDIR}/${jail}/dev/random c 1 8
+	mknod -m 444 ${JAILDIR}/${jail}/dev/urandom c 1 9
+	chown root:tty ${JAILDIR}/${jail}/dev/{console,ptmx,tty}
+	ln -s ${JAILDIR}/${jail}/proc/self/fd ${JAILDIR}/${jail}/dev/fd
+	ln -s ${JAILDIR}/${jail}/proc/self/fd/0 ${JAILDIR}/${jail}/dev/stdin
+	ln -s ${JAILDIR}/${jail}/proc/self/fd/1 ${JAILDIR}/${jail}/dev/stdout
+	ln -s ${JAILDIR}/${jail}/proc/self/fd/2 ${JAILDIR}/${jail}/dev/stderr
+	ln -s ${JAILDIR}/${jail}/proc/kcore ${JAILDIR}/${jail}/dev/core
+	mkdir ${JAILDIR}/${jail}/dev/pts
+	mkdir ${JAILDIR}/${jail}/dev/shm
+	mount -t devpts -o gid=4,mode=620 none ${JAILDIR}/${jail}/dev/pts
+	mount -t tmpfs none ${JAILDIR}/${jail}/dev/shm
         exec chroot ${JAILDIR}/${jail} /usr/sbin/sshd -E /var/log/authlog
 }
 
@@ -102,6 +118,7 @@ sub_stop() {
 	kill $pid
 	umount ${JAILDIR}/${jail}/proc/
 	umount ${JAILDIR}/${jail}/dev/pts
+	umount ${JAILDIR}/${jail}/dev/shm
 	sleep 0.2
 	umount ${JAILDIR}/${jail}/dev/	
 }
