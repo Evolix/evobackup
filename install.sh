@@ -2,7 +2,9 @@
 
 dir=`dirname $0`
 
-cp $dir/evobackup.conf /etc/default/evobackup
+if [ ! -f /etc/default/evobackup ]; then
+	install -m 0644 -v $dir/tpl/evobackup.conf /etc/default/evobackup
+fi
 source /etc/default/evobackup
 
 grep -q usr /etc/fstab
@@ -10,9 +12,9 @@ if [ $? == 0 ]; then
 	mount -o remount,rw /usr
 fi
 
-mkdir -p $TPLDIR
-cp $dir/etc/* $TPLDIR
-cp $dir/bkctl /usr/local/sbin/
+mkdir -m 0755 -p $TPLDIR
+cp -v $dir/tpl/* $TPLDIR
+install -m 0755 -v $dir/bkctl /usr/local/sbin/
 
 crontab -l|grep -q bkctl
 if [ $? != 0 ]; then
@@ -21,13 +23,13 @@ fi
 
 dpkg -l sysvinit >/dev/null
 if [ $? == 0 ]; then
-	cp $dir/evobackup /etc/init.d/evobackup
+	install -m 0755 -v $dir/tpl/evobackup /etc/init.d/evobackup
 	insserv evobackup
 fi
 
 dpkg -l systemd >/dev/null
 if [ $? == 0 ] ; then
 	#cp evobackup@.service /etc/systemd/system/evobackup@.service
-	cp $dir/evobackup /etc/init.d/evobackup
+	install -m 0755 -v $dir/tpl/evobackup /etc/init.d/evobackup
 	systemctl enable evobackup
 fi

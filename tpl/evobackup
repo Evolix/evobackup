@@ -9,9 +9,6 @@
 # Short-Description:    Backup manager using rsync and OpenSSH chroot.
 ### END INIT INFO
 
-set -e
-. /etc/default/evobackup
-
 case "$1" in
     start)
 	bkctl start all
