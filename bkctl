@@ -24,6 +24,7 @@ sub_help(){
     echo "	stop		<jailname>"
     echo "	reload		<jailname>"
     echo "	restart		<jailname>"
+    echo "	sync		<jailname>"
     echo "	status		[<jailname>]"
     echo "	key		<jailname>	[<keyfile>]"
     echo "	port		<jailname>	[<ssh_port>]"
@@ -199,6 +200,27 @@ sub_status() {
 	echo "$jail		$status		$port		$inc	$ip"
 }
 
+sub_sync() {
+	set -e
+	if [ -z $NODE ]; then
+		echo "You must define \$NODE in /etc/default/evobackup !" >&2
+		exit 1
+	fi
+	jail=$1
+	check_jail $jail
+	port=$(get_port $jail)
+	key=$(get_key $jail)
+	rsync -a ${CONFDIR}/$jail $NODE:${CONFDIR}/$jail
+	bkctl key $jail > /tmp/evobackup-${jail}.pub
+	rsync -a /tmp/evobackup-${jail}.pub $NODE:/tmp/evobackup-${jail}.pub
+	ssh $NODE bkctl init $jail
+	ssh $NODE bkctl port $jail $port
+	ssh $NODE bkctl key $jail /tmp/evobackup-${jail}.pub
+	for ip in $(get_ip $jail); do
+		ssh $NODE bkctl ip $jail $ip
+	done
+}
+
 sub_inc() {
 	date=$(date +"%Y-%m-%d-%H")
 	for jail in $(ls -1 $CONFDIR); do
@@ -322,7 +344,7 @@ get_ip() {
 set_ip() {
 	jail=$1
 	ip=$2
-	if [ $ip = "all" ]; then
+	if [[ $ip = "all" || $ip = "0.0.0.0/0" ]]; then
 		ips="0.0.0.0/0"
 	else
 		ips=$(get_ip $jail)
@@ -369,7 +391,7 @@ main() {
 	        fi
 		sub_${subcommand} $jail $option
 		;;
-	    "start" | "stop" | "reload" | "restart")
+	    "start" | "stop" | "reload" | "restart" | "sync")
 		if [ -z $jail ]; then
 			sub_help
 			exit 1
