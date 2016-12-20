@@ -282,7 +282,7 @@ get_port() {
 set_port() {
 	jail=$1
 	port=$2
-	if [ $port = "auto" ]; then
+	if [ "$port" = "auto" ]; then
 		port=$(grep -h Port ${JAILDIR}/*/${SSHD_CONFIG} 2>/dev/null | grep -Eo [0-9]+ | sort -n | tail -1)
 	        port=$((port+1))
         	if [ ! $port -gt 1 ]; then
@@ -290,6 +290,7 @@ set_port() {
 	        fi
 	fi
         sed -i "s/^Port .*/Port ${port}/" ${JAILDIR}/$jail/${SSHD_CONFIG}
+	set_firewall $jail
 }
 
 get_key() {
@@ -332,6 +333,18 @@ set_ip() {
 		allow="$allow root@${ip}"
 	done
 	sed -i "s~^AllowUsers .*~${allow}~" ${JAILDIR}/$jail/${SSHD_CONFIG}
+	set_firewall $jail
+}
+
+set_firewall() {
+	jail=$1
+	if [ -f $FIREWALL_RULES ]; then
+		sed -i "/#${jail}$/d" $FIREWALL_RULES
+	fi
+	port=$(get_port $jail)
+	for ip in $(get_ip $jail); do
+		echo "/sbin/iptables -A INPUT -p tcp --sport 1024: --dport $port -s $ip -j ACCEPT #$jail" >> $FIREWALL_RULES
+	done
 }
 
 main() {
