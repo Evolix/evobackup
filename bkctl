@@ -27,6 +27,7 @@ sub_help(){
     echo "	status		[<jailname>]"
     echo "	key		<jailname>	[<keyfile>]"
     echo "	port		<jailname>	[<ssh_port>]"
+    echo "	ip		<jailname>	[<ip>]"
     echo "	inc"
     echo "	rm"
     echo ""
@@ -173,6 +174,20 @@ sub_port() {
 	fi
 }
 
+sub_ip() {
+	set -e
+	jail=$1
+	ip=$2
+	check_jail $jail
+	pre_ip=$(get_ip $jail)
+	if [ -z $ip ]; then
+		echo "$pre_ip"
+	else
+		set_ip $jail $ip
+		$0 reload $jail
+	fi
+}
+
 sub_status() {
 	set -e
 	jail=$1
@@ -180,7 +195,8 @@ sub_status() {
 	inc=$(check_inc $jail)
 	status=$(check_jail_on $jail)
 	port=$(get_port $jail)
-	echo "$jail : $status ($port) -> $inc"
+	ip=$(get_ip $jail|xargs)
+	echo "$jail		$status		$port		$inc	$ip"
 }
 
 sub_inc() {
@@ -238,7 +254,7 @@ check_jail_on() {
                 pid=$(cat ${JAILDIR}/${jail}/${SSHD_PID})
                 ps -p $pid > /dev/null
                 if [ $? == 0 ]; then
-                        status="ON "
+                        status="ON"
                 else
 			rm ${JAILDIR}/${jail}/${SSHD_PID}
 		fi
@@ -295,6 +311,29 @@ set_key() {
 	fi
 }
 
+get_ip() {
+	jail=$1
+	for allow in $(grep -E "^AllowUsers" ${JAILDIR}/$jail/${SSHD_CONFIG}|grep -Eo "root@[^ ]+"); do
+		echo $allow|cut -d'@' -f2
+	done
+}
+
+set_ip() {
+	jail=$1
+	ip=$2
+	if [ $ip = "all" ]; then
+		ips="0.0.0.0/0"
+	else
+		ips=$(get_ip $jail)
+		ips=$(echo $ips $ip|xargs -n1|grep -v "0.0.0.0/0"|sort|uniq)
+	fi
+	allow="AllowUsers"
+	for ip in $ips; do
+		allow="$allow root@${ip}"
+	done
+	sed -i "s~^AllowUsers .*~${allow}~" ${JAILDIR}/$jail/${SSHD_CONFIG}
+}
+
 main() {
 	mkdir -p $CONFDIR $JAILDIR $INCDIR
 	subcommand=$1
@@ -310,7 +349,7 @@ main() {
 		sub_${subcommand} $jail &
 		echo $! > /run/bkctl.pid
 		;;
-	    "init" | "key" | "port")
+	    "init" | "key" | "port" | "ip")
 		if [ -z $jail ]; then
 	                sub_help
 	                exit 1
