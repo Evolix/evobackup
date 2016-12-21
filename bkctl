@@ -19,77 +19,56 @@ fi
 sub_help(){
     echo "Usage: bkctl <subcommand> [options]"
     echo "Subcommands:"
-    echo "	init		<jailname>"
-    echo "	start		<jailname>"
-    echo "	stop		<jailname>"
-    echo "	reload		<jailname>"
-    echo "	restart		<jailname>"
-    echo "	sync		<jailname>"
-    echo "	status		[<jailname>]"
-    echo "	key		<jailname>	[<keyfile>]"
-    echo "	port		<jailname>	[<ssh_port>]"
-    echo "	ip		<jailname>	[<ip>]"
-    echo "	inc"
-    echo "	rm"
-    echo ""
-    echo "For help with each subcommand run:"
-    echo "bkctl <subcommand> -h|--help"
+    echo "	init		<jailname>					Init jail <jailname>"
+    echo "	update		(<jailname>|all)				Update jail <jailname> or all"
+    echo "	start		(<jailname>|all)				Start jail <jailname> or all"
+    echo "	stop		(<jailname>|all)				Stop jail <jailname> or all"
+    echo "	reload		(<jailname>|all)				Reload jail <jailname> or all"
+    echo "	restart		(<jailname>|all)				Restart jail <jailname> or all"
+    echo "	sync		(<jailname>|all)				Sync jail <jailname> or all to another node"
+    echo "	status		[<jailname>]					Print status of <jailname> (default all jail)"
+    echo "	key		<jailname>		[<keyfile>]		Set or get ssh pubic key of <jailname>"
+    echo "	port		<jailname>		[(<ssh_port>|auto)]	Set or get ssh port of <jailname>"
+    echo "	ip		<jailname>		[(<ip>|all)]		Set or get allowed(s) ip(s) of <jailname>"
+    echo "	inc								Make incremental inc of all jails"
+    echo "	rm								Remove old incremtal inc of all jails"
     echo ""
 }
   
 sub_init() {
 	jail=$1
-	mkdir -p ${JAILDIR}/${jail}
-	umask 022
-
-	echo -n "1 - Creating the chroot..."
-	mkdir -p ${JAILDIR}/${jail}/{bin,dev,etc/ssh,lib,lib64,proc}
-	mkdir -p ${JAILDIR}/${jail}/lib/{x86_64-linux-gnu,tls/i686/cmov,i686/cmov}
-	mkdir -p ${JAILDIR}/${jail}/usr/{bin,lib,sbin}
-	mkdir -p ${JAILDIR}/${jail}/usr/lib/{x86_64-linux-gnu,openssh,i686/cmov}
-	mkdir -p ${JAILDIR}/${jail}/root/.ssh && chmod 700 ${JAILDIR}/${jail}/root/.ssh
-	mkdir -p ${JAILDIR}/${jail}/var/{log,run/sshd}
-	touch ${JAILDIR}/${jail}/var/log/{authlog,lastlog,messages,syslog}
-	touch ${JAILDIR}/${jail}/etc/fstab
+	mk_jail $jail
+	echo -n "4 - Copie default sshd_config..."
+	install -m 0640 ${TPLDIR}/sshd_config ${JAILDIR}/$jail/${SSHD_CONFIG}
 	echo "...OK"
+	echo -n "5 - Set usable sshd port..."
+	set_port $jail auto
+	echo "...OK"
+	echo -n "6 - Copie default inc configuration..."
+	install -m 0640 ${TPLDIR}/inc.tpl ${CONFDIR}/$jail
+	echo "...OK"
+}
 
-	echo -n "2 - Copying essential files..."
-	cp /proc/devices ${JAILDIR}/${jail}/proc
-	cp /etc/ssh/{ssh_host_rsa_key,ssh_host_dsa_key} ${JAILDIR}/${jail}/etc/ssh/
-	cp ${TPLDIR}/{passwd,shadow,group} ${JAILDIR}/${jail}/etc/
-	if [ ! -f ${JAILDIR}/$jail/${SSHD_CONFIG} ]; then
-		cp ${TPLDIR}/sshd_config ${JAILDIR}/$jail/${SSHD_CONFIG}
+sub_update() {
+	jail=$1
+	status=$(check_jail_on $jail)
+	if ( $status ); then
+		$0 stop $jail			
 	fi
-	echo "...OK"
-
-	echo -n "3 - Copying binaries..."
-	cp -f /lib/ld-linux.so.2 ${JAILDIR}/${jail}/lib/ 2>/dev/null || cp -f /lib64/ld-linux-x86-64.so.2 ${JAILDIR}/${jail}/lib64/
-	cp /lib/x86_64-linux-gnu/libnss* ${JAILDIR}/${jail}/lib/x86_64-linux-gnu/
-
-	for dbin in /bin/bash /bin/cat /bin/chown /bin/mknod /bin/rm /bin/ls /bin/sed /bin/sh /bin/uname /bin/mount /usr/bin/rsync /usr/sbin/sshd /usr/lib/openssh/sftp-server; do
-		cp -f $dbin ${JAILDIR}/${jail}/$dbin;
-		for lib in $(ldd $dbin | grep -Eo "/.*so.[0-9\.]+"); do
-			cp -p $lib ${JAILDIR}/${jail}/$lib
-		done
-	done
-	echo "...OK"
-
-	if [ ! -f ${CONFDIR}/$jail ]; then
-		install -m 0640 -v ${TPLDIR}/inc.tpl ${CONFDIR}/$jail
-	fi
+	mk_jail $jail
+	if ( $status ); then
+                $0 start $jail
+        fi
 }
 
 sub_start() {
-	set -e
 	jail=$1
-	check_jail $jail
-	status=$(check_jail_on $jail)
-	if [ $status == "ON" ]; then
+	if ( $(check_jail_on $jail) ); then
 		echo "Jail $jail already running !" >&2
 		exit 1
 	fi
-	mount -t proc proc-chroot ${JAILDIR}/${jail}/proc/
-	mount -nt tmpfs none ${JAILDIR}/${jail}/dev
+	mount -t proc bkctl-proc-${jail} ${JAILDIR}/${jail}/proc/
+	mount -nt tmpfs bkctl-dev-${jail} ${JAILDIR}/${jail}/dev
 	mknod -m 622 ${JAILDIR}/${jail}/dev/console c 5 1
 	mknod -m 666 ${JAILDIR}/${jail}/dev/null c 1 3
 	mknod -m 666 ${JAILDIR}/${jail}/dev/zero c 1 5
@@ -107,15 +86,14 @@ sub_start() {
 	mkdir ${JAILDIR}/${jail}/dev/shm
 	mount -t devpts -o gid=4,mode=620 none ${JAILDIR}/${jail}/dev/pts
 	mount -t tmpfs none ${JAILDIR}/${jail}/dev/shm
-        exec chroot ${JAILDIR}/${jail} /usr/sbin/sshd -E /var/log/authlog
+        chroot ${JAILDIR}/${jail} /usr/sbin/sshd -D &
+	#umount -R ${JAILDIR}/${jail}/dev
+        #umount ${JAILDIR}/${jail}/proc/
 }
 
 sub_stop() {
-	set -e
 	jail=$1
-	check_jail $jail
-	status=$(check_jail_on $jail)
-	if [ $status == "OFF" ]; then
+	if ( ! $(check_jail_on $jail) ); then
 		echo "Jail $jail is not running !" >&2
 		exit 1
 	fi
@@ -124,19 +102,13 @@ sub_stop() {
 		kill $conn
 	done
 	kill $pid
-	umount ${JAILDIR}/${jail}/proc/
-	umount ${JAILDIR}/${jail}/dev/pts
-	umount ${JAILDIR}/${jail}/dev/shm
-	sleep 0.2
-	umount ${JAILDIR}/${jail}/dev/	
+	umount -R ${JAILDIR}/${jail}/dev
+        umount ${JAILDIR}/${jail}/proc/
 }
 
 sub_reload() {
-	set -e
 	jail=$1
-	check_jail $jail
-	status=$(check_jail_on $jail)
-	if [ $status == "ON" ]; then
+	if [ $(check_jail_on $jail) ]; then
 		pkill -HUP -F ${JAILDIR}/${jail}/${SSHD_PID}
 	fi
 }
@@ -144,70 +116,29 @@ sub_reload() {
 sub_restart() {
 	set -e
 	jail=$1
-	check_jail $jail
 	$0 stop $jail	
 	$0 start $jail	
 }
 
-sub_key() {
-	set -e
-	jail=$1
-	keyfile=$2
-	check_jail $jail
-	if [ -n "$keyfile" ]; then
-		set_key $jail $keyfile
-	else
-		get_key $jail
-	fi
-}
-
-sub_port() {
-	set -e
-	jail=$1
-	port=$2
-	check_jail $jail
-	pre_port=$(get_port $jail)
-	if [ -z $port ]; then
-		echo "$pre_port"
-	else
-		set_port $jail $port
-		$0 reload $jail	
-	fi
-}
-
-sub_ip() {
-	set -e
-	jail=$1
-	ip=$2
-	check_jail $jail
-	pre_ip=$(get_ip $jail)
-	if [ -z $ip ]; then
-		echo "$pre_ip"
-	else
-		set_ip $jail $ip
-		$0 reload $jail
-	fi
-}
-
 sub_status() {
-	set -e
 	jail=$1
-	check_jail $jail
 	inc=$(check_inc $jail)
-	status=$(check_jail_on $jail)
+	if ($(check_jail_on $jail)); then
+		status="ON "
+	else
+		status="OFF"
+	fi
 	port=$(get_port $jail)
 	ip=$(get_ip $jail|xargs)
 	echo "$jail		$status		$port		$inc	$ip"
 }
 
 sub_sync() {
-	set -e
 	if [ -z $NODE ]; then
 		echo "You must define \$NODE in /etc/default/evobackup !" >&2
 		exit 1
 	fi
 	jail=$1
-	check_jail $jail
 	port=$(get_port $jail)
 	key=$(get_key $jail)
 	rsync -a ${CONFDIR}/$jail $NODE:${CONFDIR}/$jail
@@ -261,26 +192,66 @@ sub_rm() {
 	rm -rf $TMPDIR $EMPTYDIR 
 }
 
+mk_jail() {
+	jail=$1
+	mkdir -p ${JAILDIR}/${jail}
+	umask 022
+
+	echo -n "1 - Creating the chroot..."
+	mkdir -p ${JAILDIR}/${jail}/{bin,dev,etc/ssh,lib,lib64,proc}
+	mkdir -p ${JAILDIR}/${jail}/lib/{x86_64-linux-gnu,tls/i686/cmov,i686/cmov}
+	mkdir -p ${JAILDIR}/${jail}/usr/{bin,lib,sbin}
+	mkdir -p ${JAILDIR}/${jail}/usr/lib/{x86_64-linux-gnu,openssh,i686/cmov}
+	mkdir -p ${JAILDIR}/${jail}/root/.ssh && chmod 700 ${JAILDIR}/${jail}/root/.ssh
+	mkdir -p ${JAILDIR}/${jail}/var/{log,run/sshd}
+	touch ${JAILDIR}/${jail}/var/log/{authlog,lastlog,messages,syslog}
+	touch ${JAILDIR}/${jail}/etc/fstab
+	echo "...OK"
+
+	echo -n "2 - Copying essential files..."
+	cp /proc/devices ${JAILDIR}/${jail}/proc
+	cp /etc/ssh/{ssh_host_rsa_key,ssh_host_dsa_key} ${JAILDIR}/${jail}/etc/ssh/
+	cp ${TPLDIR}/{passwd,shadow,group} ${JAILDIR}/${jail}/etc/
+	echo "...OK"
+
+	echo -n "3 - Copying binaries..."
+	cp -f /lib/ld-linux.so.2 ${JAILDIR}/${jail}/lib/ 2>/dev/null || cp -f /lib64/ld-linux-x86-64.so.2 ${JAILDIR}/${jail}/lib64/
+	cp /lib/x86_64-linux-gnu/libnss* ${JAILDIR}/${jail}/lib/x86_64-linux-gnu/
+
+	for dbin in /bin/bash /bin/cat /bin/chown /bin/mknod /bin/rm /bin/ls /bin/sed /bin/sh /bin/uname /bin/mount /usr/bin/rsync /usr/sbin/sshd /usr/lib/openssh/sftp-server; do
+		cp -f $dbin ${JAILDIR}/${jail}/$dbin;
+		for lib in $(ldd $dbin | grep -Eo "/.*so.[0-9\.]+"); do
+			cp -p $lib ${JAILDIR}/${jail}/$lib
+		done
+	done
+	echo "...OK"
+}
+
 check_jail() {
 	jail=$1
-	if [ ! -d ${JAILDIR}/${jail} ]; then
-		echo "$jail doesn't exits !" >&2 
+	if [ -d ${JAILDIR}/${jail} ]; then
+		exit 0
+	else
 		exit 1
 	fi
 }
 
 check_jail_on() {
 	jail=$1
-	status="OFF"
         if [ -f ${JAILDIR}/${jail}/${SSHD_PID} ]; then
                 pid=$(cat ${JAILDIR}/${jail}/${SSHD_PID})
                 ps -p $pid > /dev/null
                 if [ $? == 0 ]; then
-                        status="ON"
+                        exit 0
                 else
 			rm ${JAILDIR}/${jail}/${SSHD_PID}
+	                umount -R ${JAILDIR}/${jail}/dev
+			umount ${JAILDIR}/${jail}/proc/
+			exit 1
 		fi
-        fi
+        else
+		exit 1
+	fi
 	echo $status
 }
 
@@ -384,33 +355,46 @@ main() {
 		sub_${subcommand} $jail &
 		echo $! > /run/bkctl.pid
 		;;
-	    "init" | "key" | "port" | "ip")
-		if [ -z $jail ]; then
-	                sub_help
-	                exit 1
-	        fi
-		sub_${subcommand} $jail $option
-		;;
-	    "start" | "stop" | "reload" | "restart" | "sync")
-		if [ -z $jail ]; then
-			sub_help
-			exit 1
+            "init")
+		if [[ -n "${jail}" ]]; then
+			if ( ! $(check_jail $jail) ); then
+				sub_${subcommand} $jail
+			fi
 		fi
-		if [ $jail = "all" ]; then
+		;;
+	    "key" | "port" | "ip")
+		if [[ -n "${jail}" ]]; then
+			if ( $(check_jail $jail) ); then
+	        		if [ -z "${option}" ]; then
+			                get_${subcommand} $jail
+			        else
+			                set_${subcommand} $jail $option
+			        fi
+			fi
+		fi
+		;;
+	    "start" | "stop" | "reload" | "restart" | "sync" | "update")
+		if [[ -n "${jail}" ]]; then
+			if [[ "${jail}" = "all" ]]; then
+				for jail in $(ls $JAILDIR); do
+		                        $0 ${subcommand} $jail
+		                done
+			else
+			        if ( $(check_jail $jail) ); then
+					sub_${subcommand} $jail
+				fi
+			fi
+		fi
+		;;
+	    "status")
+		if [[ -z "${jail}" ]]; then
 			for jail in $(ls $JAILDIR); do
 	                        $0 ${subcommand} $jail
 	                done
 		else
-		        sub_${subcommand} $jail
-		fi
-		;;
-	    "status")
-		if [ -z $jail ]; then
-			for jail in $(ls $JAILDIR); do
-	                        $0 status $jail
-	                done
-		else
-	        	sub_${subcommand} $jail
+			if ( $(check_jail $jail) ); then
+                	        sub_${subcommand} $jail
+                        fi
 		fi
 		;;
 	    *)
