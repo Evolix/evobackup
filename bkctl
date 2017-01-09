@@ -21,6 +21,7 @@ sub_help(){
     echo "Subcommands:"
     echo "	init		<jailname>					Init jail <jailname>"
     echo "	update		(<jailname>|all)				Update jail <jailname> or all"
+    echo "	remove		(<jailname>|all)				Remove jail <jailname> or all"
     echo "	start		(<jailname>|all)				Start jail <jailname> or all"
     echo "	stop		(<jailname>|all)				Stop jail <jailname> or all"
     echo "	reload		(<jailname>|all)				Reload jail <jailname> or all"
@@ -64,6 +65,25 @@ sub_update() {
 	if ( $status ); then
                 $0 start $jail
         fi
+}
+
+sub_remove() {
+	jail=$1
+        if ( check_jail_on $jail ); then
+                $0 stop $jail
+        fi
+	if ( check_btrfs ); then
+		btrfs subvolume delete ${JAILDIR}/${jail}
+		rm -f ${CONFDIR}/${jail}
+		if [ -d  ${INCDIR}/${jail} ]; then
+			btrfs subvolume delete ${INCDIR}/${jail}/*
+			rmdir ${INCDIR}/${jail}
+		fi
+	else
+		rm -rf ${JAILDIR}/${jail}
+		rm -f ${CONFDIR}/${jail}
+		rm -rf ${INCDIR}/${jail}
+	fi
 }
 
 sub_start() {
@@ -165,7 +185,7 @@ sub_inc() {
 		if [ ! -d "${inc}" ]; then
 			/bin/date +"%d-%m-%Y ; %H:%M" >> $LOGFILE
 			if ( check_btrfs ); then
-				/sbin/btrfs subvolume snapshot ${JAILDIR}/$jail $inc >> $LOGFILE
+				btrfs subvolume snapshot ${JAILDIR}/$jail $inc >> $LOGFILE
 			else
 				echo -n "hard copy $jail begins at : " >> $LOGFILE
 				cp -alx ${JAILDIR}/${jail}/ ${INCDIR}${jail}/$date
@@ -196,7 +216,7 @@ sub_rm() {
 		        echo -n "Delete $i/$j begins at : " >> $LOGFILE
 		        /bin/date +"%d-%m-%Y ; %H:%M" >> $LOGFILE
 			if ( check_btrfs ); then
-				[ -n "$j" ] && /sbin/btrfs subvolume delete $INCDIR$i/$j && touch /tmp/evobackup-rm.txt
+				[ -n "$j" ] && btrfs subvolume delete $INCDIR$i/$j && touch /tmp/evobackup-rm.txt
 			else
 				cd $INCDIR$i
 			        [ -n "$j" ] && rsync -a --delete $EMPTYDIR/ $j*
@@ -402,7 +422,7 @@ main() {
 			fi
 		fi
 		;;
-	    "start" | "stop" | "reload" | "restart" | "sync" | "update")
+	    "start" | "stop" | "reload" | "restart" | "sync" | "update" | "remove")
 		if [[ -n "${jail}" ]]; then
 			if [[ "${jail}" = "all" ]]; then
 				for jail in $(ls $JAILDIR); do
