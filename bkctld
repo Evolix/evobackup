@@ -3,34 +3,21 @@
 # bkctld is a shell script to create and manage a backup server which will
 # handle the backup of many servers (clients).
 
-id=$(id -u)
-if [ $id != 0 ]; then
-    echo "Error, you need to be root to run bkctld !" >&2
-    exit 1
-fi
-
-if [ -f /etc/default/evobackup ]; then
-	source /etc/default/evobackup
-else
-	echo "Error, you need /etc/default/evobackup !" >&2
-	exit 1
-fi
-
-sub_help(){
+usage(){
     echo "Usage: $0 <subcommand> [options]"
     echo "Subcommands:"
     echo "	init		<jailname>					Init jail <jailname>"
-    echo "	update		(<jailname>|all)				Update jail <jailname> or all"
-    echo "	remove		(<jailname>|all)				Remove jail <jailname> or all"
-    echo "	start		(<jailname>|all)				Start jail <jailname> or all"
-    echo "	stop		(<jailname>|all)				Stop jail <jailname> or all"
-    echo "	reload		(<jailname>|all)				Reload jail <jailname> or all"
-    echo "	restart		(<jailname>|all)				Restart jail <jailname> or all"
-    echo "	sync		(<jailname>|all)				Sync jail <jailname> or all to another node"
+    echo "	update		<jailname>|all					Update jail <jailname> or all"
+    echo "	remove		<jailname>|all					Remove jail <jailname> or all"
+    echo "	start		<jailname>|all					Start jail <jailname> or all"
+    echo "	stop		<jailname>|all					Stop jail <jailname> or all"
+    echo "	reload		<jailname>|all					Reload jail <jailname> or all"
+    echo "	restart		<jailname>|all					Restart jail <jailname> or all"
+    echo "	sync		<jailname>|all					Sync jail <jailname> or all to another node"
     echo "	status		[<jailname>]					Print status of <jailname> (default all jail)"
     echo "	key		<jailname>		[<keyfile>]		Set or get ssh pubic key of <jailname>"
-    echo "	port		<jailname>		[(<ssh_port>|auto)]	Set or get ssh port of <jailname>"
-    echo "	ip		<jailname>		[(<ip>|all)]		Set or get allowed(s) ip(s) of <jailname>"
+    echo "	port		<jailname>		[<ssh_port>|auto]	Set or get ssh port of <jailname>"
+    echo "	ip		<jailname>		[<ip>|all]		Set or get allowed(s) ip(s) of <jailname>"
     echo "	inc								Make incremental inc of all jails"
     echo "	rm								Remove old incremtal inc of all jails"
     echo ""
@@ -92,8 +79,8 @@ sub_start() {
 		echo "Jail $jail already running !" >&2
 		exit 1
 	fi
-	mount -t proc bkctld-proc-${jail} ${JAILDIR}/${jail}/proc/
-	mount -nt tmpfs bkctld-dev-${jail} ${JAILDIR}/${jail}/dev
+	mount -t proc proc-${jail} ${JAILDIR}/${jail}/proc/
+	mount -nt tmpfs dev-${jail} ${JAILDIR}/${jail}/dev
 	mknod -m 622 ${JAILDIR}/${jail}/dev/console c 5 1
 	mknod -m 666 ${JAILDIR}/${jail}/dev/null c 1 3
 	mknod -m 666 ${JAILDIR}/${jail}/dev/zero c 1 5
@@ -393,13 +380,23 @@ set_firewall() {
 }
 
 main() {
+	if [ $(id -u) != 0 ]; then
+	    echo "Error, you need to be root to run $0 !" >&2
+	    exit 1
+	fi
+	if [ -f /etc/default/evobackup ]; then
+		source /etc/default/evobackup
+	else
+		echo "Error, you need /etc/default/evobackup !" >&2
+		exit 1
+	fi
 	mkdir -p $CONFDIR $JAILDIR $INCDIR
 	subcommand=$1
 	jail=$2
 	option=$3
 	case $subcommand in
 	    "" | "-h" | "--help")
-	        sub_help
+	        usage
 	        ;;
 	    "inc" | "rm")
 		sub_${subcommand} $jail
@@ -449,7 +446,7 @@ main() {
 	    *)
 	        shift
 	        echo "Error: '$subcommand' is not a known subcommand." >&2
-		sub_help	        
+		usage
 	       	exit 1
 	        ;;
 	esac
