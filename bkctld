@@ -185,35 +185,31 @@ sub_inc() {
 }
 
 sub_rm() {
-	for i in $( ls -1 $CONFDIR ); do
-	        # list actual inc backups
-	        for j in $( ls $INCDIR$i ); do
-	                echo $j
-	        done > "$TMPDIR"$i.files
-	
-	        # list non-obsolete inc backups
-	        for j in $( cat $CONFDIR$i ); do
-	                date=$( echo $j | cut -d. -f1 )
-	                before=$( echo $j | cut -d. -f2 )
-	                date -d "$(date $date) $before" "+%Y-%m-%d"
-	        done  > "$TMPDIR"$i.keep
-	
-	        # delete obsolete inc backups
-	        for j in $( grep -v -f "$TMPDIR"$i.keep "$TMPDIR"$i.files ); do
-		        echo -n "Delete $i/$j begins at : " >> $LOGFILE
+	for jail in $( ls -1 $JAILDIR ); do
+		incs=$(ls -1 ${INCDIR}/$jail)
+		if [ -f ${CONFDIR}/$jail ]; then
+		        keep=$(
+				while read j; do
+		        	        date=$( echo $j | cut -d. -f1 )
+		                	before=$( echo $j | cut -d. -f2 )
+			                date -d "$(date $date) $before" "+%Y-%m-%d"
+		        	done < ${CONFDIR}/$jail
+			)
+		fi
+	        for j in $( grep -v -f <(echo "${keep}") <(echo "${incs}") ); do
+		        echo -n "Delete $jail/$j begins at : " >> $LOGFILE
 		        /bin/date +"%d-%m-%Y ; %H:%M" >> $LOGFILE
 			if ( check_btrfs ); then
-				[ -n "$j" ] && btrfs subvolume delete $INCDIR$i/$j && touch /tmp/evobackup-rm.txt
+				[ -n "$j" ] && btrfs subvolume delete ${INCDIR}/$jail/$j && touch /tmp/evobackup-rm.txt
 			else
-				cd $INCDIR$i
-			        [ -n "$j" ] && rsync -a --delete $EMPTYDIR/ $j*
+				cd ${INCDIR}/$jail
+			        [ -n "$j" ] && rsync -a --delete /dev/null $j*
 			        [ -n "$j" ] && rmdir $j* && touch /tmp/evobackup-rm.txt
 			fi
-		        echo -n "Delete $i/$j ends at : " >> $LOGFILE
+		        echo -n "Delete ${jail}/$j ends at : " >> $LOGFILE
 		        /bin/date +"%d-%m-%Y ; %H:%M" >> $LOGFILE
 	        done
 	done #| tee -a $LOGFILE | ( [ -e "/tmp/evobackup-rm.txt" ] && mail -s "[info] EvoBackup - purge incs" $MYMAIL && rm /tmp/evobackup-rm.txt )
-	rm -rf $TMPDIR $EMPTYDIR 
 }
 
 mk_jail() {
