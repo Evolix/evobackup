@@ -11,23 +11,23 @@
 
 case "$1" in
     start)
-	bkctl start all
+	bkctld start all
     ;;
 
     stop)
-	bkctl stop all
+	bkctld stop all
     ;;
 
     reload|force-reload)
-        bkctl reload all
+        bkctld reload all
     ;;
 
     restart)
-	bkctl restart all
+	bkctld restart all
     ;;
 
     status)
-	bkctl status
+	bkctld status
     ;;
 
   *)

@@ -57,10 +57,10 @@ On récupère les sources via https://forge.evolix.org/projects/evobackup/reposi
 
 > **Notes :**
 > - Si l'on veut plusieurs backups dans la journée (1 par heure maximum),
-  on pourra lancer `bkctl inc` à plusieurs reprises…
+  on pourra lancer `bkctld inc` à plusieurs reprises…
   Ce qui fonctionnera sous réserve qu'entre temps les données ont bien changés !
 > - Si l'on ne veut **jamais** supprimer les backups incrémentaux, on pourra se contenter
-  de ne jamais lancer la coomande `bkctl rm`.
+  de ne jamais lancer la coomande `bkctld rm`.
 
   Si le noyau du serveur est patché avec *GRSEC*, on évitera pas mal
   de warnings en positionnant les paramètres Sysctl suivants :
@@ -74,23 +74,23 @@ Créer une prison
 ---
     Cr�er la prison :
 
-    # bkctl init <hostname>
+    # bkctld init <hostname>
 
     Changer le port d'�coute (defaut: 2222) :
 
-    # bkctl port <hostname> <port>
+    # bkctld port <hostname> <port>
 
     Autoriser une cl� publique :
 
-    # bkctl key <hostname> <pubkeyfile>
+    # bkctld key <hostname> <pubkeyfile>
 
     Lancer la prison :
 
-    # bkctl start <hostname>
+    # bkctld start <hostname>
 
     V�rifier que tout est OK :
 
-    # bkctl status <hostname>
+    # bkctld status <hostname>
 
 − Gestion des sauvegardes incrémentales :
 
@@ -124,7 +124,7 @@ toutes les 15 jours, le 1er janvier de chaque année, etc.)
 Attention, la création de ce fichier est **obligatoire** pour activer
 les copies incrémentales. Si l'on veut garder des copies *advitam aeternam*
 sans jamais les supprimer, on se contentera de ne pas lancer le script
-`bkctl rm`.
+`bkctld rm`.
 
 − Copier une prison sur un second serveur :
 

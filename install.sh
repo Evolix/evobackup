@@ -14,11 +14,11 @@ fi
 
 mkdir -m 0755 -p $TPLDIR
 cp -v $dir/tpl/* $TPLDIR
-install -m 0755 -v $dir/bkctl /usr/local/sbin/
+install -m 0755 -v $dir/bkctld /usr/local/sbin/
 
-crontab -l|grep -q bkctl
+crontab -l|grep -q bkctld
 if [ $? != 0 ]; then
-	(crontab -l 2>/dev/null; echo "29 10 * * * bkctl inc && bkctl rm") | crontab -
+	(crontab -l 2>/dev/null; echo "29 10 * * * bkctld inc && bkctld rm") | crontab -
 fi
 
 dpkg -l sysvinit >/dev/null
