@@ -37,6 +37,11 @@ sub_help(){
   
 sub_init() {
 	jail=$1
+	if ( check_btrfs); then
+		btrfs subvolume create ${JAILDIR}/${jail}
+	else
+		mkdir -p ${JAILDIR}/${jail}
+	fi
 	mk_jail $jail
 	echo -n "4 - Copie default sshd_config..."
 	install -m 0640 ${TPLDIR}/sshd_config ${JAILDIR}/$jail/${SSHD_CONFIG}
@@ -154,14 +159,22 @@ sub_sync() {
 
 sub_inc() {
 	date=$(date +"%Y-%m-%d-%H")
-	for jail in $(ls -1 $CONFDIR); do
-		echo -n "hard copy $jail begins at : " >> $LOGFILE
-		/bin/date +"%d-%m-%Y ; %H:%M" >> $LOGFILE
-		mkdir -p ${INCDIR}${jail}
-		cp -alx ${JAILDIR}/${jail}/ ${INCDIR}${jail}/$date
-		echo -n "hard copy $i ends at : " >> $LOGFILE
-		/bin/date +"%d-%m-%Y ; %H:%M" >> $LOGFILE
-	done #| tee -a $LOGFILE | mail -s "[info] EvoBackup - create incs" $MYMAIL
+	for jail in $(ls -1 $JAILDIR); do
+		inc="${INCDIR}/${jail}/${date}"
+		mkdir -p ${INCDIR}/${jail}
+		if [ ! -d "${inc}" ]; then
+			/bin/date +"%d-%m-%Y ; %H:%M" >> $LOGFILE
+			if ( check_btrfs ); then
+				/sbin/btrfs subvolume snapshot ${JAILDIR}/$jail $inc >> $LOGFILE
+			else
+				echo -n "hard copy $jail begins at : " >> $LOGFILE
+				cp -alx ${JAILDIR}/${jail}/ ${INCDIR}${jail}/$date
+				echo -n "hard copy $JAIL ends at : " >> $LOGFILE
+			fi
+			/bin/date +"%d-%m-%Y ; %H:%M" >> $LOGFILE
+		fi
+	done
+	#| tee -a $LOGFILE | mail -s "[info] EvoBackup - create incs" $MYMAIL
 }
 
 sub_rm() {
@@ -182,9 +195,13 @@ sub_rm() {
 	        for j in $( grep -v -f "$TMPDIR"$i.keep "$TMPDIR"$i.files ); do
 		        echo -n "Delete $i/$j begins at : " >> $LOGFILE
 		        /bin/date +"%d-%m-%Y ; %H:%M" >> $LOGFILE
-		        cd $INCDIR$i
-		        [ -n "$j" ] && rsync -a --delete $EMPTYDIR/ $j*
-		        [ -n "$j" ] && rmdir $j* && touch /tmp/evobackup-rm.txt
+			if ( check_btrfs ); then
+				[ -n "$j" ] && /sbin/btrfs subvolume delete $INCDIR$i/$j && touch /tmp/evobackup-rm.txt
+			else
+				cd $INCDIR$i
+			        [ -n "$j" ] && rsync -a --delete $EMPTYDIR/ $j*
+			        [ -n "$j" ] && rmdir $j* && touch /tmp/evobackup-rm.txt
+			fi
 		        echo -n "Delete $i/$j ends at : " >> $LOGFILE
 		        /bin/date +"%d-%m-%Y ; %H:%M" >> $LOGFILE
 	        done
@@ -194,7 +211,6 @@ sub_rm() {
 
 mk_jail() {
 	jail=$1
-	mkdir -p ${JAILDIR}/${jail}
 	umask 022
 
 	echo -n "1 - Creating the chroot..."
@@ -264,6 +280,22 @@ check_inc() {
                 inc="${day}/${month}"
         fi
 	echo $inc
+}
+
+check_btrfs() {
+	grep $(dirname $JAILDIR) /etc/fstab|grep -q btrfs
+	if [[ $? -eq 0 ]]; then
+                exit 0
+        fi
+	grep $JAILDIR /etc/fstab|grep -q btrfs
+	if [[ $? -ne 0 ]]; then
+		exit 1
+	fi
+	grep $INCDIR /etc/fstab|grep -q btrfs
+	if [[ $? -ne 0 ]]; then
+		exit 1
+	fi
+	exit 0
 }
 
 get_port() {
@@ -350,10 +382,7 @@ main() {
 	        sub_help
 	        ;;
 	    "inc" | "rm")
-		pkill -f /run/bkctl.pid #| mail -s "[warn] EvoBackup - purge incs interrupted" $MYMAIL
-		rm -f /run/bkctl.pid
-		sub_${subcommand} $jail &
-		echo $! > /run/bkctl.pid
+		sub_${subcommand} $jail
 		;;
             "init")
 		if [[ -n "${jail}" ]]; then
