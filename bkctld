@@ -98,9 +98,8 @@ sub_start() {
 	mkdir ${JAILDIR}/${jail}/dev/shm
 	mount -t devpts -o gid=4,mode=620 none ${JAILDIR}/${jail}/dev/pts
 	mount -t tmpfs none ${JAILDIR}/${jail}/dev/shm
-        chroot ${JAILDIR}/${jail} /usr/sbin/sshd -D &
-	#umount -R ${JAILDIR}/${jail}/dev
-        #umount ${JAILDIR}/${jail}/proc/
+        chroot ${JAILDIR}/${jail} /usr/sbin/sshd
+	echo "Jail $jail was started"
 }
 
 sub_stop() {
@@ -116,6 +115,7 @@ sub_stop() {
 	kill $pid
 	umount -R ${JAILDIR}/${jail}/dev
         umount ${JAILDIR}/${jail}/proc/
+	echo "Jail $jail was stopped"
 }
 
 sub_reload() {
@@ -123,6 +123,7 @@ sub_reload() {
 	if [ $(check_jail_on $jail) ]; then
 		pkill -HUP -F ${JAILDIR}/${jail}/${SSHD_PID}
 	fi
+	echo "Jail $jail was reloaded"
 }
 
 sub_restart() {
@@ -170,21 +171,27 @@ sub_inc() {
 		inc="${INCDIR}/${jail}/${date}"
 		mkdir -p ${INCDIR}/${jail}
 		if [ ! -d "${inc}" ]; then
-			/bin/date +"%d-%m-%Y ; %H:%M" >> $LOGFILE
+			echo "Make $date inc of $jail ..."
+			start=$(date +"%d-%m-%Y ; %H:%M")
 			if ( check_btrfs ); then
-				btrfs subvolume snapshot ${JAILDIR}/$jail $inc >> $LOGFILE
+				btrfs subvolume snapshot ${JAILDIR}/$jail $inc 
 			else
-				echo -n "hard copy $jail begins at : " >> $LOGFILE
+				echo -n "hard copy $jail begins at : "
 				cp -alx ${JAILDIR}/${jail}/ ${INCDIR}${jail}/$date
-				echo -n "hard copy $JAIL ends at : " >> $LOGFILE
+				echo -n "hard copy $JAIL ends at : "
 			fi
-			/bin/date +"%d-%m-%Y ; %H:%M" >> $LOGFILE
+			end=$(date +"%d-%m-%Y ; %H:%M")
+			echo "Inc $date of $jail created (Start at $start / End at $end"
+		else
+			echo "Inc $date of $jail already exist !" >&2
 		fi
 	done
-	#| tee -a $LOGFILE | mail -s "[info] EvoBackup - create incs" $MYMAIL
+	#| mail -s "[info] EvoBackup - create incs" $MAIL
 }
 
 sub_rm() {
+	empty="/tmp/bkctld-$$-$RANDOM/"
+	mkdir $empty
 	for jail in $( ls -1 $JAILDIR ); do
 		incs=$(ls -1 ${INCDIR}/$jail)
 		if [ -f ${CONFDIR}/$jail ]; then
@@ -196,20 +203,22 @@ sub_rm() {
 		        	done < ${CONFDIR}/$jail
 			)
 		fi
+	        #for j in $( ls ${INCDIR}/$jail ); do
 	        for j in $( grep -v -f <(echo "${keep}") <(echo "${incs}") ); do
-		        echo -n "Delete $jail/$j begins at : " >> $LOGFILE
-		        /bin/date +"%d-%m-%Y ; %H:%M" >> $LOGFILE
+		        echo -n "Delete $jail/$j begins at : "
+		        /bin/date +"%d-%m-%Y ; %H:%M"
 			if ( check_btrfs ); then
-				[ -n "$j" ] && btrfs subvolume delete ${INCDIR}/$jail/$j && touch /tmp/evobackup-rm.txt
+				btrfs subvolume delete ${INCDIR}/$jail/$j && touch /tmp/evobackup-rm.txt
 			else
 				cd ${INCDIR}/$jail
-			        [ -n "$j" ] && rsync -a --delete /dev/null $j*
-			        [ -n "$j" ] && rmdir $j* && touch /tmp/evobackup-rm.txt
+			        rsync -a --delete $empty $j*
+			        rmdir $j* && touch /tmp/evobackup-rm.txt
 			fi
-		        echo -n "Delete ${jail}/$j ends at : " >> $LOGFILE
-		        /bin/date +"%d-%m-%Y ; %H:%M" >> $LOGFILE
+		        echo -n "Delete ${jail}/$j ends at : " 
+		        /bin/date +"%d-%m-%Y ; %H:%M"
 	        done
-	done #| tee -a $LOGFILE | ( [ -e "/tmp/evobackup-rm.txt" ] && mail -s "[info] EvoBackup - purge incs" $MYMAIL && rm /tmp/evobackup-rm.txt )
+	done #| ( [ -e "/tmp/evobackup-rm.txt" ] && mail -s "[info] EvoBackup - purge incs" $MAIL && rm /tmp/evobackup-rm.txt )
+	rmdir $empty
 }
 
 mk_jail() {
@@ -375,6 +384,18 @@ set_firewall() {
 	done
 }
 
+log() {
+	subcommand=$1
+	logfile="${LOG_DIR}/bkctld.log"
+        shift
+        tty -s
+        if [ $? -eq 0 ]; then
+                sub_${subcommand} $@ 2>&1 | tee -a $logfile
+        else
+                sub_${subcommand} $@ 2>&1 >> $logfile
+        fi	
+}
+
 main() {
 	if [ $(id -u) != 0 ]; then
 	    echo "Error, you need to be root to run $0 !" >&2
@@ -395,12 +416,12 @@ main() {
 	        usage
 	        ;;
 	    "inc" | "rm")
-		sub_${subcommand} $jail
+		log ${subcommand}
 		;;
             "init")
 		if [[ -n "${jail}" ]]; then
 			if ( ! $(check_jail $jail) ); then
-				sub_${subcommand} $jail
+				log ${subcommand} $jail
 			fi
 		fi
 		;;
@@ -423,7 +444,7 @@ main() {
 		                done
 			else
 			        if ( $(check_jail $jail) ); then
-					sub_${subcommand} $jail
+					log ${subcommand} $jail
 				fi
 			fi
 		fi

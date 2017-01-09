@@ -12,7 +12,7 @@ if [ $? == 0 ]; then
 	mount -o remount,rw /usr
 fi
 
-mkdir -m 0755 -p $TPLDIR
+mkdir -m 0755 -p $TPLDIR $LOG_DIR
 cp -v $dir/tpl/* $TPLDIR
 install -m 0755 -v $dir/bkctld /usr/local/sbin/
 
