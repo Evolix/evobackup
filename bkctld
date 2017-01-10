@@ -404,26 +404,33 @@ sub_sync() {
 
 sub_inc() {
 	date=$(date +"%Y-%m-%d-%H")
+	incs_logs=""
 	for jail in $(ls -1 $JAILDIR); do
 		inc="${INCDIR}/${jail}/${date}"
 		mkdir -p ${INCDIR}/${jail}
 		if [ ! -d "${inc}" ]; then
-			echo "Make $date inc of $jail ..."
-			start=$(date +"%d-%m-%Y ; %H:%M")
-			if ( check_btrfs ); then
-				btrfs subvolume snapshot ${JAILDIR}/$jail $inc 
-			else
-				echo -n "hard copy $jail begins at : "
-				cp -alx ${JAILDIR}/${jail}/ ${INCDIR}${jail}/$date
-				echo -n "hard copy $JAIL ends at : "
-			fi
-			end=$(date +"%d-%m-%Y ; %H:%M")
-			echo "Inc $date of $jail created (Start at $start / End at $end"
+			inc_log=$(
+				echo "Make $date inc of $jail :"
+				start=$(date +"%d-%m-%Y ; %H:%M")
+				if ( check_btrfs ); then
+					btrfs subvolume snapshot ${JAILDIR}/$jail $inc
+				else
+					echo -n "hard copy $jail begins at : $start"
+					cp -alx ${JAILDIR}/${jail}/ ${INCDIR}${jail}/$date
+					echo -n "hard copy $jail ends at : $end "
+				fi
+				end=$(date +"%d-%m-%Y ; %H:%M")
+				echo "Inc $date of $jail created"
+			)	
+			echo "${inc_log}"
+			incs_logs=$(echo "${incs_logs}"; echo "${inc_log}")
 		else
 			echo "Inc $date of $jail already exist !" >&2
 		fi
 	done
-	#| mail -s "[info] EvoBackup - create incs" $MAIL
+	if [ -n "${incs_logs}" ]; then
+		echo "${incs_logs}" | mail -s "[info] EvoBackup - create incs" $MAIL
+	fi
 }
 
 sub_rm() {
