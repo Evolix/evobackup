@@ -3,6 +3,8 @@
 ## bkctld is a shell script to create and manage a backup server which will
 ## handle the backup of many servers (clients).
 
+set -e
+
 usage(){
     echo "Usage: $0 <subcommand> [options]"
     echo "Subcommands:"
@@ -53,17 +55,6 @@ check_jail_on() {
 	echo $status
 }
 
-check_inc() {
-	jail=$1
-	inc="0"
-        if [ -f ${CONFDIR}/${jail} ]; then
-                day=$(grep -c "day" ${CONFDIR}/${jail})
-                month=$(grep -c "month" ${CONFDIR}/${jail})
-                inc="${day}/${month}"
-        fi
-	echo $inc
-}
-
 check_btrfs() {
 	grep $(dirname $JAILDIR) /etc/fstab|grep -q btrfs
 	if [[ $? -eq 0 ]]; then
@@ -100,6 +91,17 @@ get_ip() {
 	for allow in $(grep -E "^AllowUsers" ${JAILDIR}/$jail/${SSHD_CONFIG}|grep -Eo "root@[^ ]+"); do
 		echo $allow|cut -d'@' -f2
 	done
+}
+
+get_inc() {
+	jail=$1
+	inc="0"
+        if [ -f ${CONFDIR}/${jail} ]; then
+                day=$(grep -c "day" ${CONFDIR}/${jail})
+                month=$(grep -c "month" ${CONFDIR}/${jail})
+                inc="${day}/${month}"
+        fi
+	echo $inc
 }
 
 ## set functions : set info on jail
@@ -149,13 +151,15 @@ set_ip() {
 
 set_firewall() {
 	jail=$1
-	if [ -f $FIREWALL_RULES ]; then
-		sed -i "/#${jail}$/d" $FIREWALL_RULES
+	if [ -n "${FIREWALL_RULES}" ]; then
+		if [ -f $FIREWALL_RULES ]; then
+			sed -i "/#${jail}$/d" $FIREWALL_RULES
+		fi
+		port=$(get_port $jail)
+		for ip in $(get_ip $jail); do
+			echo "/sbin/iptables -A INPUT -p tcp --sport 1024: --dport $port -s $ip -j ACCEPT #$jail" >> $FIREWALL_RULES
+		done
 	fi
-	port=$(get_port $jail)
-	for ip in $(get_ip $jail); do
-		echo "/sbin/iptables -A INPUT -p tcp --sport 1024: --dport $port -s $ip -j ACCEPT #$jail" >> $FIREWALL_RULES
-	done
 }
 
 ## mk_jail function : create or update a jail
@@ -202,7 +206,8 @@ sub_init() {
 		echo "Jail $jail already exist ! Use '$0 update $jail' for update it" >&2
                 exit 1		
 	fi
-	
+
+	echo "Create jail $jail :"	
 	if ( check_btrfs); then
 		btrfs subvolume create ${JAILDIR}/${jail}
 	else
@@ -231,6 +236,7 @@ sub_update() {
 	if ( $status ); then
 		log stop $jail
 	fi
+	echo "Update jail $jail :"
 	mk_jail $jail
 	if ( $status ); then
 	        log start $jail
@@ -247,18 +253,20 @@ sub_remove() {
 	if ( check_jail_on $jail ); then
 	        log stop $jail
 	fi
+	echo "Delete jail $jail ..."
 	if ( check_btrfs ); then
-		btrfs subvolume delete ${JAILDIR}/${jail}
 		rm -f ${CONFDIR}/${jail}
 		if [ -d  ${INCDIR}/${jail} ]; then
 			btrfs subvolume delete ${INCDIR}/${jail}/*
 			rmdir ${INCDIR}/${jail}
 		fi
+		btrfs subvolume delete ${JAILDIR}/${jail}
 	else
-		rm -rf ${JAILDIR}/${jail}
 		rm -f ${CONFDIR}/${jail}
 		rm -rf ${INCDIR}/${jail}
+		rm -rf ${JAILDIR}/${jail}
 	fi
+	echo "...OK"
 }
 
 sub_start() {
@@ -272,6 +280,7 @@ sub_start() {
 		exit 1
 	fi
 
+	echo -n "Start jail $jail ..."
 	mount -t proc proc-${jail} ${JAILDIR}/${jail}/proc/
 	mount -nt tmpfs dev-${jail} ${JAILDIR}/${jail}/dev
 	mknod -m 622 ${JAILDIR}/${jail}/dev/console c 5 1
@@ -292,7 +301,7 @@ sub_start() {
 	mount -t devpts -o gid=4,mode=620 none ${JAILDIR}/${jail}/dev/pts
 	mount -t tmpfs none ${JAILDIR}/${jail}/dev/shm
         chroot ${JAILDIR}/${jail} /usr/sbin/sshd
-	echo "Jail $jail was started"
+	echo "...OK"
 }
 
 sub_stop() {
@@ -306,6 +315,7 @@ sub_stop() {
 		exit 1
 	fi
 
+	echo -n "Stop jail $jail ..."
 	pid=$(cat ${JAILDIR}/${jail}/${SSHD_PID})
 	for conn in $(ps --ppid $pid -o pid=); do
 		kill $conn
@@ -313,7 +323,7 @@ sub_stop() {
 	kill $pid
 	umount -R ${JAILDIR}/${jail}/dev
 	umount ${JAILDIR}/${jail}/proc/
-	echo "Jail $jail was stopped"
+	echo "...OK"
 }
 
 sub_reload() {
@@ -327,8 +337,9 @@ sub_reload() {
 		exit 1
 	fi
 
+	echo -n "Reload jail $jail ..."
 	pkill -HUP -F ${JAILDIR}/${jail}/${SSHD_PID}
-	echo "Jail $jail was reloaded"
+	echo "...OK"
 }
 
 sub_status() {
@@ -338,8 +349,8 @@ sub_status() {
                 exit 1
 	fi
 
-	inc=$(check_inc $jail)
-	if ($(check_jail_on $jail)); then
+	inc=$(get_inc $jail)
+	if ( check_jail_on $jail ); then
 		status="ON "
 	else
 		status="OFF"
@@ -362,6 +373,7 @@ sub_params() {
 	        get_${params} $jail
 	else
 	        set_${params} $jail $option
+		echo "Update $jail : $params = $option"
 	fi
 }
 
