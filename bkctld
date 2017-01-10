@@ -481,10 +481,15 @@ main() {
 	fi
 	if [ -f /etc/default/evobackup ]; then
 		source /etc/default/evobackup
-	else
-		echo "Error, you need /etc/default/evobackup !" >&2
-		exit 1
 	fi
+	[ -z "${CONFDIR}" ] && CONFDIR='/etc/evobackup'
+	[ -z "${JAILDIR}" ] && JAILDIR='/backup/jails'
+	[ -z "${INCDIR}" ] && INCDIR='/backup/incs'
+	[ -z "${TPLDIR}" ] && TPLDIR='/usr/local/share/evobackup'
+	[ -z "${LOG_DIR}" ] && LOG_DIR='/var/log/bkctld'
+	[ -z "${SSHD_PID}" ] && SSHD_PID='/var/run/sshd.pid'
+	[ -z "${SSHD_CONFIG}" ] && SSHD_CONFIG='/etc/ssh/sshd_config'
+	[ -z "${AUTHORIZED_KEYS}" ] && AUTHORIZED_KEYS='/root/.ssh/authorized_keys'
 	mkdir -p $CONFDIR $JAILDIR $INCDIR
 	subcommand=$1
 	jail=$2
