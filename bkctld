@@ -429,6 +429,16 @@ sub_inc() {
 sub_rm() {
 	empty="/tmp/bkctld-$$-$RANDOM/"
 	mkdir $empty
+	pidfile="/var/run/bkctld-rm.pid"
+	if [ -f "${pidfile}" ]; then
+		pid=$(cat $pidfile)
+		echo "$0 rm always run (PID $pid) !" >&2
+		kill -9 $pid
+		if [ -n "${MAIL}" ]; then
+		        echo "$0 rm $pid was killed by $$ !" | mail -s "[warn] EvoBackup - purge incs interrupted" $MAIL
+		fi
+        fi
+	echo $$ > $pidfile
 	for jail in $( ls -1 $JAILDIR ); do
 		incs=$(ls -1 ${INCDIR}/$jail)
 		if [ -f ${CONFDIR}/$jail ]; then
@@ -456,6 +466,7 @@ sub_rm() {
 	        done
 	done #| ( [ -e "/tmp/evobackup-rm.txt" ] && mail -s "[info] EvoBackup - purge incs" $MAIL && rm /tmp/evobackup-rm.txt )
 	rmdir $empty
+	rm $pidfile
 }
 
 ## log function
