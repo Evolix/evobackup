@@ -1,0 +1,9 @@
+debian/*
+!debian/changelog
+!debian/compat
+!debian/control
+!debian/rules
+!debian/install
+!debian/bkctld.default
+!debian/bkctld.init
+!debian/manpages

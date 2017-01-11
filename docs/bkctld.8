@@ -1,0 +1,86 @@
+.\" Manpage for bkctld.
+.\" Contact vlaborie@evolix.fr to correct errors or typos.
+.TH man 8 "11 Janvier 2017" "1.0" "bkctld man page"
+.SH NAME
+bkctld \- Tool to manage rsync jail for backup
+.SH SYNOPSIS
+bkctld <command> [<args>]
+.SH DESCRIPTION
+bkctld is a shell script to create and manage a backup server which will handle the backup of many servers (clients).
+.SH BKCTLD COMMANDS
+bkctld init <jailname>
+.RS 4
+Init jail <jailname>
+.RE
+.PP
+bkctld update <jailname>|all
+.RS 4
+Update jail <jailname>
+.RE
+.PP
+bkctld remove <jailname>|all
+.RS 4
+Remove jail <jailname> or all
+.RE
+.PP
+bkctld start <jailname>|all
+.RS 4
+Start jail <jailname> or all
+.RE
+.PP
+bkctld stop <jailname>|all
+.RS 4
+Stop jail <jailname> or all
+.RE
+.PP
+bkctld reload <jailname>|all
+.RS 4
+Reload jail <jailname> or all
+.RE
+.PP
+bkctld restart <jailname>|all
+.RS 4
+Restart jail <jailname> or all
+.RE
+.PP
+bkctld sync <jailname>|all
+.RS 4
+Sync jail <jailname> with $NODE defined in /etc/default/bkctld
+.RE
+.PP
+bkctld status [<jailname>]
+.RS 4
+Print status of jail <jailname> or all jails
+.RE
+.PP
+bkctld key <jailname> [<keyfile>]
+.RS 4
+Print or set SSH public key of jail <jailname>
+.RE
+.PP
+bkctld port <jailname> [<ssh_port>|auto]
+.RS 4
+Print or set SSH port of jail <jailname>. Auto for user last port + 1
+.RE
+.PP
+bkctld ip <jailname> [<ip>|all]
+.RS 4
+Print or set allowed IP of jail <jailname>. All for no IP restriction
+.RE
+.PP
+bkctld inc
+.RS 4
+Make inc of jail <jailname>
+.RE
+.PP
+bkctld rm
+.RS 4
+Remove old inc of jail <jailname>
+.RE
+.PP
+.SH SEE ALSO
+sshd(8), rsync(1), chroot(8) 
+.SH BUGS
+No known bugs.
+.SH AUTHOR
+Victor Laborie (vlaborie@evolix.fr)

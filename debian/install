@@ -1,0 +1,2 @@
+bkctld usr/sbin
+tpl/* usr/share/bkctld

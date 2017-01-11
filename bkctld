@@ -386,7 +386,7 @@ sub_sync() {
         fi
 
 	if [ -z "${NODE}" ]; then
-		echo "You must define \$NODE in /etc/default/evobackup !" >&2
+		echo "You must define \$NODE in /etc/default/bkctld !" >&2
 		exit 1
 	fi
 	jail=$1
@@ -504,8 +504,8 @@ main() {
 	    echo "Error, you need to be root to run $0 !" >&2
 	    exit 1
 	fi
-	if [ -f /etc/default/evobackup ]; then
-		source /etc/default/evobackup
+	if [ -f /etc/default/bkctld ]; then
+		source /etc/default/bkctld
 	fi
 	[ -z "${CONFDIR}" ] && CONFDIR='/etc/evobackup'
 	[ -z "${JAILDIR}" ] && JAILDIR='/backup/jails'
