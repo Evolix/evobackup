@@ -159,6 +159,9 @@ set_firewall() {
 		for ip in $(get_ip $jail); do
 			echo "/sbin/iptables -A INPUT -p tcp --sport 1024: --dport $port -s $ip -j ACCEPT #$jail" >> $FIREWALL_RULES
 		done
+		if [ -f /etc/init.d/minifirewall ]; then
+			/etc/init.d/minifirewall restart
+		fi
 	fi
 }
 
