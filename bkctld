@@ -3,8 +3,6 @@
 ## bkctld is a shell script to create and manage a backup server which will
 ## handle the backup of many servers (clients).
 
-set -e
-
 usage(){
     echo "Usage: $0 <subcommand> [options]"
     echo "Subcommands:"
@@ -387,22 +385,20 @@ sub_sync() {
                 exit 1
         fi
 
-	if [ -z $NODE ]; then
+	if [ -z "${NODE}" ]; then
 		echo "You must define \$NODE in /etc/default/evobackup !" >&2
 		exit 1
 	fi
 	jail=$1
-	port=$(get_port $jail)
-	key=$(get_key $jail)
-	rsync -a ${CONFDIR}/$jail $NODE:${CONFDIR}/$jail
-	bkctld key $jail > /tmp/evobackup-${jail}.pub
-	rsync -a /tmp/evobackup-${jail}.pub $NODE:/tmp/evobackup-${jail}.pub
-	ssh $NODE bkctld init $jail
-	ssh $NODE bkctld port $jail $port
-	ssh $NODE bkctld key $jail /tmp/evobackup-${jail}.pub
-	for ip in $(get_ip $jail); do
-		ssh $NODE bkctld ip $jail $ip
-	done
+	rsync -a ${CONFDIR}/$jail ${NODE}:${CONFDIR}/$jail
+	rsync -a ${JAILDIR}/${jail}/ ${NODE}:${JAILDIR}/${jail}/ --exclude proc/* --exclude sys/* --exclude dev/* --exclude var/run/*.pid --exclude var/backup/*
+	if ( check_jail_on $jail ); then
+		ssh $NODE bkctld start $jail
+	fi
+	if [ -n "${FIREWALL_RULES}" ]; then
+		rsync -a ${FIREWALL_RULES} ${NODE}:${FIREWALL_RULES}
+		ssh $NODE /etc/init.d/minifirewall restart
+	fi
 }
 
 sub_inc() {
