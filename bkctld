@@ -547,6 +547,12 @@ main() {
 							log $subcommand $jail
 						fi
 						;;
+					    "restart")
+						if ( check_jail_on $jail ); then
+							log stop $jail
+	                                        fi
+						log start $jail
+						;;
 					    *)
 							log $subcommand $jail
 						;;
