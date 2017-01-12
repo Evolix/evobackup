@@ -408,16 +408,14 @@ sub_inc() {
 		inc="${INCDIR}/${jail}/${date}"
 		mkdir -p ${INCDIR}/${jail}
 		if [ ! -d "${inc}" ]; then
-			inc_log=$(
-				start=$(date +"%H:%M:%S")
-				if ( check_btrfs ); then
-					btrfs subvolume snapshot ${JAILDIR}/$jail $inc > /dev/null
-				else
-					cp -alx ${JAILDIR}/${jail}/ $inc
-				fi
-				end=$(date +"%H:%M:%S")
-				echo "Inc $date of $jail created (Start at $start / End at $end)"
-			)	
+			start=$(date +"%H:%M:%S")
+			if ( check_btrfs ); then
+				btrfs subvolume snapshot ${JAILDIR}/$jail $inc > /dev/null
+			else
+				cp -alx ${JAILDIR}/${jail}/ $inc
+			fi
+			end=$(date +"%H:%M:%S")
+			inc_log=$(echo "Create $date inc of $jail (Start at $start / End at $end)")
 			echo "${inc_log}"
 			incs_logs=$(echo "${incs_logs}"; echo "${inc_log}")
 		else
@@ -456,19 +454,16 @@ sub_rm() {
 		fi
 	        #for j in $( ls ${INCDIR}/$jail ); do
 	        for j in $( grep -v -f <(echo "${keep}") <(echo "${incs}") ); do
-			rm_log=$(
-				echo -n "Delete $jail/$j begins at : "
-				/bin/date +"%d-%m-%Y ; %H:%M"
-				if ( check_btrfs ); then
-					btrfs subvolume delete ${INCDIR}/$jail/$j
-				else
-					cd ${INCDIR}/$jail
-				        rsync -a --delete $empty $j*
-				        rmdir $j*
-				fi
-				echo -n "Delete ${jail}/$j ends at : "
-				/bin/date +"%d-%m-%Y ; %H:%M"
-			)
+			start=$(date +"%H:%M:%S")
+			if ( check_btrfs ); then
+				btrfs subvolume delete ${INCDIR}/$jail/$j >/dev/null
+			else
+				cd ${INCDIR}/$jail
+			        rsync -a --delete $empty $j*
+			        rmdir $j*
+			fi
+			end=$(date +"%H:%M:%S")
+			rm_log=$(echo "Delete $j inc of $jail (Start at $start / End at $end)")
 			echo "${rm_log}"
 			rms_logs=$(echo "${rms_logs}"; echo "${rm_log}")
 	        done
