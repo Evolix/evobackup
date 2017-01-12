@@ -409,17 +409,14 @@ sub_inc() {
 		mkdir -p ${INCDIR}/${jail}
 		if [ ! -d "${inc}" ]; then
 			inc_log=$(
-				echo "Make $date inc of $jail :"
-				start=$(date +"%d-%m-%Y ; %H:%M")
+				start=$(date +"%H:%M:%S")
 				if ( check_btrfs ); then
-					btrfs subvolume snapshot ${JAILDIR}/$jail $inc
+					btrfs subvolume snapshot ${JAILDIR}/$jail $inc > /dev/null
 				else
-					echo -n "hard copy $jail begins at : $start"
-					cp -alx ${JAILDIR}/${jail}/ ${INCDIR}${jail}/$date
-					echo -n "hard copy $jail ends at : $end "
+					cp -alx ${JAILDIR}/${jail}/ $inc
 				fi
-				end=$(date +"%d-%m-%Y ; %H:%M")
-				echo "Inc $date of $jail created"
+				end=$(date +"%H:%M:%S")
+				echo "Inc $date of $jail created (Start at $start / End at $end)"
 			)	
 			echo "${inc_log}"
 			incs_logs=$(echo "${incs_logs}"; echo "${inc_log}")
