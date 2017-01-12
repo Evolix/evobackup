@@ -433,10 +433,16 @@ sub_rm() {
 	pidfile="/var/run/bkctld-rm.pid"
 	if [ -f "${pidfile}" ]; then
 		pid=$(cat $pidfile)
-		echo "$0 rm always run (PID $pid) !" >&2
-		kill -9 $pid
-		if [ -n "${MAIL}" ]; then
-		        echo "$0 rm $pid was killed by $$ !" | mail -s "[warn] EvoBackup - purge incs interrupted" $MAIL
+		ps -u $pid >/dev/null
+		if [ $? -eq 0 ]; then
+			echo "$0 rm always run (PID $pid) !" >&2
+			kill -9 $pid
+			rm $pidfile
+			if [ -n "${MAIL}" ]; then
+			        echo "$0 rm $pid was killed by $$ !" | mail -s "[warn] EvoBackup - purge incs interrupted" $MAIL
+			fi
+		else
+			rm $pidfile
 		fi
         fi
 	echo $$ > $pidfile
