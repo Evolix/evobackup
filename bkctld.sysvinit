@@ -1,0 +1,40 @@
+#!/bin/sh
+
+### BEGIN INIT INFO
+# Provides:             evobackup
+# Required-Start:       $syslog
+# Required-Stop:        $syslog
+# Default-Start:        2
+# Default-Stop:         1
+# Short-Description:    Backup manager using rsync and OpenSSH chroot.
+### END INIT INFO
+
+case "$1" in
+    start)
+	bkctld start all
+    ;;
+
+    stop)
+	bkctld stop all
+    ;;
+
+    reload|force-reload)
+        bkctld reload all
+    ;;
+
+    restart)
+	bkctld restart all
+    ;;
+
+    status)
+	bkctld status
+    ;;
+
+  *)
+
+    echo "Usage: $0 {start|stop|restart|reload|status}"
+    exit 1
+
+esac
+
+exit 0
