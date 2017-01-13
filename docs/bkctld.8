@@ -2,85 +2,288 @@
 .\" Contact vlaborie@evolix.fr to correct errors or typos.
 .TH man 8 "11 Janvier 2017" "1.0" "bkctld man page"
 .SH NAME
-bkctld \- Tool to manage rsync jail for backup
+bkctld - tool to manage evobackup jail
 .SH SYNOPSIS
 bkctld <command> [<args>]
 .SH DESCRIPTION
 bkctld is a shell script to create and manage a backup server which will handle the backup of many servers (clients).
+.PP
+The main principle uses SSH chroot (called "jails" in the FreeBSD world) for each client to backup. Each client will upload his data every day using rsync in his chroot (using root account).
+.PP
+Incrementals are stored outside of the chroot using hard links or btrfs snapshots.
+(So incrementals are not available for clients). Using this method we can keep tens
+of backup of each client securely and not using too much space.
+.PP
+A big size volume must be mount on /backup, we recommend usage of **btrfs** for
+subvolume and snapshot fonctionnality.
+This volume can be encrypted by **luks** for security reason.
+.PP
 .SH BKCTLD COMMANDS
 bkctld init <jailname>
 .RS 4
-Init jail <jailname>
+Create an evobackup jail.
 .RE
 .PP
 bkctld update <jailname>|all
 .RS 4
-Update jail <jailname>
+Update an evobackup jail or all.
 .RE
 .PP
 bkctld remove <jailname>|all
 .RS 4
-Remove jail <jailname> or all
+Remove an evobackup jail or all.
 .RE
 .PP
 bkctld start <jailname>|all
 .RS 4
-Start jail <jailname> or all
+Start an evobackup jail or all.
 .RE
 .PP
 bkctld stop <jailname>|all
 .RS 4
-Stop jail <jailname> or all
+Stop an evobackup jail or all.
 .RE
 .PP
 bkctld reload <jailname>|all
 .RS 4
-Reload jail <jailname> or all
+Reload an evobackup jail or all.
 .RE
 .PP
 bkctld restart <jailname>|all
 .RS 4
-Restart jail <jailname> or all
+Restart an evobackup jail or all.
 .RE
 .PP
 bkctld sync <jailname>|all
 .RS 4
-Sync jail <jailname> with $NODE defined in /etc/default/bkctld
+Sync an evobackup jail or all.
+.RE
+.RS 4
+Second server was defined by $NODE var in /etc/default/bkctld.
 .RE
 .PP
 bkctld status [<jailname>]
 .RS 4
-Print status of jail <jailname> or all jails
+Print status of all evobackup jail or one jail.
 .RE
 .PP
 bkctld key <jailname> [<keyfile>]
 .RS 4
-Print or set SSH public key of jail <jailname>
+Print or set SSH public key of an evobackup jail.
 .RE
 .PP
 bkctld port <jailname> [<ssh_port>|auto]
 .RS 4
-Print or set SSH port of jail <jailname>. Auto for user last port + 1
+Print or set SSH port of an evobackup jail.
+.RE
+.RS 4
+Auto for use last port + 1.
 .RE
 .PP
 bkctld ip <jailname> [<ip>|all]
 .RS 4
-Print or set allowed IP of jail <jailname>. All for no IP restriction
+Print or set allowed IP of an evobackup jail.
+.RE
+.RS 4
+All for no IP restriction (default).
 .RE
 .PP
 bkctld inc
 .RS 4
-Make inc of jail <jailname>
+Make inc of an evobackup jail.
 .RE
 .PP
 bkctld rm
 .RS 4
-Remove old inc of jail <jailname>
+Remove old inc of an evobackup jail.
 .RE
 .PP
+.SH CONFIGURATION VARS
+bkctld configuration was done in /etc/default/bkctld.
+.SH REQUIREDS VARS
+Requireds vars has default value set in bkctld script. Surcharge them for change default value.
+.RE
+.PP
+CONFDIR
+.RS 4
+Dir where incremental backup was configured. See INCS CONFIGURATION section for details.
+.RE
+.RS 4
+default : /etc/evobackup
+.RE
+.PP
+JAILDIR
+.RS 4
+Dir for root dir of jail. BTRFS recommended.
+.RE
+.RS 4
+default : /backup/jails
+.RE
+.PP
+INCDIR
+.RS 4
+Dir where incremental backup was stocked. BTRFS recommended.
+default : /backups/incs
+.RE
+.PP
+TPLDIR
+.RS 4
+Dir where template file for create jail was stocked.
+.RE
+.RS 4
+default : /usr/share/bkctld
+.RE
+.PP
+LOG_DIR
+.RS 4
+Emplacement of log directory.
+.RE
+.RS 4
+default : /var/log
+.RE
+.PP
+.SH OPTIONALS VARS
+Optionnals vars are no default value. No set them desactivate correspondant fonctionnality.
+.RE
+.PP
+MAIL
+.RS 4
+Mail address were notification mail will be set.
+.RE
+.RS 4
+Default : no mail notification
+.RE
+.PP
+FIREWALL_RULES
+.RS 4
+Configuration file were firewall was configured to allow jail access. This file must be sourced by your firewall configuration tool.
+.RE
+.RS 4
+Default : no firewall auto configuration
+.SH INCS CONFIGURATION
+Incremental backups was configured in $CONFDIR/<jailname>. Some example of syntax.
+.RE
+.PP
+Keep the incrememtal backup of today
+.RS 4
++%Y-%m-%d.-0day
+.RE
+.PP
+Keep the incremental backup of yesterday
+.RS 4
++%Y-%m-%d.-1day
+.RE
+.PP
+Keep the incremental backup of the first day of this month
+.RS 4
++%Y-%m-01.-0month
+.RE
+.PP
+Keep the incremental backup of the first day of last month
+.RS 4
++%Y-%m-01.-1month
+.RE
+.PP
+Keep the incremental backup of every 15 days
+.RS 4
++%Y-%m-01.-1month
+.RE
+.RS 4
++%Y-%m-15.-1month
+.RE
+.PP
+Keep the incremental backup of the first january
+.RS 4
++%Y-01-01.-1month
+.RE
+.PP
+.PP
+Default value : keep incremental of last 4 days and last 2 months. Change default in $TPLDIR/inc.tpl.
+
+    +%Y-%m-%d.-0day
+    +%Y-%m-%d.-1day
+    +%Y-%m-%d.-2day
+    +%Y-%m-%d.-3day
+    +%Y-%m-01.-0month
+    +%Y-%m-01.-1month
+
+.SH CLIENT CONFIGURATION
+You can save various systems on evobackup jail :  Linux, BSD, Windows, MacOSX. Only prequisites is rsync command.
+.PP
+.RS 4
+rsync -av -e "ssh -p SSH_PORT" /home/ root@SERVER_NAME:/var/backup/home/
+.PP
+.RE
+You can simply create a shell script which use rsync for backup your's servers. An example script is available in docs/zzz_evobackup for quickstart.
+.RE
+.PP
+This documentation explain how to use this example script.
+.PP
+Install example script in crontab :
+.PP
+.RS 4
+# For Linux
+.RE
+.RS 4
+install -v -m700 zzz_evobackup /etc/cron.daily/
+.PP
+# For FreeBSD
+.RE
+.RS 4
+install -v -m700 zzz_evobackup /etc/periodic/daily/
+.PP
+.RE
+Generate an SSH key for root account with no passphrase :
+.PP
+.RS 4
+ssh-keygen
+.RE
+.PP
+Sent /root/.ssh/id_rsa.pub to backup server administrator or read BKCTLD COMMANDS section.
+.PP
+Edit zzz_evobackup script and update this variables :
+.PP
+.RS 4
+SSH_PORT
+.RS 4
+Port of corespondant evobackup jail.
+.RE
+.PP
+SYSTEME
+.RS 4
+Linux or BSD.
+.RE
+.PP
+MAIL
+.RS 4
+Email address for notification.
+.RE
+.PP
+NODE
+.RS 4
+Use for alternate between mutiple backup servers.
+.RE
+.RS 4
+Default value permit to save on node0 on pair day and on node1 on impair day.
+.RE
+.PP
+SRV
+.RS 4
+Adress of your backup serveur.
+.RE
+.RE
+.PP
+Uncomment service dump, ex Mysql / LDAP / PostgreQL / ...
+.PP
+Itiniate SSH connection and validate fingerprint :
+.PP
+.RS 4
+ssh -p SSH_PORT SERVER_NAME
+.RE
+.PP
+Your daily evobackup is in place !
+.PP
 .SH SEE ALSO
-sshd(8), rsync(1), chroot(8) 
-.SH BUGS
-No known bugs.
+rsync(1), sshd(8), chroot(8) 
 .SH AUTHOR
 Victor Laborie (vlaborie@evolix.fr)
