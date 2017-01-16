@@ -6,17 +6,13 @@ bkctld - tool to manage evobackup jail
 .SH SYNOPSIS
 bkctld <command> [<args>]
 .SH DESCRIPTION
-bkctld is a shell script to create and manage a backup server which will handle the backup of many servers (clients).
+bkctld is a shell script used to set up and manage a backup server able to receive data from many servers (clients).
 .PP
-The main principle uses SSH chroot (called "jails" in the FreeBSD world) for each client to backup. Each client will upload his data every day using rsync in his chroot (using root account).
+The aim is to run a SSH chroot environment (called "jails" in the FreeBSD world) for every single client. The client will then be able to send data over SSH using rsync in his own chroot environment (using root account).
 .PP
-Incrementals are stored outside of the chroot using hard links or btrfs snapshots.
-(So incrementals are not available for clients). Using this method we can keep tens
-of backup of each client securely and not using too much space.
+Incrementals are stored outside the chroot using hard links or btrfs snapshots (thus incrementals are not accessible by clients). This method has the advantage to keep incrementals securely isolated using low space on device.
 .PP
-A big size volume must be mount on /backup, we recommend usage of **btrfs** for
-subvolume and snapshot fonctionnality.
-This volume can be encrypted by **luks** for security reason.
+A suitable volume size must be mounted on /backup (usage of **btrfs** is preferable, providing subvolume and snapshot fonctionnality). For security reason, you can use an encrypted volume (e.g. **luks**)
 .PP
 .SH BKCTLD COMMANDS
 bkctld init <jailname>
@@ -59,7 +55,7 @@ bkctld sync <jailname>|all
 Sync an evobackup jail or all.
 .RE
 .RS 4
-Second server was defined by $NODE var in /etc/default/bkctld.
+Second server is defined by $NODE var in /etc/default/bkctld.
 .RE
 .PP
 bkctld status [<jailname>]
@@ -69,15 +65,15 @@ Print status of all evobackup jail or one jail.
 .PP
 bkctld key <jailname> [<keyfile>]
 .RS 4
-Print or set SSH public key of an evobackup jail.
+Print or set the SSH public key of an evobackup jail.
 .RE
 .PP
 bkctld port <jailname> [<ssh_port>|auto]
 .RS 4
-Print or set SSH port of an evobackup jail.
+Print or set the SSH port of an evobackup jail.
 .RE
 .RS 4
-Auto for use last port + 1.
+Auto to set next available port (last + 1).
 .RE
 .PP
 bkctld ip <jailname> [<ip>|all]
@@ -85,12 +81,12 @@ bkctld ip <jailname> [<ip>|all]
 Print or set allowed IP of an evobackup jail.
 .RE
 .RS 4
-All for no IP restriction (default).
+All for unrestricted access (default).
 .RE
 .PP
 bkctld inc
 .RS 4
-Make inc of an evobackup jail.
+Generate inc of an evobackup jail.
 .RE
 .PP
 bkctld rm
@@ -99,14 +95,14 @@ Remove old inc of an evobackup jail.
 .RE
 .PP
 .SH CONFIGURATION VARS
-bkctld configuration was done in /etc/default/bkctld.
+bkctld configuration has to be set in /etc/default/bkctld file.
 .SH REQUIREDS VARS
-Requireds vars has default value set in bkctld script. Surcharge them for change default value.
+Default required vars are defined in bkctld script. Alter them to override default values.
 .RE
 .PP
 CONFDIR
 .RS 4
-Dir where incremental backup was configured. See INCS CONFIGURATION section for details.
+Dir where incremental backup is configured. See INCS CONFIGURATION section for details.
 .RE
 .RS 4
 default : /etc/evobackup
@@ -114,7 +110,7 @@ default : /etc/evobackup
 .PP
 JAILDIR
 .RS 4
-Dir for root dir of jail. BTRFS recommended.
+Dir for jail's root dir. BTRFS recommended.
 .RE
 .RS 4
 default : /backup/jails
@@ -122,13 +118,13 @@ default : /backup/jails
 .PP
 INCDIR
 .RS 4
-Dir where incremental backup was stocked. BTRFS recommended.
+Dir where incremental backup is stored. BTRFS recommended.
 default : /backups/incs
 .RE
 .PP
 TPLDIR
 .RS 4
-Dir where template file for create jail was stocked.
+Dir where jail template file is stored.
 .RE
 .RS 4
 default : /usr/share/bkctld
