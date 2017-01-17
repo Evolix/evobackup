@@ -1,7 +1,12 @@
 #!/bin/bash
 #
-## bkctld is a shell script to create and manage a backup server which will
-## handle the backup of many servers (clients).
+# bkctld is a shell script to create and manage a backup server which will
+# handle the backup of many servers (clients).
+#
+# Author: Victor Laborie <vlaborie@evolix.fr>
+# Contributor: Benoît Série <bserie@evolix.fr>, Gregory Colpart <reg@evolix.fr>, Romain Dessort <rdessort@evolix.fr>, Tristan Pilat <tpilat@evolix.fr>
+# Licence: AGPLv3
+#
 
 usage(){
     echo "Usage: $0 <subcommand> [options]"

@@ -1,9 +1,12 @@
 #!/bin/sh
-
 #
 # Script Evobackup client
 # See https://forge.evolix.org/projects/evobackup
 # 
+# Author: Gregory Colpart <reg@evolix.fr>
+# Contributor: Romain Dessort <rdessort@evolix.fr>, Benoît Série <bserie@evolix.fr>, Tristan Pilat <tpilat@evolix.fr>, Victor Laborie <vlaborie@evolix.fr>,  Jérémy Lecour <jlecour@evolix.fr>
+# Licence: AGPLv3
+#
 
 ## lang = C for english outputs
 LANGUAGE=C
