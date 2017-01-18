@@ -1,9 +1,0 @@
-Source: bkctld
-Section: utils
-Priority: optional
-Maintainer: vlaborie@evolix.fr
-
-Package: bkctld
-Architecture: all
-Depends: coreutils, openssh-server, btrfs-tools, rsync
-Description: Tool for manage rsync jail for backup
