@@ -4,10 +4,12 @@
 # Provides:             evobackup
 # Required-Start:       $syslog
 # Required-Stop:        $syslog
-# Default-Start:        2
-# Default-Stop:         1
+# Default-Start:        2 3 4 5
+# Default-Stop:
 # Short-Description:    Backup manager using rsync and OpenSSH chroot.
 ### END INIT INFO
+
+. /lib/lsb/init-functions
 
 case "$1" in
     start)
