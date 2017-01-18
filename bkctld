@@ -427,8 +427,10 @@ sub_inc() {
 			echo "Inc $date of $jail already exist !" >&2
 		fi
 	done
-	if [ -n "${incs_logs}" ]; then
-		echo "${incs_logs}" | mail -s "[info] EvoBackup - create incs" $MAIL
+	if [ -n "${NOTIF_MAIL}" ]; then
+		if [ -n "${incs_logs}" ]; then
+			echo "${incs_logs}" | mail -s "[info] EvoBackup - create incs" $NOTIF_MAIL
+		fi
 	fi
 }
 
@@ -443,8 +445,8 @@ sub_rm() {
 			echo "$0 rm always run (PID $pid) !" >&2
 			kill -9 $pid
 			rm $pidfile
-			if [ -n "${MAIL}" ]; then
-			        echo "$0 rm $pid was killed by $$ !" | mail -s "[warn] EvoBackup - purge incs interrupted" $MAIL
+			if [ -n "${NOTIF_MAIL}" ]; then
+			        echo "$0 rm $pid was killed by $$ !" | mail -s "[warn] EvoBackup - purge incs interrupted" $NOTIF_MAIL
 			fi
 		else
 			rm $pidfile
@@ -481,8 +483,10 @@ sub_rm() {
 	done
 	rmdir $empty
 	rm $pidfile
-	if [ -n "${rms_logs}" ]; then
-                echo "${rms_logs}" | mail -s "[info] EvoBackup - purge incs" $MAIL
+	if [ -n "${NOTIF_MAIL}" ]; then
+		if [ -n "${rms_logs}" ]; then
+	                echo "${rms_logs}" | mail -s "[info] EvoBackup - purge incs" $NOTIF_MAIL
+		fi
         fi
 }
 
