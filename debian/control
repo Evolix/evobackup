@@ -1,0 +1,13 @@
+Source: bkctld
+Section: utils
+Priority: optional
+Maintainer: Victor Laborie <vlaborie@evolix.fr>
+Build-Depends: debhelper
+Standards-Version: 3.9.6
+
+Package: bkctld
+Architecture: all
+Depends: openssh-server, btrfs-tools, rsync, ${misc:Depends} 
+Description: Tool for manage rsync jail for backup
+ bkctld is a shell script to create and manage a backup server
+ which will handle the backup of many servers (clients).

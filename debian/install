@@ -1,0 +1,3 @@
+bkctld usr/sbin
+tpl/* usr/share/bkctld
+docs/zzz_evobackup usr/share/doc/bkctld
