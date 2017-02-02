@@ -1,3 +1,9 @@
+bkctld (1.1) unstable; urgency=high
+
+  * Add bash completion
+
+ -- Victor Laborie <vlaborie@evolix.fr>  Thu, 02 Feb 2017 18:24:50 +0100
+
 bkctld (1.0.2) unstable; urgency=high
 
   * Fix bkctld sync
