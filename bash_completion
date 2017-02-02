@@ -1,0 +1,28 @@
+# bkctld(8) completion
+#
+# Copyright (c) 2017 Victor Laborie <vlaborie@evolix.fr>
+#
+
+function _bkctld()
+{
+	local cur prev commands jails keys
+
+	cur=${COMP_WORDS[COMP_CWORD]};
+	prev=${COMP_WORDS[COMP_CWORD-1]};
+	commands="init update remove start stop reload restart sync status key port ip inc rm"
+
+	if [ $COMP_CWORD -eq 1 ]; then
+		COMPREPLY=($(compgen -W '${commands}' -- ${cur}))
+	elif [ $COMP_CWORD -eq 2 ]; then
+		[ -f /etc/default/bkctld ] && source /etc/default/bkctld
+		[ -z "${JAILDIR}" ] && JAILDIR='/backup/jails'
+		jails=$(ls "${JAILDIR}")
+  		COMPREPLY=($(compgen -W "${jails}" -- ${cur}))
+	elif [ $COMP_CWORD -eq 3 ]; then
+		keys=$(ls *.pub)
+		COMPREPLY=($(compgen -W "${keys}" -- ${cur}))
+	fi
+
+	return 0
+} &&
+complete -F _bkctld bkctld
