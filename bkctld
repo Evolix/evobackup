@@ -163,7 +163,7 @@ set_firewall() {
 			echo "/sbin/iptables -A INPUT -p tcp --sport 1024: --dport $port -s $ip -j ACCEPT #$jail" >> $FIREWALL_RULES
 		done
 		if [ -f /etc/init.d/minifirewall ]; then
-			/etc/init.d/minifirewall restart
+			/etc/init.d/minifirewall restart >/dev/null
 		fi
 	fi
 }
@@ -395,14 +395,15 @@ sub_sync() {
 		exit 1
 	fi
 	jail=$1
-	rsync -a ${CONFDIR}/$jail ${NODE}:${CONFDIR}/$jail
+	ssh $NODE bkctld init $jail >/dev/null
 	rsync -a ${JAILDIR}/${jail}/ ${NODE}:${JAILDIR}/${jail}/ --exclude proc/* --exclude sys/* --exclude dev/* --exclude var/run/*.pid --exclude var/backup/*
+	rsync -a ${CONFDIR}/$jail ${NODE}:${CONFDIR}/$jail
 	if ( check_jail_on $jail ); then
-		ssh $NODE bkctld start $jail
+		ssh $NODE bkctld start $jail >/dev/null
 	fi
 	if [ -n "${FIREWALL_RULES}" ]; then
 		rsync -a ${FIREWALL_RULES} ${NODE}:${FIREWALL_RULES}
-		ssh $NODE /etc/init.d/minifirewall restart
+		ssh $NODE /etc/init.d/minifirewall restart >/dev/null
 	fi
 }
 

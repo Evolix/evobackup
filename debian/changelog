@@ -1,3 +1,10 @@
+bkctld (1.0.2) unstable; urgency=high
+
+  * Fix bkctld sync
+  * Make minifirewall silent
+
+ -- Victor Laborie <vlaborie@evolix.fr>  Thu, 02 Feb 2017 10:48:30 +0100
+
 bkctld (1.0.1) unstable; urgency=high
 
   * Use absolute path for btrfs command (fix cron use)
