@@ -34,7 +34,7 @@ This volume can be encrypted by **luks** for security reason.
 A Debian package is available in Evolix repository
 
 ~~~
-echo "http://pub.evolix.net" >> /etc/apt/sources.list
+echo "http://pub.evolix.net/ jessie/" >> /etc/apt/sources.list
 apt update
 apt install bkctld
 ~~~
