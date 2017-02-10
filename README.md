@@ -74,7 +74,7 @@ rsync -av -e "ssh -p SSH_PORT" /home/ root@SERVER_NAME:/var/backup/home/
 An example script is present in docs/zzz_evobackup, clone evobackup repo and read **CLIENT CONFIGURATION** section of the manual.
 
 ~~~
-git clone https://vlaborie@forge.evolix.org/evobackup.git
+git clone https://forge.evolix.org/evobackup.git
 cd evobackup
 man ./docs/bkctld.8
 ~~~

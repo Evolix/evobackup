@@ -1,3 +1,9 @@
+bkctld (1.1.1) unstable; urgency=low
+
+  * Print all IP on bkctld status
+
+ -- Victor Laborie <vlaborie@evolix.fr>  Fri, 10 Feb 2017 10:43:44 +0100
+
 bkctld (1.1) unstable; urgency=high
 
   * Add bash completion

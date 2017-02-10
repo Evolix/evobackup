@@ -362,7 +362,7 @@ sub_status() {
 		status="OFF"
 	fi
 	port=$(get_port $jail)
-	ip=$(get_ip $jail|xargs)
+	ip=$(get_ip $jail|xargs|tr -s ' ' ',')
 	echo "$jail $status $port $inc $ip" | awk '{ printf("%- 30s %- 10s %- 10s %- 10s %- 40s\n", $1, $2, $3, $4, $5); }'
 }
 
