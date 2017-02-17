@@ -172,6 +172,12 @@ set_firewall() {
 
 mk_jail() {
 	jail=$1
+	passwd="${TPLDIR}/passwd"
+	shadow="${TPLDIR}/shadow"
+	group="${TPLDIR}/group"
+	[ -f "${LOCALTPLDIR}/passwd" ] && passwd="${LOCALTPLDIR}/passwd"
+	[ -f "${LOCALTPLDIR}/shadow" ] && shadow="${LOCALTPLDIR}/shadow"
+	[ -f "${LOCALTPLDIR}/group" ] && group="${LOCALTPLDIR}/group"
 	umask 022
 
 	echo -n "1 - Creating the chroot..."
@@ -188,7 +194,9 @@ mk_jail() {
 	echo -n "2 - Copying essential files..."
 	cp /proc/devices ${JAILDIR}/${jail}/proc
 	cp /etc/ssh/{ssh_host_rsa_key,ssh_host_dsa_key} ${JAILDIR}/${jail}/etc/ssh/
-	cp ${TPLDIR}/{passwd,shadow,group} ${JAILDIR}/${jail}/etc/
+	cp $passwd ${JAILDIR}/${jail}/etc/
+	cp $shadow ${JAILDIR}/${jail}/etc/
+	cp $group ${JAILDIR}/${jail}/etc/
 	echo "...OK"
 
 	echo -n "3 - Copying binaries..."
@@ -208,6 +216,10 @@ mk_jail() {
   
 sub_init() {
 	jail=$1
+	sshd_config="${TPLDIR}/sshd_config"
+	inctpl="${TPLDIR}/inc.tpl"
+	[ -f "${LOCALTPLDIR}/sshd_config" ] && sshd_config="${LOCALTPLDIR}/sshd_config"
+	[ -f "${LOCALTPLDIR}/inc.tpl" ] && inctpl="${LOCALTPLDIR}/inc.tpl"
 	if ( check_jail $jail ); then
 		echo "Jail $jail already exist ! Use '$0 update $jail' for update it" >&2
                 exit 1		
@@ -221,13 +233,13 @@ sub_init() {
 	fi
 	mk_jail $jail
 	echo -n "4 - Copie default sshd_config..."
-	install -m 0640 ${TPLDIR}/sshd_config ${JAILDIR}/$jail/${SSHD_CONFIG}
+	install -m 0640 $sshd_config ${JAILDIR}/$jail/${SSHD_CONFIG}
 	echo "...OK"
 	echo -n "5 - Set usable sshd port..."
 	set_port $jail auto
 	echo "...OK"
 	echo -n "6 - Copie default inc configuration..."
-	install -m 0640 ${TPLDIR}/inc.tpl ${CONFDIR}/$jail
+	install -m 0640 $inctpl ${CONFDIR}/$jail
 	echo "...OK"
 }
 
@@ -519,6 +531,7 @@ main() {
 	[ -z "${JAILDIR}" ] && JAILDIR='/backup/jails'
 	[ -z "${INCDIR}" ] && INCDIR='/backup/incs'
 	[ -z "${TPLDIR}" ] && TPLDIR='/usr/share/bkctld'
+	[ -z "${LOCALTPLDIR}" ] && LOCALTPLDIR='/usr/local/share/bkctld'
 	[ -z "${LOG_DIR}" ] && LOG_DIR='/var/log'
 	[ -z "${SSHD_PID}" ] && SSHD_PID='/var/run/sshd.pid'
 	[ -z "${SSHD_CONFIG}" ] && SSHD_CONFIG='/etc/ssh/sshd_config'
