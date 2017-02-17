@@ -130,6 +130,14 @@ Dir where jail template file is stored.
 default : /usr/share/bkctld
 .RE
 .PP
+LOCALTPLDIR
+.RS 4
+Dir for surcharge jail templates.
+.RE
+.RS 4
+default : /usr/local/share/bkctld
+.RE
+.PP
 LOG_DIR
 .RS 4
 Emplacement of log directory.
@@ -194,7 +202,7 @@ Keep the incremental backup of the first january
 .RE
 .PP
 .PP
-Default value : keep incremental of last 4 days and last 2 months. Change default in $TPLDIR/inc.tpl.
+Default value : keep incremental of last 4 days and last 2 months. Change default in $LOCALTPLDIR/inc.tpl.
 
     +%Y-%m-%d.-0day
     +%Y-%m-%d.-1day
