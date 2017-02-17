@@ -143,6 +143,9 @@ mkdir -p -m 700 /home/backup
 # backup MegaCli config
 #megacli -CfgSave -f /home/backup/megacli_conf.dump -a0 >/dev/null
 
+## Dump system and kernel versions
+uname -a > /home/backup/uname
+
 ## Dump network routes with mtr and traceroute (warning: could be long with aggressive firewalls)
 for addr in 8.8.8.8 www.evolix.fr travaux.evolix.net; do
     mtr -r $addr > /home/backup/mtr-${addr}
