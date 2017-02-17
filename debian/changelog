@@ -1,6 +1,13 @@
+bkctld (1.2.1) unstable; urgency=low
+
+  * Add local dir for surcharge default templates files
+  * Add uname in client sample script 
+
+ -- Victor Laborie <vlaborie@evolix.fr>  Fri, 17 Feb 2017 13:29:00 +0100
+
 bkctld (1.1.1) unstable; urgency=low
 
-  * Print all IP on bkctld status
+  * print all ip on bkctld status
 
  -- Victor Laborie <vlaborie@evolix.fr>  Fri, 10 Feb 2017 10:43:44 +0100
 
