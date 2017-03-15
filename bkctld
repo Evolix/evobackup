@@ -281,8 +281,8 @@ sub_remove() {
 		/sbin/btrfs subvolume delete ${JAILDIR}/${jail}
 	else
 		rm -f ${CONFDIR}/${jail}
-		rm -rf ${INCDIR}/${jail}
 		rm -rf ${JAILDIR}/${jail}
+		echo "You need to purge ${INCDIR}/${jail} manually !"
 	fi
 	echo "...OK"
 }
