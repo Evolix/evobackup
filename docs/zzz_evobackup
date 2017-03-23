@@ -33,7 +33,7 @@ trap "rm -f $PIDFILE" EXIT
 SSH_PORT=2XXX
 
 # choose "linux" or "bsd"
-SYSTEME=linux
+SYSTEME=$(uname | tr '[:upper:]' '[:lower:]')
 
 # email adress for notifications
 MAIL=jdoe@example.com
