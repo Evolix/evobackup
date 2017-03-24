@@ -48,8 +48,8 @@ check_jail_on() {
                         exit 0
                 else
 			rm ${JAILDIR}/${jail}/${SSHD_PID}
-	                umount -R ${JAILDIR}/${jail}/dev
-			umount ${JAILDIR}/${jail}/proc/
+	                umount --lazy --recursive ${JAILDIR}/${jail}/dev
+			umount --lazy ${JAILDIR}/${jail}/proc/
 			exit 1
 		fi
         else
@@ -339,8 +339,8 @@ sub_stop() {
 		kill $conn
 	done
 	kill $pid
-	umount -R ${JAILDIR}/${jail}/dev
-	umount ${JAILDIR}/${jail}/proc/
+	umount --lazy --recursive ${JAILDIR}/${jail}/dev
+	umount --lazy ${JAILDIR}/${jail}/proc/
 	echo "...OK"
 }
 
