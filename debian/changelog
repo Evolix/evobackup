@@ -1,3 +1,11 @@
+bkctld (1.2.3) unstable; urgency=low
+
+  * Don't automatically purge incs with bkctld remove (cp version)
+  * Use lazy umount (wait for sshd stop)
+  * Update man page
+
+ -- Victor Laborie <vlaborie@evolix.fr>  Fri, 24 Mar 2017 12:22:00 +0100
+
 bkctld (1.2.1) unstable; urgency=low
 
   * Add local dir for surcharge default templates files
