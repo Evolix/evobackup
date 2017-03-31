@@ -158,12 +158,14 @@ set_firewall() {
 		if [ -f $FIREWALL_RULES ]; then
 			sed -i "/#${jail}$/d" $FIREWALL_RULES
 		fi
-		port=$(get_port $jail)
-		for ip in $(get_ip $jail); do
-			echo "/sbin/iptables -A INPUT -p tcp --sport 1024: --dport $port -s $ip -j ACCEPT #$jail" >> $FIREWALL_RULES
-		done
-		if [ -f /etc/init.d/minifirewall ]; then
-			/etc/init.d/minifirewall restart >/dev/null
+		if ( check_jail $jail ); then
+			port=$(get_port $jail)
+			for ip in $(get_ip $jail); do
+				echo "/sbin/iptables -A INPUT -p tcp --sport 1024: --dport $port -s $ip -j ACCEPT #$jail" >> $FIREWALL_RULES
+			done
+			if [ -f /etc/init.d/minifirewall ]; then
+				/etc/init.d/minifirewall restart >/dev/null
+			fi
 		fi
 	fi
 }
@@ -284,6 +286,7 @@ sub_remove() {
 		rm -rf ${JAILDIR}/${jail}
 		echo "You need to purge ${INCDIR}/${jail} manually !"
 	fi
+	set_firewall $jail
 	echo "...OK"
 }
 
