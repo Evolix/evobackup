@@ -33,7 +33,7 @@ trap "rm -f $PIDFILE" EXIT
 SSH_PORT=2XXX
 
 # choose "linux" or "bsd"
-SYSTEME=$(uname | tr '[:upper:]' '[:lower:]')
+SYSTEM=$(uname | tr '[:upper:]' '[:lower:]')
 
 # email adress for notifications
 MAIL=jdoe@example.com
@@ -163,7 +163,7 @@ done
 ## Dump process with ps
 ps aux >/home/backup/ps.out
 
-if [ $SYSTEME = "linux" ]; then
+if [ $SYSTEM = "linux" ]; then
     ## Dump network connections with netstat
     netstat -taupen >/home/backup/netstat.out
 
@@ -181,9 +181,9 @@ HOSTNAME=$(hostname)
 
 DATE=$(/bin/date +"%d-%m-%Y")
 
-DEBUT=$(/bin/date +"%d-%m-%Y ; %H:%M")
+BEGINNING=$(/bin/date +"%d-%m-%Y ; %H:%M")
 
-if [ $SYSTEME = "linux" ]; then
+if [ $SYSTEM = "linux" ]; then
     rep="/bin /boot /lib /opt /sbin /usr"
 else
     rep="/bsd /bin /boot /sbin /usr"
@@ -228,12 +228,12 @@ rsync -avzh --stats --delete --delete-excluded --force --ignore-errors --partial
     root@$SRV:/var/backup/     \
     | tail -30 >> /var/log/evobackup.log
 
-FIN=$(/bin/date +"%d-%m-%Y ; %H:%M")
+END=$(/bin/date +"%d-%m-%Y ; %H:%M")
 
-echo "EvoBackup - $HOSTNAME - START $DEBUT"            \
+echo "EvoBackup - $HOSTNAME - START $BEGINNING"            \
     >> /var/log/evobackup.log
 
-echo "EvoBackup - $HOSTNAME - STOP $FIN"               \
+echo "EvoBackup - $HOSTNAME - STOP $END"               \
     >> /var/log/evobackup.log
 
 tail -10 /var/log/evobackup.log |                      \
