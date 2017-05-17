@@ -431,7 +431,7 @@ sub_inc() {
 		if [ ! -d "${inc}" ]; then
 			start=$(date +"%H:%M:%S")
 			if ( check_btrfs ); then
-				/sbin/btrfs subvolume snapshot ${JAILDIR}/$jail $inc > /dev/null
+				/sbin/btrfs subvolume snapshot -r ${JAILDIR}/$jail $inc > /dev/null
 			else
 				cp -alx ${JAILDIR}/${jail}/ $inc
 			fi
