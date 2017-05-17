@@ -41,6 +41,14 @@ apt update
 apt install bkctld
 ~~~
 
+### Chroot dependency
+
+Chroot jail use part of this package
+
+~~~
+apt install bash coreutils sed dash mount rsync openssh-server openssh-sftp-server libc6-i386 libc6
+~~~
+
 #### Install cron for incremental backup
 
 Edit root crontab
