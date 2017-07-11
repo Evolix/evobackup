@@ -169,6 +169,7 @@ if [ $SYSTEM = "linux" ]; then
 
     ## List Debian packages
     dpkg -l >/home/backup/packages
+    dpkg --get-selections >/home/backup/packages.getselections
 else
     ## Dump network connections with netstat
     netstat -finet -atn >/home/backup/netstat.out
