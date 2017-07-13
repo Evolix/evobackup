@@ -122,7 +122,7 @@ set_key() {
 set_ip() {
 	jail=$1
 	ip=$2
-	if [[ $ip = "all" || $ip = "0.0.0.0/0" ]]; then
+	if [ "$ip" = "all" ] || [ "$ip" = "0.0.0.0/0" ]; then
 		ips="0.0.0.0/0"
 	else
 		ips=$(get_ip $jail)
@@ -545,22 +545,22 @@ main() {
 		log $subcommand
 		;;
             "init")
-		if [[ -n "${jail}" ]]; then
+		if [ -n "${jail}" ]; then
 			log $subcommand $jail
 		else
 			usage
 		fi
 		;;
 	    "key" | "port" | "ip")
-		if [[ -n "${jail}" ]]; then
+		if [ -n "${jail}" ]; then
 			log params $jail $subcommand $option
 		else
 			usage
 		fi
 		;;
 	    "start" | "stop" | "reload" | "restart" | "sync" | "update" | "remove")
-		if [[ -n "${jail}" ]]; then
-			if [[ "${jail}" = "all" ]]; then
+		if [ -n "${jail}" ]; then
+			if [ "${jail}" = "all" ]; then
 				for jail in $(ls $JAILDIR); do
 					case $subcommand in
 					    "start")
@@ -599,7 +599,7 @@ main() {
 		fi
 		;;
 	    "status")
-		if [[ -z "${jail}" ]]; then
+		if [ -z "${jail}" ]; then
 			for jail in $(ls $JAILDIR); do
 	                        sub_$subcommand $jail
 	                done
