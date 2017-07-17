@@ -58,22 +58,6 @@ check_jail_on() {
 	echo $status
 }
 
-check_btrfs() {
-	grep $(dirname $JAILDIR) /etc/fstab|grep -q btrfs
-	if [[ $? -eq 0 ]]; then
-                exit 0
-        fi
-	grep $JAILDIR /etc/fstab|grep -q btrfs
-	if [[ $? -ne 0 ]]; then
-		exit 1
-	fi
-	grep $INCDIR /etc/fstab|grep -q btrfs
-	if [[ $? -ne 0 ]]; then
-		exit 1
-	fi
-	exit 0
-}
-
 ## get functions : get info on jail
 
 get_port() {
@@ -138,7 +122,7 @@ set_key() {
 set_ip() {
 	jail=$1
 	ip=$2
-	if [[ $ip = "all" || $ip = "0.0.0.0/0" ]]; then
+	if [ "$ip" = "all" ] || [ "$ip" = "0.0.0.0/0" ]; then
 		ips="0.0.0.0/0"
 	else
 		ips=$(get_ip $jail)
@@ -227,8 +211,10 @@ sub_init() {
                 exit 1		
 	fi
 
-	echo "Create jail $jail :"	
-	if ( check_btrfs); then
+	echo "Create jail $jail :"
+	rootdir_inode=$(stat --format=%i $(dirname $JAILDIR))
+	jaildir_inode=$(stat --format=%i $JAILDIR)
+	if [ "$rootdir_inode" -eq 256 ] || [ "$jaildir_inode" -eq 256 ]; then
 		/sbin/btrfs subvolume create ${JAILDIR}/${jail}
 	else
 		mkdir -p ${JAILDIR}/${jail}
@@ -274,17 +260,23 @@ sub_remove() {
 	        log stop $jail
 	fi
 	echo "Delete jail $jail ..."
-	if ( check_btrfs ); then
-		rm -f ${CONFDIR}/${jail}
-		if [ -d  ${INCDIR}/${jail} ]; then
-			/sbin/btrfs subvolume delete ${INCDIR}/${jail}/*
-			rmdir ${INCDIR}/${jail}
-		fi
+	rm -f ${CONFDIR}/${jail}
+	jail_inode=$(stat --format=%i ${JAILDIR}/${jail})
+	if [ "$jail_inode" -eq 256 ]; then
 		/sbin/btrfs subvolume delete ${JAILDIR}/${jail}
 	else
-		rm -f ${CONFDIR}/${jail}
 		rm -rf ${JAILDIR}/${jail}
-		echo "You need to purge ${INCDIR}/${jail} manually !"
+	fi
+	if [ -d  ${INCDIR}/${jail} ]; then
+		for inc in $(ls ${INCDIR}/${jail}); do
+			inc_inode=$(stat --format=%i ${INCDIR}/${jail}/$inc)
+			if [ "$inc_inode" -eq 256 ]; then
+				/sbin/btrfs subvolume delete ${INCDIR}/${jail}/${inc}
+			else
+				echo "You need to purge ${INCDIR}/${jail}/$inc manually !" >&2
+			fi
+		done
+		rmdir --ignore-fail-on-non-empty ${INCDIR}/${jail}
 	fi
 	set_firewall $jail
 	echo "...OK"
@@ -430,8 +422,9 @@ sub_inc() {
 		mkdir -p ${INCDIR}/${jail}
 		if [ ! -d "${inc}" ]; then
 			start=$(date +"%H:%M:%S")
-			if ( check_btrfs ); then
-				/sbin/btrfs subvolume snapshot ${JAILDIR}/$jail $inc > /dev/null
+			jail_inode=$(stat --format=%i ${JAILDIR}/${jail})
+			if [ "$jail_inode" -eq 256 ]; then
+				/sbin/btrfs subvolume snapshot -r ${JAILDIR}/${jail} $inc > /dev/null
 			else
 				cp -alx ${JAILDIR}/${jail}/ $inc
 			fi
@@ -484,8 +477,9 @@ sub_rm() {
 	        #for j in $( ls ${INCDIR}/$jail ); do
 	        for j in $( grep -v -f <(echo "${keep}") <(echo "${incs}") ); do
 			start=$(date +"%H:%M:%S")
-			if ( check_btrfs ); then
-				/sbin/btrfs subvolume delete ${INCDIR}/$jail/$j >/dev/null
+			inc_inode=$(stat --format=%i ${INCDIR}/${jail}/${j})
+			if [ "$inc_inode" -eq 256 ]; then
+				/sbin/btrfs subvolume delete ${INCDIR}/${jail}/${j} >/dev/null
 			else
 				cd ${INCDIR}/$jail
 			        rsync -a --delete $empty $j*
@@ -551,22 +545,22 @@ main() {
 		log $subcommand
 		;;
             "init")
-		if [[ -n "${jail}" ]]; then
+		if [ -n "${jail}" ]; then
 			log $subcommand $jail
 		else
 			usage
 		fi
 		;;
 	    "key" | "port" | "ip")
-		if [[ -n "${jail}" ]]; then
+		if [ -n "${jail}" ]; then
 			log params $jail $subcommand $option
 		else
 			usage
 		fi
 		;;
 	    "start" | "stop" | "reload" | "restart" | "sync" | "update" | "remove")
-		if [[ -n "${jail}" ]]; then
-			if [[ "${jail}" = "all" ]]; then
+		if [ -n "${jail}" ]; then
+			if [ "${jail}" = "all" ]; then
 				for jail in $(ls $JAILDIR); do
 					case $subcommand in
 					    "start")
@@ -605,7 +599,7 @@ main() {
 		fi
 		;;
 	    "status")
-		if [[ -z "${jail}" ]]; then
+		if [ -z "${jail}" ]; then
 			for jail in $(ls $JAILDIR); do
 	                        sub_$subcommand $jail
 	                done
