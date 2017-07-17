@@ -1,3 +1,14 @@
+bkctld (1.3) unstable; urgency=medium
+
+  * Fix btrfs support/detection
+  * Btrfs snapshot (incs) are now readonly
+  * Fix bashism (if [[ -> if [)
+  * Add chroot dependency to README
+  * Use English for var names
+  * Improve packages list backup
+
+ -- Victor Laborie <vlaborie@evolix.fr>  Mon, 17 Jul 2017 11:40:30 +0100
+
 bkctld (1.2.4) unstable; urgency=low
 
   * Delete firewall rules on bkctld remove
