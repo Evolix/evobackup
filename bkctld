@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 # bkctld is a shell script to create and manage a backup server which will
 # handle the backup of many servers (clients).
@@ -44,7 +44,7 @@ check_jail_on() {
         if [ -f ${JAILDIR}/${jail}/${SSHD_PID} ]; then
                 pid=$(cat ${JAILDIR}/${jail}/${SSHD_PID})
                 ps -p $pid > /dev/null
-                if [ $? == 0 ]; then
+                if [ $? -eq 0 ]; then
                         exit 0
                 else
 			rm ${JAILDIR}/${jail}/${SSHD_PID}
@@ -166,28 +166,27 @@ mk_jail() {
 	[ -f "${LOCALTPLDIR}/group" ] && group="${LOCALTPLDIR}/group"
 	umask 022
 
-	echo -n "1 - Creating the chroot..."
-	mkdir -p ${JAILDIR}/${jail}/{bin,dev,etc/ssh,lib,lib64,proc}
-	mkdir -p ${JAILDIR}/${jail}/lib/{x86_64-linux-gnu,tls/i686/cmov,i686/cmov}
-	mkdir -p ${JAILDIR}/${jail}/usr/{bin,lib,sbin}
-	mkdir -p ${JAILDIR}/${jail}/usr/lib/{x86_64-linux-gnu,openssh,i686/cmov}
-	mkdir -p ${JAILDIR}/${jail}/root/.ssh && chmod 700 ${JAILDIR}/${jail}/root/.ssh
-	mkdir -p ${JAILDIR}/${jail}/var/{log,run/sshd}
-	touch ${JAILDIR}/${jail}/var/log/{authlog,lastlog,messages,syslog}
-	touch ${JAILDIR}/${jail}/etc/fstab
-	echo "...OK"
+	echo "1 - Creating the chroot"
+	cd "${JAILDIR}/${jail}"
+	mkdir -p bin dev etc/ssh lib lib64 proc
+	mkdir -p lib/x86_64-linux-gnu lib/tls/i686/cmov lib/i686/cmov
+	mkdir -p usr/bin usr/lib usr/sbin
+	mkdir -p usr/lib/x86_64-linux-gnu usr/lib/openssh usr/lib/i686/cmov
+	mkdir -p root/.ssh -m 0700
+	mkdir -p var/log var/run/sshd
+	touch var/log/authlog var/log/lastlog var/log/messages var/log/syslog etc/fstab
 
-	echo -n "2 - Copying essential files..."
-	cp /proc/devices ${JAILDIR}/${jail}/proc
-	cp /etc/ssh/{ssh_host_rsa_key,ssh_host_dsa_key} ${JAILDIR}/${jail}/etc/ssh/
-	cp $passwd ${JAILDIR}/${jail}/etc/
-	cp $shadow ${JAILDIR}/${jail}/etc/
-	cp $group ${JAILDIR}/${jail}/etc/
-	echo "...OK"
+	echo "2 - Copying essential files"
+	cp /proc/devices proc
+	cp /etc/ssh/ssh_host_rsa_key etc/ssh
+	cp /etc/ssh/ssh_host_dsa_key etc/ssh
+	cp "$passwd" etc
+	cp "$shadow" etc
+	cp "$group" etc
 
-	echo -n "3 - Copying binaries..."
-	cp -f /lib/ld-linux.so.2 ${JAILDIR}/${jail}/lib/ 2>/dev/null || cp -f /lib64/ld-linux-x86-64.so.2 ${JAILDIR}/${jail}/lib64/
-	cp /lib/x86_64-linux-gnu/libnss* ${JAILDIR}/${jail}/lib/x86_64-linux-gnu/
+	echo "3 - Copying binaries"
+	cp -f /lib/ld-linux.so.2 lib 2>/dev/null || cp -f /lib64/ld-linux-x86-64.so.2 lib64
+	cp /lib/x86_64-linux-gnu/libnss* lib/x86_64-linux-gnu
 
 	for dbin in /bin/bash /bin/cat /bin/chown /bin/mknod /bin/rm /bin/ls /bin/sed /bin/sh /bin/uname /bin/mount /usr/bin/rsync /usr/sbin/sshd /usr/lib/openssh/sftp-server; do
 		cp -f $dbin ${JAILDIR}/${jail}/$dbin;
@@ -195,7 +194,6 @@ mk_jail() {
 			cp -p $lib ${JAILDIR}/${jail}/$lib
 		done
 	done
-	echo "...OK"
 }
 
 ## sub functions : functions call by subcommand
@@ -220,15 +218,12 @@ sub_init() {
 		mkdir -p ${JAILDIR}/${jail}
 	fi
 	mk_jail $jail
-	echo -n "4 - Copie default sshd_config..."
+	echo "4 - Copie default sshd_config"
 	install -m 0640 $sshd_config ${JAILDIR}/$jail/${SSHD_CONFIG}
-	echo "...OK"
-	echo -n "5 - Set usable sshd port..."
+	echo "5 - Set usable sshd port"
 	set_port $jail auto
-	echo "...OK"
-	echo -n "6 - Copie default inc configuration..."
+	echo "6 - Copie default inc configuration"
 	install -m 0640 $inctpl ${CONFDIR}/$jail
-	echo "...OK"
 }
 
 sub_update() {
@@ -259,7 +254,7 @@ sub_remove() {
 	if ( check_jail_on $jail ); then
 	        log stop $jail
 	fi
-	echo "Delete jail $jail ..."
+	echo "Delete jail $jail"
 	rm -f ${CONFDIR}/${jail}
 	jail_inode=$(stat --format=%i ${JAILDIR}/${jail})
 	if [ "$jail_inode" -eq 256 ]; then
@@ -279,7 +274,6 @@ sub_remove() {
 		rmdir --ignore-fail-on-non-empty ${INCDIR}/${jail}
 	fi
 	set_firewall $jail
-	echo "...OK"
 }
 
 sub_start() {
@@ -293,28 +287,28 @@ sub_start() {
 		exit 1
 	fi
 
-	echo -n "Start jail $jail ..."
-	mount -t proc proc-${jail} ${JAILDIR}/${jail}/proc/
-	mount -nt tmpfs dev-${jail} ${JAILDIR}/${jail}/dev
-	mknod -m 622 ${JAILDIR}/${jail}/dev/console c 5 1
-	mknod -m 666 ${JAILDIR}/${jail}/dev/null c 1 3
-	mknod -m 666 ${JAILDIR}/${jail}/dev/zero c 1 5
-	mknod -m 666 ${JAILDIR}/${jail}/dev/ptmx c 5 2
-	mknod -m 666 ${JAILDIR}/${jail}/dev/tty c 5 0
-	mknod -m 444 ${JAILDIR}/${jail}/dev/random c 1 8
-	mknod -m 444 ${JAILDIR}/${jail}/dev/urandom c 1 9
-	chown root:tty ${JAILDIR}/${jail}/dev/{console,ptmx,tty}
-	ln -s ${JAILDIR}/${jail}/proc/self/fd ${JAILDIR}/${jail}/dev/fd
-	ln -s ${JAILDIR}/${jail}/proc/self/fd/0 ${JAILDIR}/${jail}/dev/stdin
-	ln -s ${JAILDIR}/${jail}/proc/self/fd/1 ${JAILDIR}/${jail}/dev/stdout
-	ln -s ${JAILDIR}/${jail}/proc/self/fd/2 ${JAILDIR}/${jail}/dev/stderr
-	ln -s ${JAILDIR}/${jail}/proc/kcore ${JAILDIR}/${jail}/dev/core
-	mkdir ${JAILDIR}/${jail}/dev/pts
-	mkdir ${JAILDIR}/${jail}/dev/shm
-	mount -t devpts -o gid=4,mode=620 none ${JAILDIR}/${jail}/dev/pts
-	mount -t tmpfs none ${JAILDIR}/${jail}/dev/shm
-        chroot ${JAILDIR}/${jail} /usr/sbin/sshd
-	echo "...OK"
+	echo "Start jail $jail"
+	cd "${JAILDIR}/${jail}"
+	mount -t proc "proc-${jail}" proc
+	mount -nt tmpfs "dev-${jail}" dev
+	mknod -m 622 dev/console c 5 1
+	mknod -m 666 dev/null c 1 3
+	mknod -m 666 dev/zero c 1 5
+	mknod -m 666 dev/ptmx c 5 2
+	mknod -m 666 dev/tty c 5 0
+	mknod -m 444 dev/random c 1 8
+	mknod -m 444 dev/urandom c 1 9
+	chown root:tty dev/console dev/ptmx dev/tty
+	ln -s proc/self/fd dev/fd
+	ln -s proc/self/fd/0 dev/stdin
+	ln -s proc/self/fd/1 dev/stdout
+	ln -s proc/self/fd/2 dev/stderr
+	ln -s proc/kcore dev/core
+	mkdir dev/pts
+	mkdir dev/shm
+	mount -t devpts -o gid=4,mode=620 none dev/pts
+	mount -t tmpfs none dev/shm
+	chroot "${JAILDIR}/${jail}" /usr/sbin/sshd
 }
 
 sub_stop() {
@@ -328,7 +322,7 @@ sub_stop() {
 		exit 1
 	fi
 
-	echo -n "Stop jail $jail ..."
+	echo "Stop jail $jail"
 	pid=$(cat ${JAILDIR}/${jail}/${SSHD_PID})
 	for conn in $(ps --ppid $pid -o pid=); do
 		kill $conn
@@ -336,7 +330,6 @@ sub_stop() {
 	kill $pid
 	umount --lazy --recursive ${JAILDIR}/${jail}/dev
 	umount --lazy ${JAILDIR}/${jail}/proc/
-	echo "...OK"
 }
 
 sub_reload() {
@@ -350,9 +343,8 @@ sub_reload() {
 		exit 1
 	fi
 
-	echo -n "Reload jail $jail ..."
+	echo "Reload jail $jail"
 	pkill -HUP -F ${JAILDIR}/${jail}/${SSHD_PID}
-	echo "...OK"
 }
 
 sub_status() {
@@ -444,7 +436,7 @@ sub_inc() {
 }
 
 sub_rm() {
-	empty="/tmp/bkctld-$$-$RANDOM/"
+	empty="/tmp/bkctld-${$}-$(date +%N))"
 	mkdir $empty
 	pidfile="/var/run/bkctld-rm.pid"
 	if [ -f "${pidfile}" ]; then
@@ -466,30 +458,28 @@ sub_rm() {
 	for jail in $( ls -1 $JAILDIR ); do
 		incs=$(ls -1 ${INCDIR}/$jail)
 		if [ -f ${CONFDIR}/$jail ]; then
-		        keep=$(
-				while read j; do
-		        	        date=$( echo $j | cut -d. -f1 )
-		                	before=$( echo $j | cut -d. -f2 )
-			                date -d "$(date $date) $before" "+%Y-%m-%d"
-		        	done < ${CONFDIR}/$jail
-			)
+			keepfile="${CONFDIR}/.keep-${jail}"
+			while read j; do
+			        date=$( echo "$j" | cut -d. -f1 )
+			        before=$( echo "$j" | cut -d. -f2 )
+				date -d "$(date "$date") $before" "+%Y-%m-%d"
+			done < "${CONFDIR}/$jail" > "$keepfile"
+			for j in $(echo "${incs}" | grep -v -f "$keepfile"); do
+				start=$(date +"%H:%M:%S")
+				inc_inode=$(stat --format=%i "${INCDIR}/${jail}/${j}")
+				if [ "$inc_inode" -eq 256 ]; then
+				        /sbin/btrfs subvolume delete "${INCDIR}/${jail}/${j}" >/dev/null
+				else
+				        cd "${INCDIR}/$jail"
+				        rsync -a --delete "$empty/" "$j/"
+				        rmdir "$j"
+				fi
+				end=$(date +"%H:%M:%S")
+				rm_log="Delete $j inc of $jail (Start at $start / End at $end)"
+				echo "${rm_log}"
+				rms_logs="${rms_logs} ${rm_log}"
+			done
 		fi
-	        #for j in $( ls ${INCDIR}/$jail ); do
-	        for j in $( grep -v -f <(echo "${keep}") <(echo "${incs}") ); do
-			start=$(date +"%H:%M:%S")
-			inc_inode=$(stat --format=%i ${INCDIR}/${jail}/${j})
-			if [ "$inc_inode" -eq 256 ]; then
-				/sbin/btrfs subvolume delete ${INCDIR}/${jail}/${j} >/dev/null
-			else
-				cd ${INCDIR}/$jail
-			        rsync -a --delete $empty $j*
-			        rmdir $j*
-			fi
-			end=$(date +"%H:%M:%S")
-			rm_log=$(echo "Delete $j inc of $jail (Start at $start / End at $end)")
-			echo "${rm_log}"
-			rms_logs=$(echo "${rms_logs}"; echo "${rm_log}")
-	        done
 	done
 	rmdir $empty
 	rm $pidfile
@@ -521,9 +511,7 @@ main() {
 	    echo "Error, you need to be root to run $0 !" >&2
 	    exit 1
 	fi
-	if [ -f /etc/default/bkctld ]; then
-		source /etc/default/bkctld
-	fi
+	[ -f /etc/default/bkctld ] && . /etc/default/bkctld
 	[ -z "${CONFDIR}" ] && CONFDIR='/etc/evobackup'
 	[ -z "${JAILDIR}" ] && JAILDIR='/backup/jails'
 	[ -z "${INCDIR}" ] && INCDIR='/backup/incs'
