@@ -164,20 +164,20 @@ mk_jail() {
 	[ -f "${LOCALTPLDIR}/passwd" ] && passwd="${LOCALTPLDIR}/passwd"
 	[ -f "${LOCALTPLDIR}/shadow" ] && shadow="${LOCALTPLDIR}/shadow"
 	[ -f "${LOCALTPLDIR}/group" ] && group="${LOCALTPLDIR}/group"
-	umask 022
+	umask 077
 
 	echo "1 - Creating the chroot"
 	cd "${JAILDIR}/${jail}"
-	mkdir -p bin dev etc/ssh lib lib64 proc
-	mkdir -p lib/x86_64-linux-gnu lib/tls/i686/cmov lib/i686/cmov
-	mkdir -p usr/bin usr/lib usr/sbin
-	mkdir -p usr/lib/x86_64-linux-gnu usr/lib/openssh usr/lib/i686/cmov
-	mkdir -p root/.ssh -m 0700
-	mkdir -p var/log var/run/sshd
-	touch var/log/authlog var/log/lastlog var/log/messages var/log/syslog etc/fstab
+	mkdir -p dev proc
+	mkdir -p usr/bin usr/sbin usr/lib usr/lib/x86_64-linux-gnu usr/lib/openssh usr/lib64
+	mkdir -p etc/ssh var/log var/run/sshd
+	mkdir -p root/.ssh var/backup -m 0700
+	ln -s usr/bin bin
+	ln -s usr/lib lib
+	ln -s usr/lib64 lib64
+	touch var/log/lastlog var/log/wtmp var/run/utmp
 
 	echo "2 - Copying essential files"
-	cp /proc/devices proc
 	[ -f /etc/ssh/ssh_host_rsa_key ] && cp /etc/ssh/ssh_host_rsa_key etc/ssh
 	[ -f /etc/ssh/ssh_host_ecdsa_key ] && cp /etc/ssh/ssh_host_ecdsa_key etc/ssh
 	[ -f /etc/ssh/ssh_host_ed25519_key ] && cp /etc/ssh/ssh_host_ed25519_key etc/ssh
@@ -189,7 +189,7 @@ mk_jail() {
 	cp -f /lib/ld-linux.so.2 lib 2>/dev/null || cp -f /lib64/ld-linux-x86-64.so.2 lib64
 	cp /lib/x86_64-linux-gnu/libnss* lib/x86_64-linux-gnu
 
-	for dbin in /bin/bash /bin/cat /bin/chown /bin/mknod /bin/rm /bin/ls /bin/sed /bin/sh /bin/uname /bin/mount /usr/bin/rsync /usr/sbin/sshd /usr/lib/openssh/sftp-server; do
+	for dbin in /bin/sh /bin/ls /bin/mkdir /bin/cat /bin/rm /bin/sed /usr/bin/rsync /usr/sbin/sshd /usr/lib/openssh/sftp-server; do
 		cp -f $dbin ${JAILDIR}/${jail}/$dbin;
 		for lib in $(ldd $dbin | grep -Eo "/.*so.[0-9\.]+"); do
 			cp -p $lib ${JAILDIR}/${jail}/$lib
