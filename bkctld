@@ -178,8 +178,9 @@ mk_jail() {
 
 	echo "2 - Copying essential files"
 	cp /proc/devices proc
-	cp /etc/ssh/ssh_host_rsa_key etc/ssh
-	cp /etc/ssh/ssh_host_dsa_key etc/ssh
+	[ -f /etc/ssh/ssh_host_rsa_key ] && cp /etc/ssh/ssh_host_rsa_key etc/ssh
+	[ -f /etc/ssh/ssh_host_ecdsa_key ] && cp /etc/ssh/ssh_host_ecdsa_key etc/ssh
+	[ -f /etc/ssh/ssh_host_ed25519_key ] && cp /etc/ssh/ssh_host_ed25519_key etc/ssh
 	cp "$passwd" etc
 	cp "$shadow" etc
 	cp "$group" etc
