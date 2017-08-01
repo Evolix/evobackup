@@ -29,6 +29,7 @@ PrintMotd no
 PrintLastLog yes
 TCPKeepAlive yes
 UseLogin no
+UseDNS no
 
 Subsystem sftp /usr/lib/openssh/sftp-server
 
