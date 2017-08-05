@@ -2,4 +2,4 @@
 bkctld usr/sbin
 tpl/* usr/share/bkctld
 docs/zzz_evobackup usr/share/doc/bkctld
-bash_completion => /etc/bash_completion.d/bkctld
+bash_completion => /usr/share/bash_completion/bkctld

@@ -1,3 +1,9 @@
+bkctld (1.3-1) unstable; urgency=medium
+
+  * Convert to non native package
+
+ -- Victor Laborie <vlaborie@evolix.fr>  Sat, 05 Aug 2017 15:51:35 -0400
+
 bkctld (1.3) unstable; urgency=medium
 
   * Fix btrfs support/detection
