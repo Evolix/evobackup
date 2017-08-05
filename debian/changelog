@@ -1,3 +1,14 @@
+bkctld (1.4.4-1) unstable; urgency=medium
+
+  * Posix Compatibility and shellcheck cleaning
+  * Fix jail's sshd logging
+  * Simpler and more secure jail
+  * Use sh instead of bash and permit SSH keys only
+  * Set UseDNS to no in jail's config
+  * Add a basic nrpe check and a licence file
+
+ -- Victor Laborie <vlaborie@evolix.fr>  Sat, 05 Aug 2017 15:56:13 -0400
+
 bkctld (1.3-1) unstable; urgency=medium
 
   * Convert to non native package
