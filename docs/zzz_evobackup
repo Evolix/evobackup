@@ -9,8 +9,8 @@
 #
 
 ## lang = C for english outputs
-LANGUAGE=C
-LANG=C
+export LANGUAGE=C
+export LANG=C
 
 ## Force umask
 umask 077
@@ -18,13 +18,14 @@ umask 077
 ## Verify other evobackup process and kill if needed
 PIDFILE=/var/run/evobackup.pid
 if [ -e $PIDFILE ]; then
+    pid=$(cat "$PIDFILE")
     # Killing the childs of evobackup.
-    for pid in $(ps h --ppid $(cat $PIDFILE) -o pid | tr -s '\n' ' '); do
-        kill -9 $pid;
+    for ppid in $(ps h --ppid "$pid" -o pid | tr -s '\n' ' '); do
+        kill -9 "$ppid";
     done
     # Then kill the main PID.
-    kill -9 $(cat $PIDFILE)
-    echo "$0 tourne encore (PID `cat $PIDFILE`). Processus killé" >&2
+    kill -9 "$pid"
+    echo "$0 tourne encore (PID $pid). Processus killé" >&2
 fi
 echo "$$" > $PIDFILE
 trap "rm -f $PIDFILE" EXIT
@@ -39,7 +40,7 @@ SYSTEM=$(uname | tr '[:upper:]' '[:lower:]')
 MAIL=jdoe@example.com
 
 # Variable to choose different backup server with date
-NODE=$(expr `date +%d` % 2)
+NODE=$(($(date +%d) % 2))
 
 # serveur address for rsync
 SRV="node$NODE.backup.example.com"
@@ -163,7 +164,7 @@ done
 ## Dump process with ps
 ps aux >/home/backup/ps.out
 
-if [ $SYSTEM = "linux" ]; then
+if [ "$SYSTEM" = "linux" ]; then
     ## Dump network connections with netstat
     netstat -taupen >/home/backup/netstat.out
 
@@ -180,11 +181,9 @@ fi
 
 HOSTNAME=$(hostname)
 
-DATE=$(/bin/date +"%d-%m-%Y")
-
 BEGINNING=$(/bin/date +"%d-%m-%Y ; %H:%M")
 
-if [ $SYSTEM = "linux" ]; then
+if [ "$SYSTEM" = "linux" ]; then
     rep="/bin /boot /lib /opt /sbin /usr"
 else
     rep="/bsd /bin /boot /sbin /usr"
@@ -226,7 +225,7 @@ rsync -avzh --stats --delete --delete-excluded --force --ignore-errors --partial
         /home                                          \
         /srv                                           \
     -e "ssh -p $SSH_PORT"                              \
-    root@$SRV:/var/backup/     \
+    "root@$SRV:/var/backup/"                           \
     | tail -30 >> /var/log/evobackup.log
 
 END=$(/bin/date +"%d-%m-%Y ; %H:%M")

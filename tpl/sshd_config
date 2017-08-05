@@ -10,7 +10,7 @@ ServerKeyBits 768
 SyslogFacility AUTH
 LogLevel INFO
 LoginGraceTime 120
-PermitRootLogin yes
+PermitRootLogin without-password
 StrictModes yes
 RSAAuthentication yes
 PubkeyAuthentication yes
@@ -29,6 +29,7 @@ PrintMotd no
 PrintLastLog yes
 TCPKeepAlive yes
 UseLogin no
+UseDNS no
 
 Subsystem sftp /usr/lib/openssh/sftp-server
 
