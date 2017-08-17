@@ -216,7 +216,7 @@ sub_init() {
 	rootdir_inode=$(stat --format=%i "$rootdir")
 	jaildir_inode=$(stat --format=%i $JAILDIR)
 	if [ "$rootdir_inode" -eq 256 ] || [ "$jaildir_inode" -eq 256 ]; then
-		/sbin/btrfs subvolume create ${JAILDIR}/${jail}
+		$BTRFS subvolume create ${JAILDIR}/${jail}
 	else
 		mkdir -p ${JAILDIR}/${jail}
 	fi
@@ -261,7 +261,7 @@ sub_remove() {
 	rm -f ${CONFDIR}/${jail}
 	jail_inode=$(stat --format=%i ${JAILDIR}/${jail})
 	if [ "$jail_inode" -eq 256 ]; then
-		/sbin/btrfs subvolume delete ${JAILDIR}/${jail}
+		$BTRFS subvolume delete ${JAILDIR}/${jail}
 	else
 		rm -rf ${JAILDIR}/${jail}
 	fi
@@ -270,7 +270,7 @@ sub_remove() {
 		for inc in $incs; do
 			inc_inode=$(stat --format=%i ${INCDIR}/${jail}/$inc)
 			if [ "$inc_inode" -eq 256 ]; then
-				/sbin/btrfs subvolume delete ${INCDIR}/${jail}/${inc}
+				$BTRFS subvolume delete ${INCDIR}/${jail}/${inc}
 			else
 				echo "You need to purge ${INCDIR}/${jail}/$inc manually !" >&2
 			fi
@@ -421,7 +421,7 @@ sub_inc() {
 			start=$(date +"%H:%M:%S")
 			jail_inode=$(stat --format=%i ${JAILDIR}/${jail})
 			if [ "$jail_inode" -eq 256 ]; then
-				/sbin/btrfs subvolume snapshot -r ${JAILDIR}/${jail} $inc > /dev/null
+				$BTRFS subvolume snapshot -r ${JAILDIR}/${jail} $inc > /dev/null
 			else
 				cp -alx ${JAILDIR}/${jail}/ $inc
 			fi
@@ -474,7 +474,7 @@ sub_rm() {
 				start=$(date +"%H:%M:%S")
 				inc_inode=$(stat --format=%i "${INCDIR}/${jail}/${j}")
 				if [ "$inc_inode" -eq 256 ]; then
-				        /sbin/btrfs subvolume delete "${INCDIR}/${jail}/${j}" >/dev/null
+				        $BTRFS subvolume delete "${INCDIR}/${jail}/${j}" >/dev/null
 				else
 				        cd "${INCDIR}/$jail"
 				        rsync -a --delete "$empty/" "$j/"
@@ -527,6 +527,7 @@ main() {
 	[ -z "${SSHD_PID}" ] && SSHD_PID='/run/sshd.pid'
 	[ -z "${SSHD_CONFIG}" ] && SSHD_CONFIG='/etc/ssh/sshd_config'
 	[ -z "${AUTHORIZED_KEYS}" ] && AUTHORIZED_KEYS='/root/.ssh/authorized_keys'
+	BTRFS=$(which btrfs)
 	mkdir -p $CONFDIR $JAILDIR $INCDIR
 	subcommand=$1
 	jail=$2
