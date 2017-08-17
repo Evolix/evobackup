@@ -170,12 +170,13 @@ mk_jail() {
 	cd "${JAILDIR}/${jail}"
 	mkdir -p dev proc
 	mkdir -p usr/bin usr/sbin usr/lib usr/lib/x86_64-linux-gnu usr/lib/openssh usr/lib64
-	mkdir -p etc/ssh var/log var/run/sshd
+	mkdir -p etc/ssh var/log run/sshd
 	mkdir -p root/.ssh var/backup -m 0700
 	ln -s usr/bin bin
 	ln -s usr/lib lib
 	ln -s usr/lib64 lib64
-	touch var/log/lastlog var/log/wtmp var/run/utmp
+	ln -s run var/run
+	touch var/log/lastlog var/log/wtmp run/utmp
 
 	echo "2 - Copying essential files"
 	[ -f /etc/ssh/ssh_host_rsa_key ] && cp /etc/ssh/ssh_host_rsa_key etc/ssh
@@ -398,7 +399,7 @@ sub_sync() {
 	fi
 	jail=$1
 	ssh $NODE bkctld init $jail >/dev/null
-	rsync -a ${JAILDIR}/${jail}/ ${NODE}:${JAILDIR}/${jail}/ --exclude proc/* --exclude sys/* --exclude dev/* --exclude var/run/*.pid --exclude var/backup/*
+	rsync -a ${JAILDIR}/${jail}/ ${NODE}:${JAILDIR}/${jail}/ --exclude proc/* --exclude sys/* --exclude dev/* --exclude run --exclude var/backup/*
 	rsync -a ${CONFDIR}/$jail ${NODE}:${CONFDIR}/$jail
 	if ( check_jail_on $jail ); then
 		ssh $NODE bkctld start $jail >/dev/null
@@ -523,7 +524,7 @@ main() {
 	[ -z "${TPLDIR}" ] && TPLDIR='/usr/share/bkctld'
 	[ -z "${LOCALTPLDIR}" ] && LOCALTPLDIR='/usr/local/share/bkctld'
 	[ -z "${LOG_DIR}" ] && LOG_DIR='/var/log'
-	[ -z "${SSHD_PID}" ] && SSHD_PID='/var/run/sshd.pid'
+	[ -z "${SSHD_PID}" ] && SSHD_PID='/run/sshd.pid'
 	[ -z "${SSHD_CONFIG}" ] && SSHD_CONFIG='/etc/ssh/sshd_config'
 	[ -z "${AUTHORIZED_KEYS}" ] && AUTHORIZED_KEYS='/root/.ssh/authorized_keys'
 	mkdir -p $CONFDIR $JAILDIR $INCDIR
