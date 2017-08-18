@@ -106,7 +106,7 @@ set_port() {
 set_key() {
 	jail=$1
 	keyfile=$2
-	if [ -f $keyfile ]; then
+	if [ -e $keyfile ]; then
 		cat $keyfile > ${JAILDIR}/${jail}/${AUTHORIZED_KEYS}
 		chmod 600 ${JAILDIR}/${jail}/${AUTHORIZED_KEYS}
 	else
