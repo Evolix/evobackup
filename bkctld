@@ -171,7 +171,7 @@ mk_jail() {
 	ln -s usr/bin bin
 	ln -s usr/lib lib
 	ln -s usr/lib64 lib64
-	ln -s run var/run
+	ln -st var ../run
 	touch var/log/lastlog var/log/wtmp run/utmp
 
 	echo "2 - Copying essential files"
