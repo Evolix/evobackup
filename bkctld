@@ -166,6 +166,7 @@ mk_jail() {
 
 	echo "1 - Creating the chroot"
 	cd "${JAILDIR}/${jail}"
+	rm -rf bin lib lib64 run usr var/run etc/ssh/*key
 	mkdir -p dev proc
 	mkdir -p usr/bin usr/sbin usr/lib usr/lib/x86_64-linux-gnu usr/lib/openssh usr/lib64
 	mkdir -p etc/ssh var/log run/sshd
