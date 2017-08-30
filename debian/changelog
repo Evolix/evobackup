@@ -1,3 +1,15 @@
+bkctld (1.4.7-1) unstable; urgency=medium
+
+  * Update lastlog even on non interactive ssh (eg. with rsync)
+  * Clean jail before creating it
+  * Use touch instead of lastlog in sshrc
+  * Fix jail cleaning when not running
+  * Add mount check when starting jail
+  * Use -e instead of -f when checking for Keyfile
+  * Fix /var/run to /run symlink
+
+ -- Victor Laborie <vlaborie@evolix.fr>  Wed, 30 Aug 2017 17:31:04 +0200
+
 bkctld (1.4.4-1) unstable; urgency=medium
 
   * Posix Compatibility and shellcheck cleaning
