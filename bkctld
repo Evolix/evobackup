@@ -190,7 +190,7 @@ mk_jail() {
 	cp -f /lib/ld-linux.so.2 lib 2>/dev/null || cp -f /lib64/ld-linux-x86-64.so.2 lib64
 	cp /lib/x86_64-linux-gnu/libnss* lib/x86_64-linux-gnu
 
-	for dbin in /bin/sh /bin/ls /bin/mkdir /bin/cat /bin/rm /bin/sed /usr/bin/rsync /usr/bin/lastlog /usr/sbin/sshd /usr/lib/openssh/sftp-server; do
+	for dbin in /bin/sh /bin/ls /bin/mkdir /bin/cat /bin/rm /bin/sed /usr/bin/rsync /usr/bin/lastlog /usr/bin/touch /usr/sbin/sshd /usr/lib/openssh/sftp-server; do
 		cp -f $dbin ${JAILDIR}/${jail}/$dbin;
 		for lib in $(ldd $dbin | grep -Eo "/.*so.[0-9\.]+"); do
 			cp -p $lib ${JAILDIR}/${jail}/$lib
