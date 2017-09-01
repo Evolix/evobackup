@@ -82,11 +82,9 @@ mkdir -p -m 700 /home/backup
 # mysqlhotcopy BASE /home/mysqlhotcopy/
 
 ## example for multiples MySQL instances
-# mysqladminpasswd=`cat /root/.my.cnf |grep -m1 'password = .*' |cut -d" " -f3`
+# mysqladminpasswd=$(grep -m1 'password = .*' /root/.my.cnf|cut -d" " -f3)
 # grep -E "^port\s*=\s*\d*" /etc/mysql/my.cnf |while read instance; do
-#     instance=$(echo $instance |tr -d '\t')
-#     instance=${instance// /}
-#     instance=${instance//port=/}
+#     instance=$(echo "$instance"|awk '{ print $3 }')
 #     if [ "$instance" != "3306" ]
 #     then
 #         mysqldump -P $instance --opt --all-databases --hex-blob -u mysqladmin -p$mysqladminpasswd > /home/backup/mysql.$instance.bak
@@ -140,7 +138,7 @@ mkdir -p -m 700 /home/backup
 
 ## Dump MBR / table partitions with dd and sfdisk
 ## Linux
-#for disk in $(ls /dev/{s,v}d[a-z] 2>/dev/null); do
+#for disk in $(ls /dev/[sv]d[a-z] 2>/dev/null); do
 #	name=$(basename $disk)
 #	dd if=$disk of=/home/backup/MBR-$name bs=512 count=1 2>&1 | egrep -v "(records in|records out|512 bytes)"
 #	fdisk -l $disk > /home/backup/partitions-$name
