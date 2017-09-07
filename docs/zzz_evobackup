@@ -99,7 +99,7 @@ mkdir -p -m 700 /home/backup
 ## another method with gzip directly piped
 # cd /var/lib/postgresql
 # sudo -u postgres pg_dumpall | gzip > /home/backup/pg.dump.bak.gz
-# cd -
+# cd - > /dev/null
 
 ## example with all tables from MYBASE excepts TABLE1 and TABLE2
 # pg_dump -p 5432 -h 127.0.0.1 -U USER --clean -F t --inserts -f /home/backup/pg-backup.tar -t 'TABLE1' -t 'TABLE2' MYBASE
