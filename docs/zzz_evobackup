@@ -184,7 +184,7 @@ BEGINNING=$(/bin/date +"%d-%m-%Y ; %H:%M")
 if [ "$SYSTEM" = "linux" ]; then
     rep="/bin /boot /lib /opt /sbin /usr"
 else
-    rep="/bsd /bin /boot /sbin /usr"
+    rep="/bsd /bin /sbin /usr"
 fi
 
 rsync -avzh --stats --delete --delete-excluded --force --ignore-errors --partial \
