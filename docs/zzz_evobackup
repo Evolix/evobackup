@@ -33,11 +33,11 @@ trap "rm -f $PIDFILE" EXIT
 # port SSH
 SSH_PORT=2XXX
 
-# choose "linux" or "bsd"
-SYSTEM=$(uname | tr '[:upper:]' '[:lower:]')
-
 # email adress for notifications
 MAIL=jdoe@example.com
+
+# choose "linux" or "bsd"
+SYSTEM=$(uname | tr '[:upper:]' '[:lower:]')
 
 # Variable to choose different backup server with date
 NODE=$(($(date +%d) % 2))
