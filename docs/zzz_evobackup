@@ -216,6 +216,7 @@ rsync -avzh --stats --delete --delete-excluded --force --ignore-errors --partial
     --exclude "/var/lib/amavis/tmp"                    \
     --exclude "/var/lib/clamav/*.tmp"                  \
     --exclude "/home/mysqltmp"                         \
+    --exclude "/var/lib/php/sessions"                  \
         $rep                                           \
         /etc                                           \
         /root                                          \
