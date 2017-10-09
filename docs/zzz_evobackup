@@ -40,7 +40,7 @@ MAIL=jdoe@example.com
 SYSTEM=$(uname | tr '[:upper:]' '[:lower:]')
 
 # Variable to choose different backup server with date
-NODE=$(($(date +%d) % 2))
+NODE=$(($(date +%e) % 2))
 
 # serveur address for rsync
 SRV="node$NODE.backup.example.com"
