@@ -1,8 +1,8 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Script Evobackup client
 # See https://forge.evolix.org/projects/evobackup
-# 
+#
 # Author: Gregory Colpart <reg@evolix.fr>
 # Contributor: Romain Dessort <rdessort@evolix.fr>, Benoît Série <bserie@evolix.fr>, Tristan Pilat <tpilat@evolix.fr>, Victor Laborie <vlaborie@evolix.fr>,  Jérémy Lecour <jlecour@evolix.fr>
 # Licence: AGPLv3
@@ -39,11 +39,15 @@ MAIL=jdoe@example.com
 # choose "linux" or "bsd"
 SYSTEM=$(uname | tr '[:upper:]' '[:lower:]')
 
-# Variable to choose different backup server with date
-NODE=$(($(date +%e) % 2))
-
-# serveur address for rsync
-SRV="node$NODE.backup.example.com"
+# list of backup servers to use
+NODES=(
+    "node0.backup.example.com"
+    "node1.backup.example.com"
+)
+NB_NODES=${#NODES[@]}
+# select a server depending on the current date
+I=$((10#$(date +%d) % ${NB_NODES}))
+SRV=${NODES[$I]}
 
 ## We use /home/backup : feel free to use your own dir
 mkdir -p -m 700 /home/backup
