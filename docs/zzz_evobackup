@@ -17,18 +17,18 @@ umask 077
 
 ## Verify other evobackup process and kill if needed
 PIDFILE=/var/run/evobackup.pid
-if [ -e $PIDFILE ]; then
-    pid=$(cat "$PIDFILE")
+if [ -e ${PIDFILE} ]; then
+    pid=$(cat "${PIDFILE}")
     # Killing the childs of evobackup.
-    for ppid in $(ps h --ppid "$pid" -o pid | tr -s '\n' ' '); do
-        kill -9 "$ppid";
+    for ppid in $(ps h --ppid "${pid}" -o pid | tr -s '\n' ' '); do
+        kill -9 "${ppid}";
     done
     # Then kill the main PID.
-    kill -9 "$pid"
-    echo "$0 tourne encore (PID $pid). Processus killé" >&2
+    kill -9 "${pid}"
+    echo "$0 tourne encore (PID ${pid}). Processus killé" >&2
 fi
-echo "$$" > $PIDFILE
-trap "rm -f $PIDFILE" EXIT
+echo "$$" > ${PIDFILE}
+trap "rm -f ${PIDFILE}" EXIT
 
 # port SSH
 SSH_PORT=2XXX
@@ -47,7 +47,7 @@ NODES=(
 NB_NODES=${#NODES[@]}
 # select a server depending on the current date
 I=$((10#$(date +%d) % ${NB_NODES}))
-SRV=${NODES[$I]}
+SRV=${NODES[${I}]}
 
 ## We use /home/backup : feel free to use your own dir
 mkdir -p -m 700 /home/backup
@@ -64,15 +64,15 @@ mkdir -p -m 700 /home/backup
 ## example with two dumps for each table (.sql/.txt) for all databases
 # for i in $(echo SHOW DATABASES | mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
 # | egrep -v "^(Database|information_schema|performance_schema)" ); \
-# do mkdir -p /home/mysqldump/$i ; chown -RL mysql /home/mysqldump ; \
+# do mkdir -p /home/mysqldump/${i} ; chown -RL mysql /home/mysqldump ; \
 # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 -Q --opt --events --hex-blob --skip-comments -T \
-# /home/mysqldump/$i $i; done
+# /home/mysqldump/${i} ${i}; done
 
 ## example with compressed SQL dump for each databases
 # mkdir -p /home/mysqldump/
 # for i in $(mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 -e 'show databases' -s --skip-column-names \
 # | egrep -v "^(Database|information_schema|performance_schema)"); do
-#     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --events --hex-blob $i | gzip --best > /home/mysqldump/${i}.sql.gz
+#     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --events --hex-blob ${i} | gzip --best > /home/mysqldump/${i}.sql.gz
 # done
 
 ## example with *one* uncompressed SQL dump for *one* database (MYBASE)
@@ -88,10 +88,10 @@ mkdir -p -m 700 /home/backup
 ## example for multiples MySQL instances
 # mysqladminpasswd=$(grep -m1 'password = .*' /root/.my.cnf|cut -d" " -f3)
 # grep -E "^port\s*=\s*\d*" /etc/mysql/my.cnf |while read instance; do
-#     instance=$(echo "$instance"|awk '{ print $3 }')
-#     if [ "$instance" != "3306" ]
+#     instance=$(echo "${instance}"|awk '{ print $3 }')
+#     if [ "${instance}" != "3306" ]
 #     then
-#         mysqldump -P $instance --opt --all-databases --hex-blob -u mysqladmin -p$mysqladminpasswd > /home/backup/mysql.$instance.bak
+#         mysqldump -P ${instance} --opt --all-databases --hex-blob -u mysqladmin -p${mysqladminpasswd} > /home/backup/mysql.${instance}.bak
 #     fi
 # done
 
@@ -143,9 +143,9 @@ mkdir -p -m 700 /home/backup
 ## Dump MBR / table partitions with dd and sfdisk
 ## Linux
 #for disk in $(ls /dev/[sv]d[a-z] 2>/dev/null); do
-#	name=$(basename $disk)
-#	dd if=$disk of=/home/backup/MBR-$name bs=512 count=1 2>&1 | egrep -v "(records in|records out|512 bytes)"
-#	fdisk -l $disk > /home/backup/partitions-$name
+#	name=$(basename ${disk})
+#	dd if=${disk} of=/home/backup/MBR-${name} bs=512 count=1 2>&1 | egrep -v "(records in|records out|512 bytes)"
+#	fdisk -l ${disk} > /home/backup/partitions-${name}
 #done
 #cat /home/backup/partitions-* > /home/backup/partitions
 ## OpenBSD
@@ -159,14 +159,14 @@ uname -a > /home/backup/uname
 
 ## Dump network routes with mtr and traceroute (warning: could be long with aggressive firewalls)
 for addr in 8.8.8.8 www.evolix.fr travaux.evolix.net; do
-    mtr -r $addr > /home/backup/mtr-${addr}
-    traceroute -n $addr > /home/backup/traceroute-${addr}
+    mtr -r ${addr} > /home/backup/mtr-${addr}
+    traceroute -n ${addr} > /home/backup/traceroute-${addr}
 done
 
 ## Dump process with ps
 ps aux >/home/backup/ps.out
 
-if [ "$SYSTEM" = "linux" ]; then
+if [ "${SYSTEM}" = "linux" ]; then
     ## Dump network connections with netstat
     netstat -taupen >/home/backup/netstat.out
 
@@ -185,7 +185,7 @@ HOSTNAME=$(hostname)
 
 BEGINNING=$(/bin/date +"%d-%m-%Y ; %H:%M")
 
-if [ "$SYSTEM" = "linux" ]; then
+if [ "${SYSTEM}" = "linux" ]; then
     rep="/bin /boot /lib /opt /sbin /usr"
 else
     rep="/bsd /bin /sbin /usr"
@@ -221,24 +221,24 @@ rsync -avzh --stats --delete --delete-excluded --force --ignore-errors --partial
     --exclude "/var/lib/clamav/*.tmp"                  \
     --exclude "/home/mysqltmp"                         \
     --exclude "/var/lib/php/sessions"                  \
-        $rep                                           \
+        ${rep}                                           \
         /etc                                           \
         /root                                          \
         /var                                           \
         /home                                          \
         /srv                                           \
-    -e "ssh -p $SSH_PORT"                              \
-    "root@$SRV:/var/backup/"                           \
+    -e "ssh -p ${SSH_PORT}"                              \
+    "root@${SRV}:/var/backup/"                           \
     | tail -30 >> /var/log/evobackup.log
 
 END=$(/bin/date +"%d-%m-%Y ; %H:%M")
 
-echo "EvoBackup - $HOSTNAME - START $BEGINNING"            \
+echo "EvoBackup - ${HOSTNAME} - START ${BEGINNING}"            \
     >> /var/log/evobackup.log
 
-echo "EvoBackup - $HOSTNAME - STOP $END"               \
+echo "EvoBackup - ${HOSTNAME} - STOP ${END}"               \
     >> /var/log/evobackup.log
 
 tail -10 /var/log/evobackup.log |                      \
-    mail -s "[info] EvoBackup - Client $HOSTNAME"      \
-    $MAIL
+    mail -s "[info] EvoBackup - Client ${HOSTNAME}"      \
+    "${MAIL}"
