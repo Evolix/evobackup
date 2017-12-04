@@ -506,7 +506,7 @@ log() {
         if [ $? -eq 0 ]; then
                 sub_${subcommand} "$@" 2>&1 | tee -a $logfile
         else
-                sub_${subcommand} "$@" > $logfile 2>&1
+                sub_${subcommand} "$@" >> $logfile 2>&1
         fi	
 }
 
