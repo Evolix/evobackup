@@ -33,14 +33,14 @@ trap "rm -f $PIDFILE" EXIT
 # port SSH
 SSH_PORT=2XXX
 
-# choose "linux" or "bsd"
-SYSTEM=$(uname | tr '[:upper:]' '[:lower:]')
-
 # email adress for notifications
 MAIL=jdoe@example.com
 
+# choose "linux" or "bsd"
+SYSTEM=$(uname | tr '[:upper:]' '[:lower:]')
+
 # Variable to choose different backup server with date
-NODE=$(($(date +%d) % 2))
+NODE=$(($(date +%e) % 2))
 
 # serveur address for rsync
 SRV="node$NODE.backup.example.com"
@@ -82,11 +82,9 @@ mkdir -p -m 700 /home/backup
 # mysqlhotcopy BASE /home/mysqlhotcopy/
 
 ## example for multiples MySQL instances
-# mysqladminpasswd=`cat /root/.my.cnf |grep -m1 'password = .*' |cut -d" " -f3`
+# mysqladminpasswd=$(grep -m1 'password = .*' /root/.my.cnf|cut -d" " -f3)
 # grep -E "^port\s*=\s*\d*" /etc/mysql/my.cnf |while read instance; do
-#     instance=$(echo $instance |tr -d '\t')
-#     instance=${instance// /}
-#     instance=${instance//port=/}
+#     instance=$(echo "$instance"|awk '{ print $3 }')
 #     if [ "$instance" != "3306" ]
 #     then
 #         mysqldump -P $instance --opt --all-databases --hex-blob -u mysqladmin -p$mysqladminpasswd > /home/backup/mysql.$instance.bak
@@ -101,7 +99,7 @@ mkdir -p -m 700 /home/backup
 ## another method with gzip directly piped
 # cd /var/lib/postgresql
 # sudo -u postgres pg_dumpall | gzip > /home/backup/pg.dump.bak.gz
-# cd -
+# cd - > /dev/null
 
 ## example with all tables from MYBASE excepts TABLE1 and TABLE2
 # pg_dump -p 5432 -h 127.0.0.1 -U USER --clean -F t --inserts -f /home/backup/pg-backup.tar -t 'TABLE1' -t 'TABLE2' MYBASE
@@ -140,7 +138,7 @@ mkdir -p -m 700 /home/backup
 
 ## Dump MBR / table partitions with dd and sfdisk
 ## Linux
-#for disk in $(ls /dev/{s,v}d[a-z] 2>/dev/null); do
+#for disk in $(ls /dev/[sv]d[a-z] 2>/dev/null); do
 #	name=$(basename $disk)
 #	dd if=$disk of=/home/backup/MBR-$name bs=512 count=1 2>&1 | egrep -v "(records in|records out|512 bytes)"
 #	fdisk -l $disk > /home/backup/partitions-$name
@@ -186,7 +184,7 @@ BEGINNING=$(/bin/date +"%d-%m-%Y ; %H:%M")
 if [ "$SYSTEM" = "linux" ]; then
     rep="/bin /boot /lib /opt /sbin /usr"
 else
-    rep="/bsd /bin /boot /sbin /usr"
+    rep="/bsd /bin /sbin /usr"
 fi
 
 rsync -avzh --stats --delete --delete-excluded --force --ignore-errors --partial \
@@ -218,6 +216,7 @@ rsync -avzh --stats --delete --delete-excluded --force --ignore-errors --partial
     --exclude "/var/lib/amavis/tmp"                    \
     --exclude "/var/lib/clamav/*.tmp"                  \
     --exclude "/home/mysqltmp"                         \
+    --exclude "/var/lib/php/sessions"                  \
         $rep                                           \
         /etc                                           \
         /root                                          \
