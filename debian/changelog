@@ -1,3 +1,9 @@
+bkctld (1.4.8-1) unstable; urgency=low
+
+  * Update of zzz_evobackup sample script
+
+ -- Victor Laborie <vlaborie@evolix.fr>  Mon, 04 Dec 2017 10:58:11 +0100
+
 bkctld (1.4.7-1) unstable; urgency=medium
 
   * Update lastlog even on non interactive ssh (eg. with rsync)
