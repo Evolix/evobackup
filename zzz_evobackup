@@ -55,14 +55,14 @@ mkdir -p -m 700 /home/backup
 
 ## example with global and compressed mysqldump
 # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
-# --opt --all-databases --force --events --hex-blob | gzip --best > /home/backup/mysql.bak.gz
+#  --opt --all-databases --force --events --hex-blob | gzip --best > /home/backup/mysql.bak.gz
 
 ## example with two dumps for each table (.sql/.txt) for all databases
 # for i in $(echo SHOW DATABASES | mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
 # | egrep -v "^(Database|information_schema|performance_schema)" ); \
 # do mkdir -p /home/mysqldump/$i ; chown -RL mysql /home/mysqldump ; \
-# mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 -Q --opt --events --hex-blob --skip-comments -T \
-# /home/mysqldump/$i $i; done
+# mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 -Q --opt --events --hex-blob --skip-comments \
+#  --fields-enclosed-by='\"' --fields-terminated-by=',' -T /home/mysqldump/$i $i; done
 
 ## example with compressed SQL dump for each databases
 # mkdir -p /home/mysqldump/
