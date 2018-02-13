@@ -111,6 +111,8 @@ mkdir -p -m 700 /home/backup
 ## don't forget to create use with read-only access
 ## > use admin
 ## > db.createUser( { user: "mongobackup", pwd: "PASS", roles: [ "backup", ] } )
+# test -d /home/backup/mongodump/ && rm -rf /home/backup/mongodump/
+# mkdir -p /home/backup/mongodump/
 # mongodump --quiet -u mongobackup -pPASS -o /home/backup/mongodump/
 # if [ $? -ne 0 ]; then
 #   echo "Error with mongodump!"
