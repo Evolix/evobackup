@@ -67,6 +67,30 @@ Add this ligne
 > If you want mutiples backups in a day (1 by hour maximum) you can run `bkctld inc` multiples times
 > If you want keep incremental backup **for ever**, you just need don't run `bkctld rm`
 
+## Test
+
+You can deploy tests environmments with Vagrant :
+
+~~~
+vagrant up
+~~~
+
+### Deployment
+
+Launch rsync-auto in a terminal for automatic synchronisation of your local code with Vagrant VM :
+
+~~~
+vagrant rsync-auto
+~~~
+
+### Bats
+
+You can run [bats](https://github.com/sstephenson/bats) test with *test* provisionner :
+
+~~~
+vagrant provision --provision-with test
+~~~
+
 ## Usage
 
 ~~~
