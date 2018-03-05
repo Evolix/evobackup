@@ -12,11 +12,11 @@ teardown() {
 }
 
 @test "simple ssh" {
-    ssh -p 2223 -i /root/bkctld.key -oStrictHostKeyChecking=no root@127.0.0.1 lastlog -u root
-    [ "$?" -eq 0 ]
+    run ssh -p 2223 -i /root/bkctld.key -oStrictHostKeyChecking=no root@127.0.0.1 lastlog -u root
+    [ "$status" -eq 0 ]
 }
 
 @test "rsync" {
-    rsync -a -e "ssh -p 2223 -i /root/bkctld.key -oStrictHostKeyChecking=no" /tmp/ root@127.0.0.1:/var/backup/
-    [ "$?" -eq 0 ]
+    run rsync -a -e "ssh -p 2223 -i /root/bkctld.key -oStrictHostKeyChecking=no" /tmp/ root@127.0.0.1:/var/backup/
+    [ "$status" -eq 0 ]
 }
