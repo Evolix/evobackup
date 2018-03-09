@@ -122,13 +122,20 @@ mkdir -p -m 700 /home/backup
 # cp /var/lib/redis/dump.rdb /home/backup/
 
 ## ElasticSearch : example with rsync (warning: don't forget to use NFS if you have a cluster)
+# DATE=$(date +%F)
 ## Disable ES translog flush
 # curl -s -XPUT 'localhost:9200/_settings' -d '{"index.translog.disable_flush": true}' >/dev/null
-## Flushes translog
-# curl -s 'localhost:9200/_flush' | grep -qe '"ok":true'
-## If it succeed, do an rsync of the datadir
+## Flushes translog and check if snapshot has not already been made today
+# curl -s 'localhost:9200/_flush' | grep -qe '"ok":true' &&
+# curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/snapshot_${DATE}" | grep -qv 404
+## If it succeed, do a snapshot and remove old ones
 # if [ $? -eq 0 ]; then
-#     rsync -a /var/lib/elasticsearch /home/backup/
+#     curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot_${DATE}?wait_for_completion=true" -o /tmp/es_snapshot_${DATE}.log
+#     cd /home/backup-elasticsearch/snaprepo
+#     for i in $(curl -s -XGET "localhost:9200/_snapshot/snaprepo/_all?pretty=true" | grep '^ *"snapshot" : "snapshot_.*",$' | cut -d_ -f2 | sed 's/",$//' | head -n-10); do
+#         curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/snapshot_${i}"
+#     done
+#     cd -
 # else
 #     echo "Error when flushing ES translog indexes."
 # fi
