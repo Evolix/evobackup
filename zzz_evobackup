@@ -123,7 +123,6 @@ mkdir -p -m 700 /home/backup
 
 ## ElasticSearch : example with rsync (warning: don't forget to use NFS if you have a cluster)
 # DATE=$(date +%F)
-##  If it succeed, do a snapshot and remove old ones
 # curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot_${DATE}?wait_for_completion=true" -o /tmp/es_snapshot_${DATE}.log
 # for i in $(curl -s -XGET "localhost:9200/_snapshot/snaprepo/_all?pretty=true" | grep '^ *"snapshot" : "snapshot_.*",$' | cut -d_ -f2 | sed 's/",$//' | head -n-10); do
 #     curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/snapshot_${i}"
