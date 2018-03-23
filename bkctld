@@ -312,7 +312,7 @@ sub_start() {
 	mkdir -p dev/shm
 	grep -q "${JAILDIR}/${jail}/dev/pts" /proc/mounts || mount -t devpts -o gid=4,mode=620 none dev/pts
 	grep -q "${JAILDIR}/${jail}/dev/shm" /proc/mounts || mount -t tmpfs none dev/shm
-	chroot "${JAILDIR}/${jail}" /usr/sbin/sshd -E /var/log/authlog
+	chroot "${JAILDIR}/${jail}" /usr/sbin/sshd
 }
 
 sub_stop() {
