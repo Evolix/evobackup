@@ -138,24 +138,16 @@ Dir for surcharge jail templates.
 default : /usr/local/share/bkctld
 .RE
 .PP
-LOG_DIR
+LOGLEVEL
 .RS 4
-Emplacement of log directory.
+Define loglevel, based on syslog severity level
 .RE
 .RS 4
-default : /var/log
+default : 6
 .RE
 .PP
 .SH OPTIONALS VARS
 Optionnals vars are no default value. No set them desactivate correspondant fonctionnality.
-.RE
-.PP
-NOTIF_MAIL
-.RS 4
-Mail address were notification mail will be set.
-.RE
-.RS 4
-Default : no mail notification
 .RE
 .PP
 FIREWALL_RULES
