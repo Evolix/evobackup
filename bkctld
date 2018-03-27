@@ -353,8 +353,7 @@ sub_reload() {
 
     pid=$(cat "${JAILDIR}/${jail}/${SSHD_PID}")
 
-    pkill -HUP "${pid}"
-    notice "${jail} was reloaded [${pid}]"
+    kill -HUP "${pid}" && notice "${jail} was reloaded [${pid}]"
 }
 
 sub_status() {
