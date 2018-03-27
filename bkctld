@@ -84,102 +84,102 @@ check_jail() {
 }
 
 check_jail_on() {
-    jail=$1
+    jail="${1}"
     return=1
-    if [ -f ${JAILDIR}/${jail}/${SSHD_PID} ]; then
-        pid=$(cat ${JAILDIR}/${jail}/${SSHD_PID})
-        ps -p $pid > /dev/null && return=0
+    if [ -f "${JAILDIR}/${jail}/${SSHD_PID}" ]; then
+        pid=$(cat "${JAILDIR}/${jail}/${SSHD_PID}")
+        ps -p "${pid}" > /dev/null && return=0
     fi
-    if [ "$return" -eq 1 ]; then
-        rm -f ${JAILDIR}/${jail}/${SSHD_PID}
-        grep -q "${JAILDIR}/${jail}/proc" /proc/mounts && umount --lazy ${JAILDIR}/${jail}/proc/
-        grep -q "${JAILDIR}/${jail}/dev" /proc/mounts && umount --lazy --recursive ${JAILDIR}/${jail}/dev
+    if [ "${return}" -eq 1 ]; then
+        rm -f "${JAILDIR}/${jail}/${SSHD_PID}"
+        grep -q "${JAILDIR}/${jail}/proc" /proc/mounts && umount --lazy "${JAILDIR}/${jail}/proc/"
+        grep -q "${JAILDIR}/${jail}/dev" /proc/mounts && umount --lazy --recursive "${JAILDIR}/${jail}/dev"
     fi
-    return "$return"
+    return "${return}"
 }
 
 ## get functions : get info on jail
 
 get_port() {
-    jail=$1
-    port=$(grep -E "Port [0-9]+" ${JAILDIR}/${jail}/${SSHD_CONFIG}|grep -oE "[0-9]+")
-    echo $port
+    jail="${1}"
+    port=$(grep -E "Port [0-9]+" "${JAILDIR}/${jail}/${SSHD_CONFIG}"|grep -oE "[0-9]+")
+    echo "${port}"
 }
 
 get_key() {
-    jail=$1
-    if [ -f ${JAILDIR}/${jail}/${AUTHORIZED_KEYS} ]; then
-        cat ${JAILDIR}/${jail}/${AUTHORIZED_KEYS}
+    jail="${1}"
+    if [ -f "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}" ]; then
+        cat "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}"
     fi
 }
 
 get_ip() {
-    jail=$1
+    jail="${1}"
     grep -E "^AllowUsers" "${JAILDIR}/$jail/${SSHD_CONFIG}"|grep -Eo "root@[^ ]+"| while read allow; do
-        echo "$allow"|cut -d'@' -f2
+        echo "${allow}"|cut -d'@' -f2
     done
 }
 
 get_inc() {
-    jail=$1
+    jail="${1}"
     inc="0"
-        if [ -f ${CONFDIR}/${jail} ]; then
-            day=$(grep -c "day" ${CONFDIR}/${jail})
-            month=$(grep -c "month" ${CONFDIR}/${jail})
+        if [ -f "${CONFDIR}/${jail}" ]; then
+            day=$(grep -c "day" "${CONFDIR}/${jail}")
+            month=$(grep -c "month" "${CONFDIR}/${jail}")
             inc="${day}/${month}"
         fi
-    echo $inc
+    echo "${inc}"
 }
 
 ## set functions : set info on jail
 
 set_port() {
-    jail=$1
-    port=$2
-    if [ "$port" = "auto" ]; then
-        port=$(grep -h Port ${JAILDIR}/*/${SSHD_CONFIG} 2>/dev/null | grep -Eo "[0-9]+" | sort -n | tail -1)
+    jail="${1}"
+    port="${2}"
+    if [ "${port}" = "auto" ]; then
+        port=$(grep -h Port "${JAILDIR}"/*/"${SSHD_CONFIG}" 2>/dev/null | grep -Eo "[0-9]+" | sort -n | tail -1)
         port=$((port+1))
         [ "${port}" -le 1 ] && port=2222
     fi
-    sed -i "s/^Port .*/Port ${port}/" ${JAILDIR}/$jail/${SSHD_CONFIG}
-    set_firewall $jail
+    sed -i "s/^Port .*/Port ${port}/" "${JAILDIR}/$jail/${SSHD_CONFIG}"
+    set_firewall "${jail}"
 }
 
 set_key() {
-    jail=$1
-    keyfile=$2
-    [ -e "${keyfile}" ] || error "Keyfile $keyfile dosen't exist !"
-    cat $keyfile > ${JAILDIR}/${jail}/${AUTHORIZED_KEYS}
-    chmod 600 ${JAILDIR}/${jail}/${AUTHORIZED_KEYS}
+    jail="${1}"
+    keyfile="${2}"
+    [ -e "${keyfile}" ] || error "Keyfile ${keyfile} dosen't exist !"
+    cat "${keyfile}" > "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}"
+    chmod 600 "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}"
 }
 
 set_ip() {
-    jail=$1
-    ip=$2
-    if [ "$ip" = "all" ] || [ "$ip" = "0.0.0.0/0" ]; then
+    jail="${1}"
+    ip="${2}"
+    if [ "${ip}" = "all" ] || [ "${ip}" = "0.0.0.0/0" ]; then
         ips="0.0.0.0/0"
     else
-        ips=$(get_ip $jail)
-        ips=$(echo $ips $ip|xargs -n1|grep -v "0.0.0.0/0"|sort|uniq)
+        ips=$(get_ip "${jail}")
+        ips=$(echo "${ips}" "${ip}"|xargs -n1|grep -v "0.0.0.0/0"|sort|uniq)
     fi
     allow="AllowUsers"
     for ip in $ips; do
-        allow="$allow root@${ip}"
+        allow="${allow} root@${ip}"
     done
-    sed -i "s~^AllowUsers .*~${allow}~" ${JAILDIR}/$jail/${SSHD_CONFIG}
-    set_firewall $jail
+    sed -i "s~^AllowUsers .*~${allow}~" "${JAILDIR}/$jail/${SSHD_CONFIG}"
+    set_firewall "${jail}"
 }
 
 set_firewall() {
-    jail=$1
+    jail="${1}"
     if [ -n "${FIREWALL_RULES}" ]; then
-        if [ -f $FIREWALL_RULES ]; then
-            sed -i "/#${jail}$/d" $FIREWALL_RULES
+        if [ -f "${FIREWALL_RULES}" ]; then
+            sed -i "/#${jail}$/d" "${FIREWALL_RULES}"
         fi
-        if ( check_jail $jail ); then
-            port=$(get_port $jail)
-            for ip in $(get_ip $jail); do
-                echo "/sbin/iptables -A INPUT -p tcp --sport 1024: --dport $port -s $ip -j ACCEPT #$jail" >> $FIREWALL_RULES
+        if ( check_jail "${jail}" ); then
+            port=$(get_port "${jail}")
+            for ip in $(get_ip "${jail}"); do
+                echo "/sbin/iptables -A INPUT -p tcp --sport 1024: --dport ${port} -s ${ip} -j ACCEPT #${jail}" >> "${FIREWALL_RULES}"
             done
             if [ -f /etc/init.d/minifirewall ]; then
                 /etc/init.d/minifirewall restart >/dev/null
@@ -191,7 +191,7 @@ set_firewall() {
 ## mk_jail function : create or update a jail
 
 mk_jail() {
-    jail=$1
+    jail="${1}"
     passwd="${TPLDIR}/passwd"
     shadow="${TPLDIR}/shadow"
     group="${TPLDIR}/group"
@@ -219,19 +219,19 @@ mk_jail() {
     [ -f /etc/ssh/ssh_host_rsa_key ] && cp /etc/ssh/ssh_host_rsa_key etc/ssh
     [ -f /etc/ssh/ssh_host_ecdsa_key ] && cp /etc/ssh/ssh_host_ecdsa_key etc/ssh
     [ -f /etc/ssh/ssh_host_ed25519_key ] && cp /etc/ssh/ssh_host_ed25519_key etc/ssh
-    cp "$passwd" etc
-    cp "$shadow" etc
-    cp "$group" etc
-    cp "$sshrc" etc/ssh
+    cp "${passwd}" etc
+    cp "${shadow}" etc
+    cp "${group}" etc
+    cp "${sshrc}" etc/ssh
 
     info "3 - Copying binaries"
     cp -f /lib/ld-linux.so.2 lib 2>/dev/null || cp -f /lib64/ld-linux-x86-64.so.2 lib64
     cp /lib/x86_64-linux-gnu/libnss* lib/x86_64-linux-gnu
 
     for dbin in /bin/sh /bin/ls /bin/mkdir /bin/cat /bin/rm /bin/sed /usr/bin/rsync /usr/bin/lastlog /usr/bin/touch /usr/sbin/sshd /usr/lib/openssh/sftp-server; do
-        cp -f $dbin ${JAILDIR}/${jail}/$dbin;
-        for lib in $(ldd $dbin | grep -Eo "/.*so.[0-9\.]+"); do
-            cp -p $lib ${JAILDIR}/${jail}/$lib
+        cp -f "${dbin}" "${JAILDIR}/${jail}/${dbin}";
+        for lib in $(ldd "${dbin}" | grep -Eo "/.*so.[0-9\.]+"); do
+            cp -p "${lib}" "${JAILDIR}/${jail}/${lib}"
         done
     done
 }
@@ -239,73 +239,73 @@ mk_jail() {
 ## sub functions : functions call by subcommand
   
 sub_init() {
-    jail=$1
+    jail="${1}"
     sshd_config="${TPLDIR}/sshd_config"
     inctpl="${TPLDIR}/inc.tpl"
     [ -f "${LOCALTPLDIR}/sshd_config" ] && sshd_config="${LOCALTPLDIR}/sshd_config"
     [ -f "${LOCALTPLDIR}/inc.tpl" ] && inctpl="${LOCALTPLDIR}/inc.tpl"
-    check_jail $jail && error "${jail} : trying to create existant jail"
+    check_jail "${jail}" && error "${jail} : trying to create existant jail"
 
-    rootdir=$(dirname "$JAILDIR")
-    rootdir_inode=$(stat --format=%i "$rootdir")
-    jaildir_inode=$(stat --format=%i $JAILDIR)
-    if [ "$rootdir_inode" -eq 256 ] || [ "$jaildir_inode" -eq 256 ]; then
-        $BTRFS subvolume create ${JAILDIR}/${jail}
+    rootdir=$(dirname "${JAILDIR}")
+    rootdir_inode=$(stat --format=%i "${rootdir}")
+    jaildir_inode=$(stat --format=%i "${JAILDIR}")
+    if [ "${rootdir_inode}" -eq 256 ] || [ "${jaildir_inode}" -eq 256 ]; then
+        "${BTRFS}" subvolume create "${JAILDIR}/${jail}"
     else
-        mkdir -p ${JAILDIR}/${jail}
+        mkdir -p "${JAILDIR}/${jail}"
     fi
-    mk_jail $jail
+    mk_jail "${jail}"
     info "4 - Copie default sshd_config"
-    install -m 0640 $sshd_config ${JAILDIR}/$jail/${SSHD_CONFIG}
+    install -m 0640 "${sshd_config}" "${JAILDIR}/${jail}/${SSHD_CONFIG}"
     info "5 - Set usable sshd port"
-    set_port $jail auto
+    set_port "${jail}" auto
     info "6 - Copie default inc configuration"
-    install -m 0640 $inctpl ${CONFDIR}/$jail
+    install -m 0640 "${inctpl}" "${CONFDIR}/${jail}"
     notice "${jail} : created jail"
 }
 
 sub_update() {
-    jail=$1
-    check_jail $jail || error "${jail} : trying to update inexistant jail"
-    check_jail_on $jail && sub_stop $jail
+    jail="${1}"
+    check_jail "${jail}" || error "${jail} : trying to update inexistant jail"
+    check_jail_on "${jail}" && sub_stop "${jail}"
 
-    mk_jail $jail
+    mk_jail "${jail}"
     notice "${jail} : updated jail"
 }
 
 sub_remove() {
-    jail=$1
-    check_jail $jail || error "${jail} : trying to remove inexistant jail"
+    jail="${1}"
+    check_jail "${jail}" || error "${jail} : trying to remove inexistant jail"
 
-    check_jail_on $jail && sub_stop $jail
+    check_jail_on "${jail}" && sub_stop "${jail}"
     
-    rm -f ${CONFDIR}/${jail}
-    jail_inode=$(stat --format=%i ${JAILDIR}/${jail})
-    if [ "$jail_inode" -eq 256 ]; then
-        $BTRFS subvolume delete ${JAILDIR}/${jail} | debug
+    rm -f "${CONFDIR}/${jail}"
+    jail_inode=$(stat --format=%i "${JAILDIR}/${jail}")
+    if [ "${jail_inode}" -eq 256 ]; then
+        "${BTRFS}" subvolume delete "${JAILDIR}/${jail}" | debug
     else
-        rm -rf ${JAILDIR}/${jail} | debug
+        rm -rf "${JAILDIR}/${jail}" | debug
     fi
-    if [ -d  ${INCDIR}/${jail} ]; then
-        incs=$(ls ${INCDIR}/${jail})
-        for inc in $incs; do
-            inc_inode=$(stat --format=%i ${INCDIR}/${jail}/$inc)
-            if [ "$inc_inode" -eq 256 ]; then
-                $BTRFS subvolume delete ${INCDIR}/${jail}/${inc} | debug
+    if [ -d  "${INCDIR}/${jail}" ]; then
+        incs=$(ls "${INCDIR}/${jail}")
+        for inc in ${incs}; do
+            inc_inode=$(stat --format=%i "${INCDIR}/${jail}/${inc}")
+            if [ "${inc_inode}" -eq 256 ]; then
+                "${BTRFS}" subvolume delete "${INCDIR}/${jail}/${inc}" | debug
             else
-                warning "You need to purge ${INCDIR}/${jail}/$inc manually !"
+                warning "You need to purge ${INCDIR}/${jail}/${inc} manually !"
             fi
         done
-        rmdir --ignore-fail-on-non-empty ${INCDIR}/${jail} | debug
+        rmdir --ignore-fail-on-non-empty "${INCDIR}/${jail}" | debug
     fi
-    set_firewall $jail
+    set_firewall "${jail}"
     notice "${jail} : deleted jail"
 }
 
 sub_start() {
-    jail=$1
-    check_jail $jail || error "${jail} : trying to start inexistant jail"
-    check_jail_on $jail && error "${jail} : trying to start already running jail"
+    jail="${1}"
+    check_jail "${jail}" || error "${jail} : trying to start inexistant jail"
+    check_jail_on "${jail}" && error "${jail} : trying to start already running jail"
 
     cd "${JAILDIR}/${jail}"
     grep -q "${JAILDIR}/${jail}/proc" /proc/mounts || mount -t proc "proc-${jail}" proc
@@ -333,23 +333,23 @@ sub_start() {
 }
 
 sub_stop() {
-    jail=$1
-    check_jail $jail || error "${jail} : trying to stop inexistant jail"
-    check_jail_on $jail || error "${jail} : trying to stop not running jail"
+    jail="${1}"
+    check_jail "${jail}" || error "${jail} : trying to stop inexistant jail"
+    check_jail_on "${jail}" || error "${jail} : trying to stop not running jail"
 
-    pid=$(cat ${JAILDIR}/${jail}/${SSHD_PID})
-    for conn in $(ps --ppid $pid -o pid=); do
-        kill $conn
+    pid=$(cat "${JAILDIR}/${jail}/${SSHD_PID}")
+    for conn in $(ps --ppid "${pid}" -o pid=); do
+        kill "${conn}"
     done
-    kill $pid && notice "${jail} was stopped [${pid}]"
-    umount --lazy --recursive ${JAILDIR}/${jail}/dev
-    umount --lazy ${JAILDIR}/${jail}/proc/
+    kill "${pid}" && notice "${jail} was stopped [${pid}]"
+    umount --lazy --recursive "${JAILDIR}/${jail}/dev"
+    umount --lazy "${JAILDIR}/${jail}/proc/"
 }
 
 sub_reload() {
-    jail=$1
-    check_jail $jail || error "${jail} : trying to reload inexistant jail"
-    check_jail_on $jail || error "${jail} : trying to reload not running jail"
+    jail="${1}"
+    check_jail "${jail}" || error "${jail} : trying to reload inexistant jail"
+    check_jail_on "${jail}" || error "${jail} : trying to reload not running jail"
 
     pid=$(cat "${JAILDIR}/${jail}/${SSHD_PID}")
 
@@ -358,69 +358,69 @@ sub_reload() {
 }
 
 sub_status() {
-    jail=$1
-    check_jail $jail || error "${jail} : inexistant jail ! Use '$0 status' for list all"
+    jail="${1}"
+    check_jail "${jail}" || error "${jail} : inexistant jail ! Use '$0 status' for list all"
 
-    inc=$(get_inc $jail)
-    if ( check_jail_on $jail ); then
+    inc=$(get_inc "${jail}")
+    if ( check_jail_on "${jail}" ); then
         status="ON "
     else
         status="OFF"
     fi
-    port=$(get_port $jail)
-    ip=$(get_ip $jail|xargs|tr -s ' ' ',')
-    echo "$jail $status $port $inc $ip" | awk '{ printf("%- 30s %- 10s %- 10s %- 10s %- 40s\n", $1, $2, $3, $4, $5); }'
+    port=$(get_port "${jail}")
+    ip=$(get_ip "${jail}"|xargs|tr -s ' ' ',')
+    echo "${jail} ${status} ${port} ${inc} ${ip}" | awk '{ printf("%- 30s %- 10s %- 10s %- 10s %- 40s\n", $1, $2, $3, $4, $5); }'
 }
 
 sub_params() {
-    jail=$1
-    params=$2
-    option=$3
-    check_jail $jail || error "${jail} : inexistant jail'"
+    jail="${1}"
+    params="${2}"
+    option="${3}"
+    check_jail "${jail}" || error "${jail} : inexistant jail'"
 
     if [ -z "${option}" ]; then
-        get_${params} $jail
+        "get_${params}" "${jail}"
     else
-        set_${params} $jail $option
-        notice "${jail} : update $params => $option"
+        "set_${params}" "${jail}" "${option}"
+        notice "${jail} : update ${params} => ${option}"
     fi
 }
 
 sub_sync() {
-    jail=$1
-    check_jail $jail || error "${jail} : trying to sync inexistant jail"
+    jail="${1}"
+    check_jail "${jail}" || error "${jail} : trying to sync inexistant jail"
 
     [ -n "${NODE}" ] || error "Sync need config of \$NODE in /etc/default/bkctld !"
 
-    jail=$1
-    ssh $NODE bkctld init $jail | debug
-    rsync -a ${JAILDIR}/${jail}/ ${NODE}:${JAILDIR}/${jail}/ --exclude proc/* --exclude sys/* --exclude dev/* --exclude run --exclude var/backup/*
-    rsync -a ${CONFDIR}/$jail ${NODE}:${CONFDIR}/$jail
-    if ( check_jail_on $jail ); then
-        ssh $NODE bkctld start $jail | debug
+    jail="${1}"
+    ssh "${NODE}" bkctld init "${jail}" | debug
+    rsync -a "${JAILDIR}/${jail}/" "${NODE}:${JAILDIR}/${jail}/" --exclude proc/* --exclude sys/* --exclude dev/* --exclude run --exclude var/backup/*
+    rsync -a "${CONFDIR}/${jail}" "${NODE}:${CONFDIR}/${jail}"
+    if ( check_jail_on "${jail}" ); then
+        ssh "${NODE}" bkctld start "${jail}" | debug
     fi
     if [ -n "${FIREWALL_RULES}" ]; then
-        rsync -a ${FIREWALL_RULES} ${NODE}:${FIREWALL_RULES}
-        ssh $NODE /etc/init.d/minifirewall restart | debug
+        rsync -a "${FIREWALL_RULES}" "${NODE}:${FIREWALL_RULES}"
+        ssh "${NODE}" /etc/init.d/minifirewall restart | debug
     fi
 }
 
 sub_inc() {
     date=$(date +"%Y-%m-%d-%H")
-    jails=$(ls $JAILDIR)
-    for jail in $jails; do
+    jails=$(ls "${JAILDIR}")
+    for jail in ${jails}; do
         inc="${INCDIR}/${jail}/${date}"
-        mkdir -p ${INCDIR}/${jail}
+        mkdir -p "${INCDIR}/${jail}"
         if [ ! -d "${inc}" ]; then
             start=$(date +"%H:%M:%S")
-            jail_inode=$(stat --format=%i ${JAILDIR}/${jail})
+            jail_inode=$(stat --format=%i "${JAILDIR}/${jail}")
             if [ "$jail_inode" -eq 256 ]; then
-                $BTRFS subvolume snapshot -r ${JAILDIR}/${jail} $inc | debug
+                "${BTRFS}" subvolume snapshot -r "${JAILDIR}/${jail}" "${inc}" | debug
             else
-                cp -alx ${JAILDIR}/${jail}/ $inc | debug
+                cp -alx "${JAILDIR}/${jail}/" "${inc}" | debug
             fi
             end=$(date +"%H:%M:%S")
-            notice "${jail} : made $date inc [$start/$end]"
+            notice "${jail} : made ${date} inc [${start}/${end}]"
         else
             warning "${jail} : trying to made already existant inc"
         fi
@@ -429,52 +429,51 @@ sub_inc() {
 
 sub_rm() {
     empty="/tmp/bkctld-${$}-$(date +%N))"
-    mkdir $empty
+    mkdir "${empty}"
     pidfile="/var/run/bkctld-rm.pid"
     if [ -f "${pidfile}" ]; then
-        pid=$(cat $pidfile)
-        ps -u $pid >/dev/null
-        if [ $? -eq 0 ]; then
-            kill -9 $pid
-            warning "$0 rm always run (PID $pid), killed by $$ !"
+        pid=$(cat "${pidfile}")
+        ps -u "${pid}" >/dev/null
+        if [ "${?}" -eq 0 ]; then
+            kill -9 "${pid}"
+            warning "${0} rm always run (PID ${pid}), killed by ${$} !"
         fi
-        rm $pidfile
+        rm "${pidfile}"
         fi
-    echo $$ > $pidfile
-    rms_logs=""
-    jails=$(ls $JAILDIR)
-    for jail in $jails; do
-        incs=$(ls ${INCDIR}/$jail)
-        if [ -f ${CONFDIR}/$jail ]; then
+    echo "${$}" > "${pidfile}"
+    jails=$(ls "${JAILDIR}")
+    for jail in ${jails}; do
+        incs=$(ls "${INCDIR}/${jail}")
+        if [ -f "${CONFDIR}/${jail}" ]; then
             keepfile="${CONFDIR}/.keep-${jail}"
             while read j; do
-                date=$( echo "$j" | cut -d. -f1 )
-                before=$( echo "$j" | cut -d. -f2 )
-                date -d "$(date "$date") $before" "+%Y-%m-%d"
-            done < "${CONFDIR}/$jail" > "$keepfile"
-            for j in $(echo "${incs}" | grep -v -f "$keepfile"); do
+                date=$( echo "${j}" | cut -d. -f1 )
+                before=$( echo "${j}" | cut -d. -f2 )
+                date -d "$(date "${date}") ${before}" "+%Y-%m-%d"
+            done < "${CONFDIR}/${jail}" > "${keepfile}"
+            for j in $(echo "${incs}" | grep -v -f "${keepfile}"); do
                 start=$(date +"%H:%M:%S")
                 inc_inode=$(stat --format=%i "${INCDIR}/${jail}/${j}")
-                if [ "$inc_inode" -eq 256 ]; then
-                    $BTRFS subvolume delete "${INCDIR}/${jail}/${j}" | debug
+                if [ "${inc_inode}" -eq 256 ]; then
+                    "${BTRFS}" subvolume delete "${INCDIR}/${jail}/${j}" | debug
                 else
-                    cd "${INCDIR}/$jail"
-                    rsync -a --delete "$empty/" "$j/"
-                    rmdir "$j"
+                    cd "${INCDIR}/${jail}"
+                    rsync -a --delete "${empty}/" "${j}/"
+                    rmdir "${j}"
                 fi
                 end=$(date +"%H:%M:%S")
-                notice "${jail} : deleted $j inc [$start/$end]"
+                notice "${jail} : deleted ${j} inc [${start}/${end}]"
             done
         fi
     done
-    rmdir $empty
-    rm $pidfile
+    rmdir "${empty}"
+    rm "${pidfile}"
 }
 
 ## main function : check usage and valid params
 
 main() {
-    [ "$(id -u)" -ne 0 ] && error "You need to be root to run $0 !"
+    [ "$(id -u)" -ne 0 ] && error "You need to be root to run ${0} !"
 
     [ -f /etc/default/bkctld ] && . /etc/default/bkctld
     CONFDIR="${CONFDIR:-/etc/evobackup}"
@@ -501,14 +500,14 @@ main() {
         ;;
             "init")
         if [ -n "${jail}" ]; then
-            "sub_${subcommand}" $jail
+            "sub_${subcommand}" "${jail}"
         else
             usage
         fi
         ;;
         "key" | "port" | "ip")
         if [ -n "${jail}" ]; then
-            sub_params $jail $subcommand $option
+            sub_params "${jail}" "${subcommand}" "${option}"
         else
             usage
         fi
@@ -516,30 +515,30 @@ main() {
         "start" | "stop" | "reload" | "restart" | "sync" | "update" | "remove")
         if [ -n "${jail}" ]; then
             if [ "${jail}" = "all" ]; then
-                jails=$(ls $JAILDIR)
-                for jail in $jails; do
-                    case $subcommand in
+                jails=$(ls "${JAILDIR}")
+                for jail in ${jails}; do
+                    case "${subcommand}" in
                         "start")
-                            check_jail_on $jail || "sub_${subcommand}" $jail
+                            check_jail_on "${jail}" || "sub_${subcommand}" "${jail}"
                         ;;
                         "stop" | "reload")
-                            check_jail_on $jail && "sub_${subcommand}" $jail
+                            check_jail_on "${jail}" && "sub_${subcommand}" "${jail}"
                         ;;
                         "restart")
-                            check_jail_on $jail && sub_stop $jail
-                            sub_start $jail
+                            check_jail_on "${jail}" && sub_stop "${jail}"
+                            sub_start "${jail}"
                         ;;
                         *)
-                            "sub_${subcommand}" $jail
+                            "sub_${subcommand}" "${jail}"
                         ;;
                     esac
                         done
             else
                 if [ "${subcommand}" != "restart" ]; then
-                    "sub_${subcommand}" $jail
+                    "sub_${subcommand}" "${jail}"
                 else
-                    check_jail_on $jail && sub_stop $jail
-                    sub_start $jail
+                    check_jail_on "${jail}" && sub_stop "${jail}"
+                    sub_start "${jail}"
                 fi
             fi
         else
@@ -548,12 +547,12 @@ main() {
         ;;
         "status")
         if [ -z "${jail}" ]; then
-            jails=$(ls $JAILDIR)
-            for jail in $jails; do
-                "sub_${subcommand}" $jail
+            jails=$(ls "${JAILDIR}")
+            for jail in ${jails}; do
+                "sub_${subcommand}" "${jail}"
             done
         else
-            "sub_${subcommand}" $jail
+            "sub_${subcommand}" "${jail}"
         fi
         ;;
         *)
@@ -564,4 +563,4 @@ main() {
     esac
 }
 
-main "$@"
+main "${@}"
