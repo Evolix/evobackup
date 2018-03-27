@@ -8,6 +8,8 @@
 # Licence: AGPLv3
 #
 
+set -u
+
 usage(){
     cat <<EOF
 Usage: $0 <subcommand> [options]
@@ -475,21 +477,22 @@ main() {
     [ "$(id -u)" -ne 0 ] && error "You need to be root to run $0 !"
 
     [ -f /etc/default/bkctld ] && . /etc/default/bkctld
-    [ -z "${CONFDIR}" ] && CONFDIR='/etc/evobackup'
-    [ -z "${JAILDIR}" ] && JAILDIR='/backup/jails'
-    [ -z "${INCDIR}" ] && INCDIR='/backup/incs'
-    [ -z "${TPLDIR}" ] && TPLDIR='/usr/share/bkctld'
-    [ -z "${LOCALTPLDIR}" ] && LOCALTPLDIR='/usr/local/share/bkctld'
-    [ -z "${SSHD_PID}" ] && SSHD_PID='/run/sshd.pid'
-    [ -z "${SSHD_CONFIG}" ] && SSHD_CONFIG='/etc/ssh/sshd_config'
-    [ -z "${AUTHORIZED_KEYS}" ] && AUTHORIZED_KEYS='/root/.ssh/authorized_keys'
-    [ -z "${LOGLEVEL}" ] && LOGLEVEL=6
-    BTRFS=$(which btrfs)
-    mkdir -p $CONFDIR $JAILDIR $INCDIR
-    subcommand=$1
-    jail=$2
-    option=$3
-    case $subcommand in
+    CONFDIR="${CONFDIR:-/etc/evobackup}"
+    JAILDIR="${JAILDIR:-/backup/jails}"
+    INCDIR="${INCDIR:-/backup/incs}"
+    TPLDIR="${TPLDIR:-/usr/share/bkctld}"
+    LOCALTPLDIR="${LOCALTPLDIR:-/usr/local/share/bkctld}"
+    SSHD_PID="${SSHD_PID:-/run/sshd.pid}"
+    SSHD_CONFIG="${SSHD_CONFIG:-/etc/ssh/sshd_config}"
+    AUTHORIZED_KEYS="${AUTHORIZED_KEYS:-/root/.ssh/authorized_keys}"
+    FIREWALL_RULES="${FIREWALL_RULES:-}"
+    LOGLEVEL="${LOGLEVEL:-6}"
+    BTRFS=$(command -v btrfs)
+    mkdir -p "${CONFDIR}" "${JAILDIR}" "${INCDIR}"
+    subcommand="${1:-}"
+    jail="${2:-}"
+    option="${3:-}"
+    case "${subcommand}" in
         "" | "-h" | "--help")
             usage
             ;;
