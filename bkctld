@@ -381,6 +381,7 @@ sub_params() {
         "get_${params}" "${jail}"
     else
         "set_${params}" "${jail}" "${option}"
+        check_jail_on "${jail}" && sub_reload "${jail}"
         notice "${jail} : update ${params} => ${option}"
     fi
 }
