@@ -1,3 +1,12 @@
+bkctld (1.5.0-1) unstable; urgency=medium
+
+  * Refactoring of logging and notification
+  * Force variables definition and add a set -u
+  * Reload when update params 
+  * Sanitisation / Refactoring
+
+ -- Victor Laborie <vlaborie@evolix.fr>  Thu, 29 Mar 2018 18:16:10 +0200
+
 bkctld (1.4.9-1) unstable; urgency=medium
 
   * Fix bkctld logging on non interactive usage
