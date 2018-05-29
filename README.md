@@ -93,8 +93,12 @@ vagrant provision --provision-with test
 
 ## Usage
 
+See [docs/usage.md](docs/usage.md).
+
+Man page, in roff language, can be generated with pandoc :
+
 ~~~
-man bkctld
+pandoc -f markdown -t man usage.md --template default.man -V title=bkctld -V section=8 -V date="$(date '+%d %b %Y')" -V footer="$(git describe --tags)" -V header="bkctld man page" -V author="$(git shortlog -sne|awk '{ $1 = "" } sub(FS,"\n")')"
 ~~~
 
 #### Client configuration

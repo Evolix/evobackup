@@ -121,19 +121,11 @@ mkdir -p -m 700 /home/backup
 ## Redis : example with copy .rdb file
 # cp /var/lib/redis/dump.rdb /home/backup/
 
-## ElasticSearch : example with rsync (warning: don't forget to use NFS if you have a cluster)
-## Disable ES translog flush
-# curl -s -XPUT 'localhost:9200/_settings' -d '{"index.translog.disable_flush": true}' >/dev/null
-## Flushes translog
-# curl -s 'localhost:9200/_flush' | grep -qe '"ok":true'
-## If it succeed, do an rsync of the datadir
-# if [ $? -eq 0 ]; then
-#     rsync -a /var/lib/elasticsearch /home/backup/
-# else
-#     echo "Error when flushing ES translog indexes."
-# fi
-## In any case re-enable translog flush
-# curl -s -XPUT 'localhost:9200/_settings' -d '{"index.translog.disable_flush": false}' > /dev/null
+## ElasticSearch, take a snapshot as a backup.
+## Warning: You need to have a path.repo configured.
+## See: https://wiki.evolix.org/HowtoElasticsearch#snapshots-et-sauvegardes
+# curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/snapshot.daily" -o /tmp/es_delete_snapshot.daily.log
+# curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot.daily?wait_for_completion=true" -o /tmp/es_snapshot.daily.log
 
 ## RabbitMQ : export config
 #rabbitmqadmin export /home/backup/rabbitmq.config >> /var/log/evobackup.log
