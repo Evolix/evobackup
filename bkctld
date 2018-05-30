@@ -474,24 +474,48 @@ sub_rm() {
 sub_check() {
     cur_time=$(date "+%s")
     return=0
+    nb_crit=0
+    nb_warn=0
+    nb_ok=0
+    nb_unkn=0
+    output=""
+
     jails=$(ls "${JAILDIR}")
     for jail in ${jails}; do
         if [ -f "${JAILDIR}/${jail}/var/log/lastlog" ]; then
             last_conn=$(stat --format=%Y "${JAILDIR}/${jail}/var/log/lastlog")
             date_diff=$(( (cur_time - last_conn) / (60*60) ))
             if [ "${date_diff}" -gt "${CRITICAL}" ]; then
-                echo "CRITICAL - ${jail} - ${date_diff} hours"
-                return=2
+                nb_crit=$((nb_crit + 1))
+                output="${output}CRITICAL - ${jail} - ${date_diff} hours\n"
+                [ "${return}" -le 2 ] && return=2
             elif [ "${date_diff}" -gt "${WARNING}" ]; then
-                echo "WARNING - ${jail} - ${date_diff} hours"
-                [ "${return}" -ne 2 ] && return=1
+                nb_warn=$((nb_warn + 1))
+                output="${output}WARNING - ${jail} - ${date_diff} hours\n"
+                [ "${return}" -le 1 ] && return=1
+            else
+                nb_ok=$((nb_ok + 1))
+                output="${output}OK - ${jail} - ${date_diff} hours\n"
             fi
         else
-            echo "CRITICAL - ${jail} doesn't have lastlog !"
-            return=2
+            nb_unkn=$((nb_unkn + 1))
+            output="${output}UNKNOWN - ${jail} doesn't have lastlog !\n"
+            [ "${return}" -le 3 ] && return=3
         fi
     done
-    [ "${return}" -eq 0 ] && echo "OK - Nothing to signal"
+
+    [ "${return}" -ge 0 ] && header="OK"
+    [ "${return}" -ge 1 ] && header="WARNING"
+    [ "${return}" -ge 2 ] && header="CRITICAL"
+    [ "${return}" -ge 3 ] && header="UNKNOW"
+
+    printf "%s - %s UNK / %s CRIT / %s WARN / %s OK\n\n" "${header}" "${nb_unkn}" "${nb_crit}" "${nb_warn}" "${nb_ok}"
+
+    printf "${output}" | grep -E "^UNKNOW"
+    printf "${output}" | grep -E "^CRITICAL"
+    printf "${output}" | grep -E "^WARNING"
+    printf "${output}" | grep -E "^OK"
+
     exit "${return}"
 }
 
