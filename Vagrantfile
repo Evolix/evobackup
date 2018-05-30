@@ -20,7 +20,6 @@ ln -fs /vagrant/tpl /usr/share/bkctld
 ln -fs /vagrant/bash_completion /usr/share/bash-completion/completions/bkctld
 ln -fs /vagrant/bkctld.conf /etc/default/bkctld
 mkdir -p /usr/lib/nagios/plugins/
-ln -fs /vagrant/check_nrpe /usr/lib/nagios/plugins/check_bkctld
 SCRIPT
 
   $deps = <<SCRIPT

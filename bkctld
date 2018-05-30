@@ -28,6 +28,7 @@ Subcommands:
     ip          <jailname>      [<ip>|all]      Set or get allowed(s) ip(s) of <jailname>
     inc                                         Make incremental inc of all jails
     rm                                          Remove old incremtal inc of all jails
+    check                                       Run check on jails (NRPE output)
 
 EOF
 }
@@ -470,6 +471,30 @@ sub_rm() {
     rm "${pidfile}"
 }
 
+sub_check() {
+    cur_time=$(date "+%s")
+    return=0
+    jails=$(ls "${JAILDIR}")
+    for jail in ${jails}; do
+        if [ -f "${JAILDIR}/${jail}/var/log/lastlog" ]; then
+            last_conn=$(stat --format=%Y "${JAILDIR}/${jail}/var/log/lastlog")
+            date_diff=$(( (cur_time - last_conn) / (60*60) ))
+            if [ "${date_diff}" -gt "${CRITICAL}" ]; then
+                echo "CRITICAL - ${jail} - ${date_diff} hours"
+                return=2
+            elif [ "${date_diff}" -gt "${WARNING}" ]; then
+                echo "WARNING - ${jail} - ${date_diff} hours"
+                [ "${return}" -ne 2 ] && return=1
+            fi
+        else
+            echo "CRITICAL - ${jail} doesn't have lastlog !"
+            return=2
+        fi
+    done
+    [ "${return}" -eq 0 ] && echo "OK - Nothing to signal"
+    exit "${return}"
+}
+
 ## main function : check usage and valid params
 
 main() {
@@ -486,6 +511,8 @@ main() {
     AUTHORIZED_KEYS="${AUTHORIZED_KEYS:-/root/.ssh/authorized_keys}"
     FIREWALL_RULES="${FIREWALL_RULES:-}"
     LOGLEVEL="${LOGLEVEL:-6}"
+    CRITICAL="${CRITICAL:-48}"
+    WARNING="${WARNING:-24}"
     BTRFS=$(command -v btrfs)
     mkdir -p "${CONFDIR}" "${JAILDIR}" "${INCDIR}"
     subcommand="${1:-}"
@@ -495,7 +522,7 @@ main() {
         "" | "-h" | "--help")
             usage
             ;;
-        "inc" | "rm")
+        "inc" | "rm" | "check")
             "sub_${subcommand}"
         ;;
             "init")

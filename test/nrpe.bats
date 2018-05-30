@@ -9,18 +9,18 @@ teardown() {
 }
 
 @test "ok" {
-    run /usr/lib/nagios/plugins/check_bkctld
+    run bkctld check
     [ "$status" -eq 0 ]
 }
 
 @test "warning" {
     touch --date="$(date -d -2days)" /backup/jails/*/var/log/lastlog
-    run /usr/lib/nagios/plugins/check_bkctld
+    run bkctld check
     [ "$status" -eq 1 ]
 }
 
 @test "critical" {
     touch --date="$(date -d -3days)" /backup/jails/*/var/log/lastlog
-    run /usr/lib/nagios/plugins/check_bkctld
+    run bkctld check
     [ "$status" -eq 2 ]
 }
