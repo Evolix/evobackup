@@ -3,4 +3,3 @@ bkctld usr/sbin
 tpl/* usr/share/bkctld
 zzz_evobackup usr/share/doc/bkctld
 bash_completion => /usr/share/bash_completion/bkctld
-check_nrpe => /usr/lib/nagios/plugins/check_bkctld
