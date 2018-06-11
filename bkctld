@@ -29,6 +29,8 @@ Subcommands:
     inc                                         Make incremental inc of all jails
     rm                                          Remove old incremtal inc of all jails
     check                                       Run check on jails (NRPE output)
+    index                                       Index jails dir with duc
+    stats                                       Display stats on jails (size, lastconn)
 
 EOF
 }
@@ -519,6 +521,40 @@ sub_check() {
     exit "${return}"
 }
 
+sub_index() {
+    mkdir -pm 0750 /run/bkctld
+    pidfile="/run/bkctld/duc.pid"
+    if [ -f "${pidfile}" ]; then
+        pid=$(cat ${pidfile})
+        ps -u "${pid}" >/dev/null
+        [ "${?}" -eq 0 ] && exit 0 || rm "${pidfile}"
+    fi
+    "${DUC}" index -d "${IDX_FILE}" "${JAILDIR}" &
+    pid="${!}"
+    echo "${pid}" > "${pidfile}"
+    wait "${pid}"
+    rm "${pidfile}"
+    jails=$(ls "${JAILDIR}")
+    for jail in ${jails}; do
+        "${DUC}" graph -d "${IDX_FILE}" -o "${INDEX_DIR}/graph-${jail}.png" -l4 -s 1024 "${JAILDIR}/${jail}/var/backup"
+    done
+}
+
+sub_stats() {
+    [ ! -f "${IDX_FILE}" ] && error "Index file do not exits !"
+    printf "Last update of index file : "
+    stat --format=%Y "${IDX_FILE}" | xargs -i -n1 date -R -d "@{}"
+    echo "<jail> <size> <lastconn>" | awk '{ printf("%- 30s %- 20s %- 20s\n", $1, $2, $3); }'
+    duc_output=$(mktemp)
+    stat_output=$(mktemp)
+    trap "rm ${duc_output} ${stat_output}" 0
+    "${DUC}" ls -d "${IDX_FILE}" "${JAILDIR}" > "${duc_output}"
+    awk '{ print $2 }' "${duc_output}" | while read jail; do
+        stat --format=%Y "/backup/jails/${jail}/var/log/lastlog" | xargs -i -n1 date -d "@{}" "+%d-%m-%Y" >> "${stat_output}"
+    done
+    paste "${duc_output}" "${stat_output}" | awk '{ printf("%- 30s %- 20s %- 20s\n", $2, $1, $3); }'
+}
+
 ## main function : check usage and valid params
 
 main() {
@@ -529,6 +565,8 @@ main() {
     JAILDIR="${JAILDIR:-/backup/jails}"
     INCDIR="${INCDIR:-/backup/incs}"
     TPLDIR="${TPLDIR:-/usr/share/bkctld}"
+    INDEX_DIR="${INDEX_DIR:-/backup/index}"
+    IDX_FILE="${IDX_FILE:-${INDEX_DIR}/bkctld-jails.idx}"
     LOCALTPLDIR="${LOCALTPLDIR:-/usr/local/share/bkctld}"
     SSHD_PID="${SSHD_PID:-/run/sshd.pid}"
     SSHD_CONFIG="${SSHD_CONFIG:-/etc/ssh/sshd_config}"
@@ -538,7 +576,8 @@ main() {
     CRITICAL="${CRITICAL:-48}"
     WARNING="${WARNING:-24}"
     BTRFS=$(command -v btrfs)
-    mkdir -p "${CONFDIR}" "${JAILDIR}" "${INCDIR}"
+    DUC=$(command -v duc-nox||command -v duc)
+    mkdir -p "${CONFDIR}" "${JAILDIR}" "${INCDIR}" "${INDEX_DIR}"
     subcommand="${1:-}"
     jail="${2:-}"
     option="${3:-}"
@@ -546,7 +585,7 @@ main() {
         "" | "-h" | "--help")
             usage
             ;;
-        "inc" | "rm" | "check")
+        "inc" | "rm" | "check" | "index" | "stats")
             "sub_${subcommand}"
         ;;
             "init")
