@@ -1,3 +1,10 @@
+bkctld (1.6.1-1) unstable; urgency=medium
+
+  * Add incs info to stats
+  * Fix last update date of stats index file
+
+ -- Victor Laborie <vlaborie@evolix.fr>  Wed, 13 Jun 2018 18:23:09 +0200
+
 bkctld (1.6.0-1) unstable; urgency=low
 
   * Add stats subcommands 
