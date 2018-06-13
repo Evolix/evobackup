@@ -526,15 +526,17 @@ sub_stats() {
     [ ! -f ${IDX_FILE} ] && error "Index file do not exits !"
     printf "Last update of index file : "
     stat --format=%Y "${IDX_FILE}" | xargs -i -n1 date -R -d "@{}"
-    echo "<jail> <size> <lastconn>" | awk '{ printf("%- 30s %- 20s %- 20s\n", $1, $2, $3); }'
+    echo "<jail> <size> <incs> <lastconn>" | awk '{ printf("%- 30s %- 10s %- 10s %- 15s\n", $1, $2, $3, $4); }'
     duc_output=$(mktemp)
     stat_output=$(mktemp)
-    trap "rm ${duc_output} ${stat_output}" 0
+    incs_output=$(mktemp)
+    trap "rm ${duc_output} ${incs_output} ${stat_output}" 0
     "${DUC}" ls -d "${IDX_FILE}" "${JAILDIR}" > "${duc_output}"
     awk '{ print $2 }' "${duc_output}" | while read jail; do
         stat --format=%Y "/backup/jails/${jail}/var/log/lastlog" | xargs -i -n1 date -d "@{}" "+%d-%m-%Y" >> "${stat_output}"
+        get_inc "${jail}" >> "${incs_output}"
     done
-    paste "${duc_output}" "${stat_output}" | awk '{ printf("%- 30s %- 20s %- 20s\n", $2, $1, $3); }'
+    paste "${duc_output}" "${incs_output}" "${stat_output}" | awk '{ printf("%- 30s %- 10s %- 10s %- 15s\n", $2, $1, $3, $4); }'
 }
 
 ## main function : check usage and valid params
