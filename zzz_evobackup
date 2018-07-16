@@ -178,7 +178,7 @@ HOSTNAME=$(hostname)
 BEGINNING=$(/bin/date +"%d-%m-%Y ; %H:%M")
 
 if [ "$SYSTEM" = "linux" ]; then
-    rep="/bin /boot /lib /opt /sbin /usr"
+    rep="/bin /boot /lib /opt /sbin /usr /srv"
 else
     rep="/bsd /bin /sbin /usr"
 fi
@@ -218,7 +218,6 @@ rsync -avzh --stats --delete --delete-excluded --force --ignore-errors --partial
         /root                                          \
         /var                                           \
         /home                                          \
-        /srv                                           \
     -e "ssh -p $SSH_PORT"                              \
     "root@$SRV:/var/backup/"                           \
     | tail -30 >> /var/log/evobackup.log
