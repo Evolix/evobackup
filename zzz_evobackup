@@ -8,6 +8,8 @@
 # Licence: AGPLv3
 #
 
+PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/sbin:/usr/local/bin
+
 ## lang = C for english outputs
 export LANGUAGE=C
 export LANG=C
