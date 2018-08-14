@@ -61,7 +61,7 @@ mkdir -p -m 700 /home/backup
 
 ## example with two dumps for each table (.sql/.txt) for all databases
 # for i in $(echo SHOW DATABASES | mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
-# | egrep -v "^(Database|information_schema|performance_schema)" ); \
+# | egrep -v "^(Database|information_schema|performance_schema|sys)" ); \
 # do mkdir -p /home/mysqldump/$i ; chown -RL mysql /home/mysqldump ; \
 # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 -Q --opt --events --hex-blob --skip-comments \
 #  --fields-enclosed-by='\"' --fields-terminated-by=',' -T /home/mysqldump/$i $i; done
@@ -69,7 +69,7 @@ mkdir -p -m 700 /home/backup
 ## example with compressed SQL dump for each databases
 # mkdir -p /home/mysqldump/
 # for i in $(mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 -e 'show databases' -s --skip-column-names \
-# | egrep -v "^(Database|information_schema|performance_schema)"); do
+# | egrep -v "^(Database|information_schema|performance_schema|sys)"); do
 #     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --events --hex-blob $i | gzip --best > /home/mysqldump/${i}.sql.gz
 # done
 
