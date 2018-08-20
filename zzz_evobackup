@@ -62,12 +62,12 @@ mkdir -p -m 700 /home/backup
 ## example with two dumps for each table (.sql/.txt) for all databases
 # for i in $(echo SHOW DATABASES | mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
 # | egrep -v "^(Database|information_schema|performance_schema|sys)" ); \
-# do mkdir -p /home/mysqldump/$i ; chown -RL mysql /home/mysqldump ; \
+# do mkdir -p -m 700 /home/mysqldump/$i ; chown -RL mysql /home/mysqldump ; \
 # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 -Q --opt --events --hex-blob --skip-comments \
 #  --fields-enclosed-by='\"' --fields-terminated-by=',' -T /home/mysqldump/$i $i; done
 
 ## example with compressed SQL dump for each databases
-# mkdir -p /home/mysqldump/
+# mkdir -p -m 700 /home/mysqldump/
 # for i in $(mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 -e 'show databases' -s --skip-column-names \
 # | egrep -v "^(Database|information_schema|performance_schema|sys)"); do
 #     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --events --hex-blob $i | gzip --best > /home/mysqldump/${i}.sql.gz
@@ -80,7 +80,7 @@ mkdir -p -m 700 /home/backup
 # --opt --events --hex-blob --skip-comments -T /home/mysqldump/MYBASE MYBASE
 
 ## example with mysqlhotcopy
-# mkdir -p /home/mysqlhotcopy/
+# mkdir -p -m 700 /home/mysqlhotcopy/
 # mysqlhotcopy BASE /home/mysqlhotcopy/
 
 ## example for multiples MySQL instances
@@ -114,7 +114,7 @@ mkdir -p -m 700 /home/backup
 ## > use admin
 ## > db.createUser( { user: "mongobackup", pwd: "PASS", roles: [ "backup", ] } )
 # test -d /home/backup/mongodump/ && rm -rf /home/backup/mongodump/
-# mkdir -p /home/backup/mongodump/
+# mkdir -p -m 700 /home/backup/mongodump/
 # mongodump --quiet -u mongobackup -pPASS -o /home/backup/mongodump/
 # if [ $? -ne 0 ]; then
 #   echo "Error with mongodump!"
