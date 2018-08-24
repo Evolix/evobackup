@@ -165,6 +165,7 @@ if [ "$SYSTEM" = "linux" ]; then
     ## List Debian packages
     dpkg -l >/home/backup/packages
     dpkg --get-selections >/home/backup/packages.getselections
+    apt-cache dumpavail >/home/backup/packages.available
 else
     ## Dump network connections with netstat
     netstat -finet -atn >/home/backup/netstat.out
