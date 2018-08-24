@@ -156,7 +156,7 @@ for addr in 8.8.8.8 www.evolix.fr travaux.evolix.net; do
 done
 
 ## Dump process with ps
-ps aux >/home/backup/ps.out
+ps auwwx >/home/backup/ps.out
 
 if [ "$SYSTEM" = "linux" ]; then
     ## Dump network connections with netstat
