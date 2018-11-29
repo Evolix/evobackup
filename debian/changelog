@@ -1,3 +1,10 @@
+bkctld (1.7.0-1) unstable; urgency=medium
+
+  * Check if disk is mounted in bkctld check
+  * Add dependency to cryptsetup
+
+ -- Victor Laborie <vlaborie@evolix.fr>  Thu, 29 Nov 2018 17:06:04 +0100
+
 bkctld (1.6.2-1) unstable; urgency=high
 
   * Use absolute PATH for btrfs command

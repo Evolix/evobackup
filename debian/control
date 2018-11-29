@@ -7,7 +7,7 @@ Standards-Version: 4.0.0
 
 Package: bkctld
 Architecture: all
-Depends: openssh-server, btrfs-tools, rsync, lsb-base, lsof, duc-nox | duc, ${misc:Depends}
+Depends: openssh-server, btrfs-tools, rsync, lsb-base, lsof, duc-nox | duc, cryptsetup, ${misc:Depends}
 Description: Tool for manage rsync jail for backup
  bkctld is a shell script to create and manage a backup server
  which will handle the backup of many servers (clients).
