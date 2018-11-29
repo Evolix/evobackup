@@ -8,6 +8,8 @@
 # Licence: AGPLv3
 #
 
+PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/sbin:/usr/local/bin
+
 ## lang = C for english outputs
 export LANGUAGE=C
 export LANG=C
@@ -59,15 +61,15 @@ mkdir -p -m 700 /home/backup
 
 ## example with two dumps for each table (.sql/.txt) for all databases
 # for i in $(echo SHOW DATABASES | mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
-# | egrep -v "^(Database|information_schema|performance_schema)" ); \
-# do mkdir -p /home/mysqldump/$i ; chown -RL mysql /home/mysqldump ; \
+# | egrep -v "^(Database|information_schema|performance_schema|sys)" ); \
+# do mkdir -p -m 700 /home/mysqldump/$i ; chown -RL mysql /home/mysqldump ; \
 # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 -Q --opt --events --hex-blob --skip-comments \
 #  --fields-enclosed-by='\"' --fields-terminated-by=',' -T /home/mysqldump/$i $i; done
 
 ## example with compressed SQL dump for each databases
-# mkdir -p /home/mysqldump/
+# mkdir -p -m 700 /home/mysqldump/
 # for i in $(mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 -e 'show databases' -s --skip-column-names \
-# | egrep -v "^(Database|information_schema|performance_schema)"); do
+# | egrep -v "^(Database|information_schema|performance_schema|sys)"); do
 #     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --events --hex-blob $i | gzip --best > /home/mysqldump/${i}.sql.gz
 # done
 
@@ -78,7 +80,7 @@ mkdir -p -m 700 /home/backup
 # --opt --events --hex-blob --skip-comments -T /home/mysqldump/MYBASE MYBASE
 
 ## example with mysqlhotcopy
-# mkdir -p /home/mysqlhotcopy/
+# mkdir -p -m 700 /home/mysqlhotcopy/
 # mysqlhotcopy BASE /home/mysqlhotcopy/
 
 ## example for multiples MySQL instances
@@ -112,7 +114,7 @@ mkdir -p -m 700 /home/backup
 ## > use admin
 ## > db.createUser( { user: "mongobackup", pwd: "PASS", roles: [ "backup", ] } )
 # test -d /home/backup/mongodump/ && rm -rf /home/backup/mongodump/
-# mkdir -p /home/backup/mongodump/
+# mkdir -p -m 700 /home/backup/mongodump/
 # mongodump --quiet -u mongobackup -pPASS -o /home/backup/mongodump/
 # if [ $? -ne 0 ]; then
 #   echo "Error with mongodump!"
@@ -126,6 +128,21 @@ mkdir -p -m 700 /home/backup
 ## See: https://wiki.evolix.org/HowtoElasticsearch#snapshots-et-sauvegardes
 # curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/snapshot.daily" -o /tmp/es_delete_snapshot.daily.log
 # curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot.daily?wait_for_completion=true" -o /tmp/es_snapshot.daily.log
+## Clustered version here
+## It basically the same thing except that you need to check that NFS is mounted
+# if ss | grep ':nfs' | grep -q 'ip\.add\.res\.s1' && ss | grep ':nfs' | grep -q 'ip\.add\.res\.s2'
+# then
+#     curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/snapshot.daily" -o /tmp/es_delete_snapshot.daily.log
+#     curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot.daily?wait_for_completion=true" -o /tmp/es_snapshot.daily.log
+# else
+#     echo 'Cannot make a snapshot of elasticsearch, at least one node is not mounting the repository.'
+# fi
+## If you need to keep older snapshot, for example the last 10 daily snapshots, replace the XDELETE and XPUT lines by :
+# for snapshot in $(curl -s -XGET "localhost:9200/_snapshot/snaprepo/_all?pretty=true" | grep -Eo 'snapshot_[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -n -10); do
+#     curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/${snapshot}" | grep -v -Fx '{"acknowledged":true}'
+# done
+# date=$(date +%F)
+# curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot_${date}?wait_for_completion=true" -o /tmp/es_snapshot_${date}.log
 
 ## RabbitMQ : export config
 #rabbitmqadmin export /home/backup/rabbitmq.config >> /var/log/evobackup.log
@@ -150,11 +167,11 @@ uname -a > /home/backup/uname
 ## Dump network routes with mtr and traceroute (warning: could be long with aggressive firewalls)
 for addr in 8.8.8.8 www.evolix.fr travaux.evolix.net; do
     mtr -r $addr > /home/backup/mtr-${addr}
-    traceroute -n $addr > /home/backup/traceroute-${addr}
+    traceroute -n $addr > /home/backup/traceroute-${addr} 2>&1
 done
 
 ## Dump process with ps
-ps aux >/home/backup/ps.out
+ps auwwx >/home/backup/ps.out
 
 if [ "$SYSTEM" = "linux" ]; then
     ## Dump network connections with netstat
@@ -163,6 +180,7 @@ if [ "$SYSTEM" = "linux" ]; then
     ## List Debian packages
     dpkg -l >/home/backup/packages
     dpkg --get-selections >/home/backup/packages.getselections
+    apt-cache dumpavail >/home/backup/packages.available
 else
     ## Dump network connections with netstat
     netstat -finet -atn >/home/backup/netstat.out
