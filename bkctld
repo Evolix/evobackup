@@ -481,6 +481,24 @@ sub_check() {
     nb_unkn=0
     output=""
 
+    if [ -b "${BACKUP_DISK}" ]; then
+	cryptsetup isLuks "${BACKUP_DISK}"
+        if [ "$?" -eq 0 ]; then
+            if [ ! -b '/dev/mapper/backup' ]; then
+                echo "Luks disk ${BACKUP_DISK} is not mounted !\n"
+                echo "cryptsetup luksOpen ${BACKUP_DISK} backup"
+                exit 2
+            fi
+            BACKUP_DISK='/dev/mapper/backup'
+        fi
+        grep -qE "^${BACKUP_DISK} " /etc/mtab
+        if [ "$?" -ne 0 ]; then
+             echo "Backup disk ${BACKUP_DISK} is not mounted !\n"
+             echo "mount ${BACKUP_DISK} /backup"
+             exit 2
+        fi
+    fi
+
     jails=$(ls "${JAILDIR}")
     for jail in ${jails}; do
         if [ -f "${JAILDIR}/${jail}/var/log/lastlog" ]; then
@@ -549,6 +567,7 @@ main() {
 
     [ -f /etc/default/bkctld ] && . /etc/default/bkctld
     CONFDIR="${CONFDIR:-/etc/evobackup}"
+    BACKUP_DISK="${BACKUP_DISK:-}"
     JAILDIR="${JAILDIR:-/backup/jails}"
     INCDIR="${INCDIR:-/backup/incs}"
     TPLDIR="${TPLDIR:-/usr/share/bkctld}"
