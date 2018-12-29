@@ -65,20 +65,7 @@ vagrant provision --provision-with test
 
 ## Usage
 
-See [docs/usage.md](docs/usage.md).
-
-The man(1) page, in troff(7) language, can be generated with pandoc:
-
-~~~
-pandoc -f markdown \
-	-t man usage.md \
-	--template default.man \
-	-V title=bkctld \
-	-V section=8 \
-	-V date="$(date '+%d %b %Y')" \
-	-V footer="$(git describe --tags)" \
-	-V header="bkctld man page"
-~~~
+See [docs/usage.md](docs/usage.md) or bkctld(8)
 
 #### Client configuration
 
