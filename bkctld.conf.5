@@ -1,0 +1,67 @@
+.Dd December 28, 2018
+.Dt BKCTLD.CONF 5
+.Os
+.Sh NAME
+.Nm bkctld.conf
+.Nd configuration file for
+.Xr bkctld 8
+.Sh SYNOPSIS
+.D1 name=[value]
+.Sh DESCRIPTION
+The
+.Nm
+file contains variables that override the behavior of the
+.Xr bkctld 8
+script.
+By default, it is located at
+.Pa /usr/share/bkctld/bkctld.conf .
+.Pp
+Each line must be a valid
+.Xr bash 1
+variable definition.
+Lines beginning with the
+.Sq #
+character are comments and are ignored.
+The order of the definitions does not matter.
+.Pp
+The following variables may be defined:
+.Bl -tag -width Ds
+.It Va CONFDIR
+Directory where
+.Xr evobackup-incl 5
+files are kept.
+It's default value is
+.Pa /etc/evobackup/ .
+.It Va JAILDIR
+Directory where the jails are stored,
+it is recommended that this be inside a BTRFS file system.
+It's default value is
+.Pa /backup/jails/ .
+.It Va INCDIR
+Directory where incremental backups are stored,
+it is recommended that this be inside a BTRFS file system.
+It's default value is
+.Pa /backup/incs/ .
+.It Va TPLDIR
+Directory where the default configuration files are stored.
+It's default value is
+.Pa /usr/share/bkctld/ .
+.It Va LOCALTPLDIR
+Directory where custom configuration files are stored.
+It's default is
+.Pa /usr/local/share/bkctld/ .
+.It Va LOGLEVEL
+Defines the amount of information to log, follows the same scale as in
+.In syslog.h
+and defaults to 6.
+.It Va FIREWALL_RULES
+Configuration file containing the firewall rules that govern jail access.
+This file must be sourced by your firewall.
+It does not have a default value and, if unset,
+.Xr bkctld 8
+will not automatically update the firewall.
+.El
+.Sh SEE ALSO
+.Xr bash 1 ,
+.Xr evobackup-incl 5 ,
+.Xr bkctld 8
