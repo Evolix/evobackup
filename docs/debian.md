@@ -1,6 +1,7 @@
 # Debian Package
 
-**bkctld** package can be build from the **debian** branch of this Git repository with git-buildpackage and sbuild.
+The **bkctld** package can be built from the **debian** branch of
+this git repository with git-buildpackage and sbuild.
 
 ## Dependencies
 
@@ -37,7 +38,7 @@ sbuild-createchroot --include=eatmydata,ccache,gnupg unstable /srv/chroot/sid ht
 
 ## Build
 
-You must be in **debian** branch :
+You must be in the **debian** branch :
 
 ~~~
 git checkout debian
