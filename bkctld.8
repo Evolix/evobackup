@@ -1,0 +1,179 @@
+.Dd December 27, 2018
+.Dt BKCTLD 8
+.Os
+.Sh NAME
+.Nm bkctld
+.Nd tool to manage evobackup jails
+.Sh SYNOPSIS
+.Nm
+.Op Ar operand...
+.Sh DESCRIPTION
+.Nm
+is a shell script that creates and manages a backup server
+which can handle the backups of many other servers (clients).
+.Pp
+It uses
+.Xr ssh 1
+and
+.Xr chroot 8
+to sandbox every client's backups.
+Each client will upload it's data every day
+using
+.Xr rsync 1
+in it's
+.Xr chroot 8
+(using the root account).
+.Pp
+Prior backups are stored incrementally outside of the
+.Xr chroot 8
+using
+.Xr ln 1
+hard links or BTRFS snapshots. 
+(So they can not be affected by the client), 
+which backups are kept over time can be configured in the jail's nominal
+.Xr evobackup-incl 5
+configuration file.
+.Pp
+A large enough volume must be mounted on
+.Pa /backup ,
+if the filesystem is formatted with BTRFS,
+.Nm
+will use sub-volumes and snapshots to save space.
+.Pp
+It's default settings can be overridden in
+.Xr bkctld.conf 5
+file.
+.Pp
+The following operands are available:
+.Bl -tag -width Ds
+.It Cm init Ar jailname
+Create an evobackup jail
+.It Cm update Cm all | Ar jailname
+Update an evobackup jail
+.It Cm remove Cm all | Ar jailname
+Remove an evobackup jail
+.It Cm start Cm all | Ar jailname
+Start an evobackup jail
+.It Cm stop Cm all | Ar jailname
+Stop an evobackup jail
+.It Cm reload Cm all | Ar jailname
+Reload an evobackup jail
+.It Cm restart Cm all | Ar jailname
+Restart an evobackup jail
+.It Cm sync Cm all | Ar jailname
+Sync an evobackup jail, the mirror server is defined by the
+.Ev $NODE
+variable in
+.Pa /etc/default/bkctld
+.It Cm status Op Ar jailname
+Print the status of all jails or only
+.Op Ar jailname .
+.It Cm key Ar jailname Op Ar keyfile
+Print or set the
+.Xr ssh 1
+public key of an evobackup jail
+.It Cm port Ar jailname Op Cm auto | Ar port
+Print or set the
+.Xr ssh 1
+.Op Ar port
+of an evobackup jail.
+Using
+.Op Cm auto
+will set it to the next available port.
+.It Cm ip Ar jailname Op Cm all | Ar address
+Print or set the whitelisted IP
+.Op Ar address
+for an evobackup jail.
+.Op Cm all
+allows unrestricted access and is the default.
+.It Cm inc
+Generate incremental backups
+.It Cm rm
+Remove old incremental backups
+.El
+.Sh FILES
+.Bl -tag -width Ds
+.It Pa /usr/share/bkctld/bkctld.conf
+Template for
+.Xr bkctld.conf 5
+.It Pa /usr/share/bkctld/incl.tpl
+Default rules for the incremental backups are stored here.
+.El
+.Sh EXAMPLES
+Before creating a jail and backing up a client,
+the backup server administrator will need:
+.Bl -bullet
+.It
+The host name of the client system.
+.It
+The public RSA
+.Xr ssh 1
+key for the
+.Dq root
+user of the client system,
+it is recommended the private key be password-less if automation is desired.
+.It
+The IPv4 address of the client system is needed
+if the administrator wishes to maintain a whitelist,
+see
+.Va FIREWALL_RULES
+in
+.Xr bkctld.conf 5
+.El
+.Pp
+He can then create the jail:
+.Bd -literal -offset indent
+# bkctld init CLIENT_HOST_NAME
+# bkctld key CLIENT_HOST_NAME /root/CLIENT_HOST_NAME.pub
+# bkctld ip CLIENT_HOST_NAME CLIENT_IP_ADDRESS
+# bkctld start CLIENT_HOST_NAME
+# bkctld status CLIENT_HOST_NAME
+.Ed
+.Pp
+And override the default
+.Xr evobackup-incl 5
+rules
+.Bd -literal -offset indent
+# $EDITOR /etc/evobackup/CLIENT_HOST_NAME
+.Ed
+.Pp
+To sync itself,
+the client server will need to install
+.Xr rsync 1 .
+It can then be run manually:
+.Bd -literal -offset indent
+# rsync -av -e "ssh -p JAIL_PORT" /home/ root@BACKUP_SERVER:/var/backup/home/
+.Ed
+.Pp
+If a more automated setup is required,
+a script can be written in any programming language.
+In this case,
+it may be useful to validate the backup server's identity before hand.
+.Bd -literal -offset indent
+# ssh -p JAIL_PORT BACKUP_SERVER
+.Ed
+.Pp
+A
+.Xr bash 1
+example to be run under the
+.Dq root
+user's
+.Xr crontab 5
+can be found in the
+.Lk https://gitea.evolix.org/evolix/evobackup/src/branch/master/zzz_evobackup "source repository"
+.\" .Sh EXIT STATUS
+.\" For sections 1, 6, and 8 only.
+.\" .Sh DIAGNOSTICS
+.\" For sections 1, 4, 6, 7, 8, and 9 printf/stderr messages only.
+.Sh SEE ALSO
+.Xr rsync 1 ,
+.Xr ssh-keygen 1 ,
+.Xr bkctld 5 ,
+.Xr evobackup-incl 5 ,
+.Xr chroot 8 ,
+.Xr cron 8 ,
+.Xr sshd 8
+.Sh AUTHORS
+.An Victor Laborie
+.\" .Sh CAVEATS
+.\" .Sh BUGS
