@@ -16,8 +16,7 @@ else
         [ "${port}" -le 1 ] && port=2222
     fi
     sed -i "s/^Port .*/Port ${port}/" "${JAILDIR}/$jail/${SSHD_CONFIG}"
-    set_firewall "${jail}"
     notice "${jail} : update port => ${port}"
-
     check_jail_on "${jail}" && . "${LIBDIR}/bkctld-reload" "${jail}"
+    "${LIBDIR}/bkctld-firewall" "${jail}"
 fi

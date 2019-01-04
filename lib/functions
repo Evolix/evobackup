@@ -12,6 +12,7 @@ Subcommands:
     reload      <jailname>|all                  Reload jail <jailname> or all
     restart     <jailname>|all                  Restart jail <jailname> or all
     sync        <jailname>|all                  Sync jail <jailname> or all to another node
+    firewall    <jailname>|all                  Update firewall rules of <jailname> or all
     status      [<jailname>]                    Print status of <jailname> (default all jail)
     key         <jailname>      [<keyfile>]     Set or get ssh pubic key of <jailname>
     port        <jailname>      [<port>|auto]   Set or get ssh port of <jailname>
@@ -55,22 +56,4 @@ get_inc() {
             inc="${day}/${month}"
         fi
     echo "${inc}"
-}
-
-set_firewall() {
-    jail="${1}"
-    if [ -n "${FIREWALL_RULES}" ]; then
-        if [ -f "${FIREWALL_RULES}" ]; then
-            sed -i "/#${jail}$/d" "${FIREWALL_RULES}"
-        fi
-        if ( check_jail "${jail}" ); then
-            port=$("${LIBDIR}/bkctld-port" "${jail}")
-            for ip in $("${LIBDIR}/bkctld-ip" "${jail}"); do
-                echo "/sbin/iptables -A INPUT -p tcp --sport 1024: --dport ${port} -s ${ip} -j ACCEPT #${jail}" >> "${FIREWALL_RULES}"
-            done
-            if [ -f /etc/init.d/minifirewall ]; then
-                /etc/init.d/minifirewall restart >/dev/null
-            fi
-        fi
-    fi
 }

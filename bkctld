@@ -33,7 +33,7 @@ case "${subcommand}" in
     "key" | "port" | "ip")
         "${LIBDIR}/bkctld-${subcommand}" "${jail}" "${option}"
     ;;
-    "start" | "stop" | "reload" | "restart" | "sync" | "update" | "remove")
+    "start" | "stop" | "reload" | "restart" | "sync" | "update" | "remove" | "firewall")
     if [ "${jail}" = "all" ]; then
         ls "${JAILDIR}"|xargs --no-run-if-empty --max-args=1 --max-procs=0 "${LIBDIR}/bkctld-${subcommand}"
     else

@@ -1,0 +1,18 @@
+#!/bin/sh
+
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+
+jail="${1:-}"
+[ -n "${jail}" ] || usage
+
+if [ -n "${FIREWALL_RULES}" ]; then
+    [ -f "${FIREWALL_RULES}" ] && sed -i "/#${jail}$/d" "${FIREWALL_RULES}"
+    if ( check_jail "${jail}" ); then
+        port=$("${LIBDIR}/bkctld-port" "${jail}")
+        for ip in $("${LIBDIR}/bkctld-ip" "${jail}"); do
+            echo "/sbin/iptables -A INPUT -p tcp --sport 1024: --dport ${port} -s ${ip} -j ACCEPT #${jail}" >> "${FIREWALL_RULES}"
+        done
+        [ -f /etc/init.d/minifirewall ] && /etc/init.d/minifirewall restart >/dev/null
+    fi
+    notice "${jail} : firewall rules updated"
+fi
