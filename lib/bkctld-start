@@ -5,7 +5,7 @@ LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
 jail="${1:-}"
 [ -n "${jail}" ] || usage
 check_jail "${jail}" || error "${jail} : trying to start inexistant jail"
-check_jail_on "${jail}" && error "${jail} : trying to start already running jail"
+check_jail_on "${jail}" && exit 0
 
 cd "${JAILDIR}/${jail}"
 grep -q "${JAILDIR}/${jail}/proc" /proc/mounts || mount -t proc "proc-${jail}" proc
