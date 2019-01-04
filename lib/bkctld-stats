@@ -1,0 +1,23 @@
+#!/bin/sh
+
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+
+lsof "${IDX_FILE}" >/dev/null 2>&1 || nohup sh -s -- <<EOF >/dev/null 2>&1 &
+ce -c3 "${DUC}" index -d "${IDX_FILE}" "${JAILDIR}"
+touch "${INDEX_DIR}/.lastrun.duc"
+EOF
+[ ! -f "${INDEX_DIR}/.lastrun.duc" ] && notice "First run of DUC always in progress ..." && exit 0
+[ ! -f ${IDX_FILE} ] && error "Index file do not exits !"
+printf "Last update of index file : "
+stat --format=%Y "${INDEX_DIR}/.lastrun.duc" | xargs -i -n1 date -R -d "@{}"
+echo "<jail> <size> <incs> <lastconn>" | awk '{ printf("%- 30s %- 10s %- 10s %- 15s\n", $1, $2, $3, $4); }'
+duc_output=$(mktemp)
+stat_output=$(mktemp)
+incs_output=$(mktemp)
+trap "rm ${duc_output} ${incs_output} ${stat_output}" 0
+"${DUC}" ls -d "${IDX_FILE}" "${JAILDIR}" > "${duc_output}"
+awk '{ print $2 }' "${duc_output}" | while read jail; do
+    stat --format=%Y "/backup/jails/${jail}/var/log/lastlog" | xargs -i -n1 date -d "@{}" "+%d-%m-%Y" >> "${stat_output}"
+    get_inc "${jail}" >> "${incs_output}"
+done
+paste "${duc_output}" "${incs_output}" "${stat_output}" | awk '{ printf("%- 30s %- 10s %- 10s %- 15s\n", $2, $1, $3, $4); }'

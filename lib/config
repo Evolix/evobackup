@@ -1,0 +1,23 @@
+#!/bin/sh
+
+[ -f /etc/default/bkctld ] && . /etc/default/bkctld
+LIBDIR=${LIBDIR:-/usr/lib/bkctld}
+CONFDIR="${CONFDIR:-/etc/evobackup}"
+BACKUP_DISK="${BACKUP_DISK:-}"
+JAILDIR="${JAILDIR:-/backup/jails}"
+INCDIR="${INCDIR:-/backup/incs}"
+TPLDIR="${TPLDIR:-/usr/share/bkctld}"
+INDEX_DIR="${INDEX_DIR:-/backup/index}"
+IDX_FILE="${IDX_FILE:-${INDEX_DIR}/bkctld-jails.idx}"
+LOCALTPLDIR="${LOCALTPLDIR:-/usr/local/share/bkctld}"
+SSHD_PID="${SSHD_PID:-/run/sshd.pid}"
+SSHD_CONFIG="${SSHD_CONFIG:-/etc/ssh/sshd_config}"
+AUTHORIZED_KEYS="${AUTHORIZED_KEYS:-/root/.ssh/authorized_keys}"
+FIREWALL_RULES="${FIREWALL_RULES:-}"
+LOGLEVEL="${LOGLEVEL:-6}"
+CRITICAL="${CRITICAL:-48}"
+WARNING="${WARNING:-24}"
+DUC=$(command -v duc-nox||command -v duc)
+
+. "${LIBDIR}/logging"
+. "${LIBDIR}/functions"

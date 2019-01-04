@@ -1,0 +1,17 @@
+#!/bin/sh
+
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+
+jail="${1:-}"
+params="${2:-}"
+option="${3:-}"
+[ -n "${jail}" ] || usage
+check_jail "${jail}" || error "${jail} : inexistant jail'"
+
+if [ -z "${option}" ]; then
+    "get_${params}" "${jail}"
+else
+    "set_${params}" "${jail}" "${option}"
+    check_jail_on "${jail}" && . "${LIBDIR}/bkctld-reload" "${jail}"
+    notice "${jail} : update ${params} => ${option}"
+fi

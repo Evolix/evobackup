@@ -1,0 +1,30 @@
+#!/bin/sh
+
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+
+jail="${1:-}"
+[ -n "${jail}" ] || usage
+check_jail "${jail}" || error "${jail} : trying to remove inexistant jail"
+check_jail_on "${jail}" && . "${LIBDIR}/bkctld-stop" "${jail}"
+
+rm -f "${CONFDIR}/${jail}"
+jail_inode=$(stat --format=%i "${JAILDIR}/${jail}")
+if [ "${jail_inode}" -eq 256 ]; then
+    /bin/btrfs subvolume delete "${JAILDIR}/${jail}" | debug
+else
+    rm -rf "${JAILDIR}/${jail}" | debug
+fi
+if [ -d  "${INCDIR}/${jail}" ]; then
+    incs=$(ls "${INCDIR}/${jail}")
+    for inc in ${incs}; do
+        inc_inode=$(stat --format=%i "${INCDIR}/${jail}/${inc}")
+        if [ "${inc_inode}" -eq 256 ]; then
+            /bin/btrfs subvolume delete "${INCDIR}/${jail}/${inc}" | debug
+        else
+            warning "You need to purge ${INCDIR}/${jail}/${inc} manually !"
+        fi
+    done
+    rmdir --ignore-fail-on-non-empty "${INCDIR}/${jail}" | debug
+fi
+set_firewall "${jail}"
+notice "${jail} : deleted jail"

@@ -1,0 +1,133 @@
+#!/bin/sh
+
+usage() {
+    cat <<EOF
+Usage: $0 <subcommand> [options]
+Subcommands:
+    init        <jailname>                      Init jail <jailname>
+    update      <jailname>|all                  Update jail <jailname> or all
+    remove      <jailname>|all                  Remove jail <jailname> or all
+    start       <jailname>|all                  Start jail <jailname> or all
+    stop        <jailname>|all                  Stop jail <jailname> or all
+    reload      <jailname>|all                  Reload jail <jailname> or all
+    restart     <jailname>|all                  Restart jail <jailname> or all
+    sync        <jailname>|all                  Sync jail <jailname> or all to another node
+    status      [<jailname>]                    Print status of <jailname> (default all jail)
+    key         <jailname>      [<keyfile>]     Set or get ssh pubic key of <jailname>
+    port        <jailname>      [<port>|auto]   Set or get ssh port of <jailname>
+    ip          <jailname>      [<ip>|all]      Set or get allowed(s) ip(s) of <jailname>
+    inc                                         Make incremental inc of all jails
+    rm                                          Remove old incremtal inc of all jails
+    check                                       Run check on jails (NRPE output)
+    stats                                       Make and display stats on jails (size, lastconn)
+
+EOF
+exit 1
+}
+
+check_jail() {
+    jail="${1}"
+    [ -d "${JAILDIR}/${jail}" ] && return 0
+    return 1
+}
+
+check_jail_on() {
+    jail="${1}"
+    return=1
+    if [ -f "${JAILDIR}/${jail}/${SSHD_PID}" ]; then
+        pid=$(cat "${JAILDIR}/${jail}/${SSHD_PID}")
+        ps -p "${pid}" > /dev/null && return=0
+    fi
+    if [ "${return}" -eq 1 ]; then
+        rm -f "${JAILDIR}/${jail}/${SSHD_PID}"
+        grep -q "${JAILDIR}/${jail}/proc" /proc/mounts && umount --lazy "${JAILDIR}/${jail}/proc/"
+        grep -q "${JAILDIR}/${jail}/dev" /proc/mounts && umount --lazy --recursive "${JAILDIR}/${jail}/dev"
+    fi
+    return "${return}"
+}
+
+get_port() {
+    jail="${1}"
+    port=$(grep -E "Port [0-9]+" "${JAILDIR}/${jail}/${SSHD_CONFIG}"|grep -oE "[0-9]+")
+    echo "${port}"
+}
+
+get_key() {
+    jail="${1}"
+    if [ -f "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}" ]; then
+        cat "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}"
+    fi
+}
+
+get_ip() {
+    jail="${1}"
+    grep -E "^AllowUsers" "${JAILDIR}/$jail/${SSHD_CONFIG}"|grep -Eo "root@[^ ]+"| while read allow; do
+        echo "${allow}"|cut -d'@' -f2
+    done
+}
+
+get_inc() {
+    jail="${1}"
+    inc="0"
+        if [ -f "${CONFDIR}/${jail}" ]; then
+            day=$(grep -c "day" "${CONFDIR}/${jail}")
+            month=$(grep -c "month" "${CONFDIR}/${jail}")
+            inc="${day}/${month}"
+        fi
+    echo "${inc}"
+}
+
+set_port() {
+    jail="${1}"
+    port="${2}"
+    if [ "${port}" = "auto" ]; then
+        port=$(grep -h Port "${JAILDIR}"/*/"${SSHD_CONFIG}" 2>/dev/null | grep -Eo "[0-9]+" | sort -n | tail -1)
+        port=$((port+1))
+        [ "${port}" -le 1 ] && port=2222
+    fi
+    sed -i "s/^Port .*/Port ${port}/" "${JAILDIR}/$jail/${SSHD_CONFIG}"
+    set_firewall "${jail}"
+}
+
+set_key() {
+    jail="${1}"
+    keyfile="${2}"
+    [ -e "${keyfile}" ] || error "Keyfile ${keyfile} dosen't exist !"
+    cat "${keyfile}" > "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}"
+    chmod 600 "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}"
+}
+
+set_ip() {
+    jail="${1}"
+    ip="${2}"
+    if [ "${ip}" = "all" ] || [ "${ip}" = "0.0.0.0/0" ]; then
+        ips="0.0.0.0/0"
+    else
+        ips=$(get_ip "${jail}")
+        ips=$(echo "${ips}" "${ip}"|xargs -n1|grep -v "0.0.0.0/0"|sort|uniq)
+    fi
+    allow="AllowUsers"
+    for ip in $ips; do
+        allow="${allow} root@${ip}"
+    done
+    sed -i "s~^AllowUsers .*~${allow}~" "${JAILDIR}/$jail/${SSHD_CONFIG}"
+    set_firewall "${jail}"
+}
+
+set_firewall() {
+    jail="${1}"
+    if [ -n "${FIREWALL_RULES}" ]; then
+        if [ -f "${FIREWALL_RULES}" ]; then
+            sed -i "/#${jail}$/d" "${FIREWALL_RULES}"
+        fi
+        if ( check_jail "${jail}" ); then
+            port=$(get_port "${jail}")
+            for ip in $(get_ip "${jail}"); do
+                echo "/sbin/iptables -A INPUT -p tcp --sport 1024: --dport ${port} -s ${ip} -j ACCEPT #${jail}" >> "${FIREWALL_RULES}"
+            done
+            if [ -f /etc/init.d/minifirewall ]; then
+                /etc/init.d/minifirewall restart >/dev/null
+            fi
+        fi
+    fi
+}
