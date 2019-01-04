@@ -24,7 +24,7 @@ mkdir -p /usr/lib/nagios/plugins/
 SCRIPT
 
   $deps = <<SCRIPT
-DEBIAN_FRONTEND=noninteractive apt-get -yq install openssh-server btrfs-tools rsync lsb-base coreutils sed dash mount openssh-sftp-server libc6 bash-completion duc-nox cryptsetup
+DEBIAN_FRONTEND=noninteractive apt-get -yq install openssh-server btrfs-tools rsync lsb-base coreutils sed dash mount openssh-sftp-server libc6 bash-completion duc-nox cryptsetup bats
 SCRIPT
 
   $pre_part = <<SCRIPT
@@ -39,8 +39,6 @@ mount /dev/vdb /backup
 SCRIPT
 
   nodes = [
-    { :version => "jessie", :fs => "btrfs" },
-    { :version => "jessie", :fs => "ext4" },
     { :version => "stretch", :fs => "btrfs" },
     { :version => "stretch", :fs => "ext4" }
   ]
@@ -50,14 +48,6 @@ SCRIPT
       node.vm.hostname = "bkctld-#{i[:version]}-#{i[:fs]}"
       node.vm.box = "debian/#{i[:version]}64"
       config.vm.provision "deps", type: "shell", :inline => $deps
-      if ("#{i[:version]}" == "jessie") then
-        config.vm.provision "backports", type: "shell" do |s|
-          s.inline = "echo 'deb http://deb.debian.org/debian jessie-backports main' > /etc/apt/sources.list.d/backports.list && apt-get update"
-        end
-        config.vm.provision "bats", type: "shell", :inline => "DEBIAN_FRONTEND=noninteractive apt-get -yq install -t jessie-backports bats"
-      else
-        config.vm.provision "bats", type: "shell", :inline => "DEBIAN_FRONTEND=noninteractive apt-get -yq install bats"
-      end
       config.vm.provision "install", type: "shell", :inline => $install
       config.vm.provision "pre_part", type: "shell", :inline => $pre_part
       config.vm.provision "part", type: "shell", :inline => "mkfs.btrfs -f /dev/vdb" if "#{i[:fs]}" == "btrfs"
