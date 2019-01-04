@@ -16,6 +16,7 @@ Vagrant.configure('2') do |config|
 
   $install = <<SCRIPT
 ln -fs /vagrant/bkctld /usr/sbin/bkctld
+ln -fs /vagrant/lib /usr/lib/bkctld
 ln -fs /vagrant/tpl /usr/share/bkctld
 ln -fs /vagrant/bash_completion /usr/share/bash-completion/completions/bkctld
 ln -fs /vagrant/bkctld.conf /etc/default/bkctld

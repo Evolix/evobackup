@@ -1,0 +1,29 @@
+#!/bin/sh
+
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+
+jail="${1:-}"
+[ -n "${jail}" ] || usage
+check_jail "${jail}" && error "${jail} : trying to create existant jail"
+
+sshd_config="${TPLDIR}/sshd_config"
+inctpl="${TPLDIR}/inc.tpl"
+[ -f "${LOCALTPLDIR}/sshd_config" ] && sshd_config="${LOCALTPLDIR}/sshd_config"
+[ -f "${LOCALTPLDIR}/inc.tpl" ] && inctpl="${LOCALTPLDIR}/inc.tpl"
+
+rootdir=$(dirname "${JAILDIR}")
+rootdir_inode=$(stat --format=%i "${rootdir}")
+jaildir_inode=$(stat --format=%i "${JAILDIR}")
+if [ "${rootdir_inode}" -eq 256 ] || [ "${jaildir_inode}" -eq 256 ]; then
+    /bin/btrfs subvolume create "${JAILDIR}/${jail}"
+else
+    mkdir -p "${JAILDIR}/${jail}"
+fi
+. "${LIBDIR}/mkjail"
+info "4 - Copie default sshd_config"
+install -m 0640 "${sshd_config}" "${JAILDIR}/${jail}/${SSHD_CONFIG}"
+info "5 - Set usable sshd port"
+set_port "${jail}" auto
+info "6 - Copie default inc configuration"
+install -m 0640 "${inctpl}" "${CONFDIR}/${jail}"
+notice "${jail} : created jail"

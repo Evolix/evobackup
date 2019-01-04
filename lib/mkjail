@@ -1,0 +1,44 @@
+#!/bin/sh
+
+passwd="${TPLDIR}/passwd"
+shadow="${TPLDIR}/shadow"
+group="${TPLDIR}/group"
+sshrc="${TPLDIR}/sshrc"
+[ -f "${LOCALTPLDIR}/passwd" ] && passwd="${LOCALTPLDIR}/passwd"
+[ -f "${LOCALTPLDIR}/shadow" ] && shadow="${LOCALTPLDIR}/shadow"
+[ -f "${LOCALTPLDIR}/group" ] && group="${LOCALTPLDIR}/group"
+[ -f "${LOCALTPLDIR}/sshrc" ] && group="${LOCALTPLDIR}/sshrc"
+umask 077
+
+info "1 - Creating the chroot"
+cd "${JAILDIR}/${jail}"
+rm -rf bin lib lib64 run usr var/run etc/ssh/*key
+mkdir -p dev proc
+mkdir -p usr/bin usr/sbin usr/lib usr/lib/x86_64-linux-gnu usr/lib/openssh usr/lib64
+mkdir -p etc/ssh var/log run/sshd
+mkdir -p root/.ssh var/backup -m 0700
+ln -s usr/bin bin
+ln -s usr/lib lib
+ln -s usr/lib64 lib64
+ln -st var ../run
+touch var/log/lastlog var/log/wtmp run/utmp
+
+info "2 - Copying essential files"
+[ -f /etc/ssh/ssh_host_rsa_key ] && cp /etc/ssh/ssh_host_rsa_key etc/ssh
+[ -f /etc/ssh/ssh_host_ecdsa_key ] && cp /etc/ssh/ssh_host_ecdsa_key etc/ssh
+[ -f /etc/ssh/ssh_host_ed25519_key ] && cp /etc/ssh/ssh_host_ed25519_key etc/ssh
+cp "${passwd}" etc
+cp "${shadow}" etc
+cp "${group}" etc
+cp "${sshrc}" etc/ssh
+
+info "3 - Copying binaries"
+cp -f /lib/ld-linux.so.2 lib 2>/dev/null || cp -f /lib64/ld-linux-x86-64.so.2 lib64
+cp /lib/x86_64-linux-gnu/libnss* lib/x86_64-linux-gnu
+
+for dbin in /bin/sh /bin/ls /bin/mkdir /bin/cat /bin/rm /bin/sed /usr/bin/rsync /usr/bin/lastlog /usr/bin/touch /usr/sbin/sshd /usr/lib/openssh/sftp-server; do
+    cp -f "${dbin}" "${JAILDIR}/${jail}/${dbin}";
+    for lib in $(ldd "${dbin}" | grep -Eo "/.*so.[0-9\.]+"); do
+        cp -p "${lib}" "${JAILDIR}/${jail}/${lib}"
+    done
+done
