@@ -22,8 +22,7 @@ fi
 . "${LIBDIR}/mkjail"
 info "4 - Copie default sshd_config"
 install -m 0640 "${sshd_config}" "${JAILDIR}/${jail}/${SSHD_CONFIG}"
-info "5 - Set usable sshd port"
-set_port "${jail}" auto
-info "6 - Copie default inc configuration"
+info "5 - Copie default inc configuration"
 install -m 0640 "${inctpl}" "${CONFDIR}/${jail}"
+"${LIBDIR}/bkctld-port" "${jail}" auto
 notice "${jail} : created jail"

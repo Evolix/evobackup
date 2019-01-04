@@ -12,6 +12,6 @@ if ( check_jail_on "${jail}" ); then
 else
     status="OFF"
 fi
-port=$(get_port "${jail}")
-ip=$(get_ip "${jail}"|xargs|tr -s ' ' ',')
+port=$("${LIBDIR}/bkctld-port" "${jail}")
+ip=$("${LIBDIR}/bkctld-ip" "${jail}"|xargs|tr -s ' ' ',')
 echo "${jail} ${status} ${port} ${inc} ${ip}" | awk '{ printf("%- 30s %- 10s %- 10s %- 10s %- 40s\n", $1, $2, $3, $4, $5); }'
