@@ -1,1 +1,30 @@
-bkctld-params
+#!/bin/sh
+
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+
+jail="${1:-}"
+ip="${2:-}"
+[ -n "${jail}" ] || usage
+check_jail "${jail}" || error "${jail} : inexistant jail'"
+
+if [ -z "${ip}" ]; then
+    grep -E "^AllowUsers" "${JAILDIR}/$jail/${SSHD_CONFIG}"|grep -Eo "root@[^ ]+"| while read allow; do
+        echo "${allow}"|cut -d'@' -f2
+    done
+else
+    if [ "${ip}" = "all" ] || [ "${ip}" = "0.0.0.0/0" ]; then
+        ips="0.0.0.0/0"
+    else
+        ips=$("${LIBDIR}/bkctld-ip" "${jail}")
+        ips=$(echo "${ips}" "${ip}"|xargs -n1|grep -v "0.0.0.0/0"|sort|uniq)
+    fi
+    allow="AllowUsers"
+    for ip in $ips; do
+        allow="${allow} root@${ip}"
+    done
+    sed -i "s~^AllowUsers .*~${allow}~" "${JAILDIR}/$jail/${SSHD_CONFIG}"
+    set_firewall "${jail}"
+    notice "${jail} : update ip => ${ip}"
+
+    check_jail_on "${jail}" && "${LIBDIR}/bkctld-reload" "${jail}"
+fi

@@ -46,26 +46,6 @@ check_jail_on() {
     return "${return}"
 }
 
-get_port() {
-    jail="${1}"
-    port=$(grep -E "Port [0-9]+" "${JAILDIR}/${jail}/${SSHD_CONFIG}"|grep -oE "[0-9]+")
-    echo "${port}"
-}
-
-get_key() {
-    jail="${1}"
-    if [ -f "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}" ]; then
-        cat "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}"
-    fi
-}
-
-get_ip() {
-    jail="${1}"
-    grep -E "^AllowUsers" "${JAILDIR}/$jail/${SSHD_CONFIG}"|grep -Eo "root@[^ ]+"| while read allow; do
-        echo "${allow}"|cut -d'@' -f2
-    done
-}
-
 get_inc() {
     jail="${1}"
     inc="0"
@@ -77,43 +57,6 @@ get_inc() {
     echo "${inc}"
 }
 
-set_port() {
-    jail="${1}"
-    port="${2}"
-    if [ "${port}" = "auto" ]; then
-        port=$(grep -h Port "${JAILDIR}"/*/"${SSHD_CONFIG}" 2>/dev/null | grep -Eo "[0-9]+" | sort -n | tail -1)
-        port=$((port+1))
-        [ "${port}" -le 1 ] && port=2222
-    fi
-    sed -i "s/^Port .*/Port ${port}/" "${JAILDIR}/$jail/${SSHD_CONFIG}"
-    set_firewall "${jail}"
-}
-
-set_key() {
-    jail="${1}"
-    keyfile="${2}"
-    [ -e "${keyfile}" ] || error "Keyfile ${keyfile} dosen't exist !"
-    cat "${keyfile}" > "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}"
-    chmod 600 "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}"
-}
-
-set_ip() {
-    jail="${1}"
-    ip="${2}"
-    if [ "${ip}" = "all" ] || [ "${ip}" = "0.0.0.0/0" ]; then
-        ips="0.0.0.0/0"
-    else
-        ips=$(get_ip "${jail}")
-        ips=$(echo "${ips}" "${ip}"|xargs -n1|grep -v "0.0.0.0/0"|sort|uniq)
-    fi
-    allow="AllowUsers"
-    for ip in $ips; do
-        allow="${allow} root@${ip}"
-    done
-    sed -i "s~^AllowUsers .*~${allow}~" "${JAILDIR}/$jail/${SSHD_CONFIG}"
-    set_firewall "${jail}"
-}
-
 set_firewall() {
     jail="${1}"
     if [ -n "${FIREWALL_RULES}" ]; then
@@ -121,8 +64,8 @@ set_firewall() {
             sed -i "/#${jail}$/d" "${FIREWALL_RULES}"
         fi
         if ( check_jail "${jail}" ); then
-            port=$(get_port "${jail}")
-            for ip in $(get_ip "${jail}"); do
+            port=$("${LIBDIR}/bkctld-port" "${jail}")
+            for ip in $("${LIBDIR}/bkctld-ip" "${jail}"); do
                 echo "/sbin/iptables -A INPUT -p tcp --sport 1024: --dport ${port} -s ${ip} -j ACCEPT #${jail}" >> "${FIREWALL_RULES}"
             done
             if [ -f /etc/init.d/minifirewall ]; then

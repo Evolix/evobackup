@@ -1,1 +1,21 @@
-bkctld-params
+#!/bin/sh
+
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+
+jail="${1:-}"
+keyfile="${2:-}"
+[ -n "${jail}" ] || usage
+check_jail "${jail}" || error "${jail} : inexistant jail'"
+
+if [ -z "${keyfile}" ]; then
+    if [ -f "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}" ]; then
+        cat "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}"
+    fi
+else
+    [ -e "${keyfile}" ] || error "Keyfile ${keyfile} dosen't exist !"
+    cat "${keyfile}" > "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}"
+    chmod 600 "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}"
+    notice "${jail} : update key => ${keyfile}"
+
+    check_jail_on "${jail}" && . "${LIBDIR}/bkctld-reload" "${jail}"
+fi

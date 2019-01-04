@@ -31,7 +31,7 @@ case "${subcommand}" in
         "${LIBDIR}/bkctld-${subcommand}" "${jail}"
     ;;
     "key" | "port" | "ip")
-        "${LIBDIR}/bkctld-params" "${jail}" "${subcommand}" "${option}"
+        "${LIBDIR}/bkctld-${subcommand}" "${jail}" "${option}"
     ;;
     "start" | "stop" | "reload" | "restart" | "sync" | "update" | "remove")
     if [ "${jail}" = "all" ]; then
