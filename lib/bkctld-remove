@@ -26,5 +26,5 @@ if [ -d  "${INCDIR}/${jail}" ]; then
     done
     rmdir --ignore-fail-on-non-empty "${INCDIR}/${jail}" | debug
 fi
-set_firewall "${jail}"
+"${LIBDIR}/bkctld-firewall" "${jail}"
 notice "${jail} : deleted jail"
