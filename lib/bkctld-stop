@@ -5,7 +5,7 @@ LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
 jail="${1:-}"
 [ -n "${jail}" ] || usage
 check_jail "${jail}" || error "${jail} : trying to stop inexistant jail"
-check_jail_on "${jail}" || error "${jail} : trying to stop not running jail"
+check_jail_on "${jail}" || exit 0
 
 pid=$(cat "${JAILDIR}/${jail}/${SSHD_PID}")
 for conn in $(ps --ppid "${pid}" -o pid=); do

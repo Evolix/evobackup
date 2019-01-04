@@ -5,7 +5,7 @@ LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
 jail="${1:-}"
 [ -n "${jail}" ] || usage
 check_jail "${jail}" || error "${jail} : trying to reload inexistant jail"
-check_jail_on "${jail}" || error "${jail} : trying to reload not running jail"
+check_jail_on "${jail}" || exit 0
 
 pid=$(cat "${JAILDIR}/${jail}/${SSHD_PID}")
 

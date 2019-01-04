@@ -35,20 +35,7 @@ case "${subcommand}" in
     ;;
     "start" | "stop" | "reload" | "restart" | "sync" | "update" | "remove")
     if [ "${jail}" = "all" ]; then
-        jails=$(ls "${JAILDIR}")
-        for jail in ${jails}; do
-            case "${subcommand}" in
-                "start")
-                    check_jail_on "${jail}" || "${LIBDIR}/bkctld-${subcommand}" "${jail}"
-                ;;
-                "stop" | "reload" | "restart")
-                    check_jail_on "${jail}" && "${LIBDIR}/bkctld-${subcommand}" "${jail}"
-                ;;
-                *)
-                    "${LIBDIR}/bkctld-${subcommand}" "${jail}"
-                ;;
-            esac
-                done
+        ls "${JAILDIR}"|xargs --no-run-if-empty --max-args=1 --max-procs=0 "${LIBDIR}/bkctld-${subcommand}"
     else
         "${LIBDIR}/bkctld-${subcommand}" "${jail}"
     fi
