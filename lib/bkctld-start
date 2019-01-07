@@ -11,7 +11,7 @@ if [ ! -n "${jail}" ]; then
     "${LIBDIR}/bkctld-help" && exit 1
 fi
 check_jail "${jail}" || error "${jail} : trying to start inexistant jail"
-check_jail_on "${jail}" && exit 0
+"${LIBDIR}/bkctld-is-on" "${jail}" && exit 0
 
 cd "${JAILDIR}/${jail}"
 grep -q "${JAILDIR}/${jail}/proc" /proc/mounts || mount -t proc "proc-${jail}" proc

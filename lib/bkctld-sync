@@ -18,9 +18,7 @@ jail="${1}"
 ssh "${NODE}" "${LIBDIR}/bkctld-init" "${jail}" | debug
 rsync -a "${JAILDIR}/${jail}/" "${NODE}:${JAILDIR}/${jail}/" --exclude proc/* --exclude sys/* --exclude dev/* --exclude run --exclude var/backup/*
 rsync -a "${CONFDIR}/${jail}" "${NODE}:${CONFDIR}/${jail}"
-if ( check_jail_on "${jail}" ); then
-    ssh "${NODE}" "${LIBDIR}/bkctld-start" "${jail}" | debug
-fi
+"${LIBDIR}/bkctld-is-on" "${jail}" && ssh "${NODE}" "${LIBDIR}/bkctld-start" "${jail}" | debug
 if [ -n "${FIREWALL_RULES}" ]; then
     rsync -a "${FIREWALL_RULES}" "${NODE}:${FIREWALL_RULES}"
     ssh "${NODE}" /etc/init.d/minifirewall restart | debug

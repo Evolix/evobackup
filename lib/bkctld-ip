@@ -30,6 +30,6 @@ else
     done
     sed -i "s~^AllowUsers .*~${allow}~" "${JAILDIR}/$jail/${SSHD_CONFIG}"
     notice "${jail} : update ip => ${ip}"
-    check_jail_on "${jail}" && "${LIBDIR}/bkctld-reload" "${jail}"
+    "${LIBDIR}/bkctld-is-on" "${jail}" && "${LIBDIR}/bkctld-reload" "${jail}"
     "${LIBDIR}/bkctld-firewall" "${jail}"
 fi
