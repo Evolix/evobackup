@@ -10,7 +10,7 @@ jail="${1:-}"
 if [ ! -n "${jail}" ]; then
     "${LIBDIR}/bkctld-help" && exit 1
 fi
-check_jail "${jail}" && error "${jail} : trying to create existant jail"
+[ -d "${JAILDIR}/${jail}" ] && error "${jail} : trying to create existant jail"
 
 sshd_config="${TPLDIR}/sshd_config"
 inctpl="${TPLDIR}/inc.tpl"
