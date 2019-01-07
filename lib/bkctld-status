@@ -12,7 +12,12 @@ if [ ! -n "${jail}" ]; then
 fi
 check_jail "${jail}" || error "${jail} : inexistant jail ! Use '$0 status' for list all"
 
-inc=$(get_inc "${jail}")
+inc="0"
+if [ -f "${CONFDIR}/${jail}" ]; then
+    day=$(grep -c "day" "${CONFDIR}/${jail}")
+    month=$(grep -c "month" "${CONFDIR}/${jail}")
+    inc="${day}/${month}"
+fi
 if ( check_jail_on "${jail}" ); then
     status="ON "
 else

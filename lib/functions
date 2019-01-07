@@ -20,14 +20,3 @@ check_jail_on() {
     fi
     return "${return}"
 }
-
-get_inc() {
-    jail="${1}"
-    inc="0"
-        if [ -f "${CONFDIR}/${jail}" ]; then
-            day=$(grep -c "day" "${CONFDIR}/${jail}")
-            month=$(grep -c "month" "${CONFDIR}/${jail}")
-            inc="${day}/${month}"
-        fi
-    echo "${inc}"
-}
