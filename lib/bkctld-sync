@@ -10,7 +10,7 @@ jail="${1:-}"
 if [ ! -n "${jail}" ]; then
     "${LIBDIR}/bkctld-help" && exit 1
 fi
-check_jail "${jail}" || error "${jail} : trying to sync inexistant jail"
+[ -d "${JAILDIR}/${jail}" ] || error "${jail} : trying to sync inexistant jail"
 
 [ -n "${NODE}" ] || error "Sync need config of \$NODE in /etc/default/bkctld !"
 

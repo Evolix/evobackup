@@ -11,7 +11,7 @@ port="${2:-}"
 if [ ! -n "${jail}" ]; then
     "${LIBDIR}/bkctld-help" && exit 1
 fi
-check_jail "${jail}" || error "${jail} : inexistant jail'"
+[ -d "${JAILDIR}/${jail}" ] || error "${jail} : inexistant jail'"
 
 if [ -z "${port}" ]; then
     grep -E "Port [0-9]+" "${JAILDIR}/${jail}/${SSHD_CONFIG}"|grep -oE "[0-9]+"

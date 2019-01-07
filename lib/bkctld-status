@@ -10,7 +10,7 @@ jail="${1:-}"
 if [ ! -n "${jail}" ]; then
     "${LIBDIR}/bkctld-help" && exit 1
 fi
-check_jail "${jail}" || error "${jail} : inexistant jail ! Use '$0 status' for list all"
+[ -d "${JAILDIR}/${jail}" ] || error "${jail} : inexistant jail ! Use '$0 status' for list all"
 
 inc="0"
 if [ -f "${CONFDIR}/${jail}" ]; then

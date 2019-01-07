@@ -11,7 +11,7 @@ keyfile="${2:-}"
 if [ ! -n "${jail}" ]; then
     "${LIBDIR}/bkctld-help" && exit 1
 fi
-check_jail "${jail}" || error "${jail} : inexistant jail'"
+[ -d "${JAILDIR}/${jail}" ] || error "${jail} : inexistant jail'"
 
 if [ -z "${keyfile}" ]; then
     if [ -f "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}" ]; then

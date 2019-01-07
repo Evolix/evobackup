@@ -1,7 +1,0 @@
-#!/bin/sh
-
-check_jail() {
-    jail="${1}"
-    [ -d "${JAILDIR}/${jail}" ] && return 0
-    return 1
-}
