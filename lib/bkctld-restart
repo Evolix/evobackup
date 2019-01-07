@@ -1,11 +1,17 @@
 #!/bin/sh
+#
+# Restart jail <jailname> or all
+# Usage: restart <jailname>|all
+#
 
 set -eu
 
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
 
 jail="${1:-}"
-[ -n "${jail}" ] || usage
+if [ ! -n "${jail}" ]; then
+    "${LIBDIR}/bkctld-help" && exit 1
+fi
 check_jail "${jail}" || error "${jail} : trying to restart inexistant jail"
 check_jail_on "${jail}" && "${LIBDIR}/bkctld-stop" "${jail}"
 "${LIBDIR}/bkctld-start" "${jail}"

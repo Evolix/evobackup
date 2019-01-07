@@ -1,31 +1,5 @@
 #!/bin/sh
 
-usage() {
-    cat <<EOF
-Usage: $0 <subcommand> [options]
-Subcommands:
-    init        <jailname>                      Init jail <jailname>
-    update      <jailname>|all                  Update jail <jailname> or all
-    remove      <jailname>|all                  Remove jail <jailname> or all
-    start       <jailname>|all                  Start jail <jailname> or all
-    stop        <jailname>|all                  Stop jail <jailname> or all
-    reload      <jailname>|all                  Reload jail <jailname> or all
-    restart     <jailname>|all                  Restart jail <jailname> or all
-    sync        <jailname>|all                  Sync jail <jailname> or all to another node
-    firewall    <jailname>|all                  Update firewall rules of <jailname> or all
-    status      [<jailname>]                    Print status of <jailname> (default all jail)
-    key         <jailname>      [<keyfile>]     Set or get ssh pubic key of <jailname>
-    port        <jailname>      [<port>|auto]   Set or get ssh port of <jailname>
-    ip          <jailname>      [<ip>|all]      Set or get allowed(s) ip(s) of <jailname>
-    inc                                         Make incremental inc of all jails
-    rm                                          Remove old incremtal inc of all jails
-    check                                       Run check on jails (NRPE output)
-    stats                                       Make and display stats on jails (size, lastconn)
-
-EOF
-exit 1
-}
-
 check_jail() {
     jail="${1}"
     [ -d "${JAILDIR}/${jail}" ] && return 0

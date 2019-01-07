@@ -1,9 +1,15 @@
 #!/bin/sh
+#
+# Sync jail <jailname> or all to another node
+# Usage: sync <jailname>|all
+#
 
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
 
 jail="${1:-}"
-[ -n "${jail}" ] || usage
+if [ ! -n "${jail}" ]; then
+    "${LIBDIR}/bkctld-help" && exit 1
+fi
 check_jail "${jail}" || error "${jail} : trying to sync inexistant jail"
 
 [ -n "${NODE}" ] || error "Sync need config of \$NODE in /etc/default/bkctld !"

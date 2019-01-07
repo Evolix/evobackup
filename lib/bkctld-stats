@@ -1,4 +1,8 @@
 #!/bin/sh
+#
+# Make and display stats on jails (size, lastconn)
+# Usage: stats
+#
 
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
 

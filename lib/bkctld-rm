@@ -1,4 +1,8 @@
 #!/bin/sh
+#
+# Remove old incremtal inc of all jails
+# Usage: rm
+#
 
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
 

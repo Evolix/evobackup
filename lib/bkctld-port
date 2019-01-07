@@ -1,10 +1,16 @@
 #!/bin/sh
+#
+# Set or get ssh port of <jailname>
+# Usage: port <jailname> [<port>|auto]
+#
 
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
 
 jail="${1:-}"
 port="${2:-}"
-[ -n "${jail}" ] || usage
+if [ ! -n "${jail}" ]; then
+    "${LIBDIR}/bkctld-help" && exit 1
+fi
 check_jail "${jail}" || error "${jail} : inexistant jail'"
 
 if [ -z "${port}" ]; then
