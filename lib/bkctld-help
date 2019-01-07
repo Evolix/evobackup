@@ -1,0 +1,21 @@
+#!/bin/sh
+#
+# Print this help
+# Usage: help
+#
+
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+
+cat <<EOF
+Usage: bkctld <subcommand> [options]
+Subcommands:
+EOF
+
+for subcommand in ${LIBDIR}/bkctld-*; do
+    name=$(basename "${subcommand}"|cut -d'-' -f2)
+    desc=$(grep -E "^#" "${subcommand}"|sed -n '3p'|sed "s/^# //")
+    usage=$(grep -E "^# Usage: ${name}" "${subcommand}"|sed "s/^# Usage: ${name}//")
+    printf "    %- 10s %- 30s %- 40s\n" "${name}" "${usage}" "${desc}"
+done
+
+printf "\n"

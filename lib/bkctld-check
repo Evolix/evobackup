@@ -1,4 +1,8 @@
 #!/bin/sh
+#
+# Run check on jails (NRPE output)
+# Usage: check
+#
 
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
 

@@ -21,10 +21,12 @@ subcommand="${1:-}"
 jail="${2:-}"
 option="${3:-}"
 
-[ -x "${LIBDIR}/bkctld-${subcommand}" ] || usage
+if [ ! -x "${LIBDIR}/bkctld-${subcommand}" ]; then
+    "${LIBDIR}/bkctld-help" && exit 1
+fi
 
 case "${subcommand}" in
-    "inc" | "rm" | "check" | "stats")
+    "inc" | "rm" | "check" | "stats" | "help")
         "${LIBDIR}/bkctld-${subcommand}"
     ;;
         "init")

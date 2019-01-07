@@ -1,9 +1,15 @@
 #!/bin/sh
+#
+# Stop jail <jailname> or all
+# Usage: stop <jailname>|all
+#
 
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
 
 jail="${1:-}"
-[ -n "${jail}" ] || usage
+if [ ! -n "${jail}" ]; then
+    "${LIBDIR}/bkctld-help" && exit 1
+fi
 check_jail "${jail}" || error "${jail} : trying to stop inexistant jail"
 check_jail_on "${jail}" || exit 0
 

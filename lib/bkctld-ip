@@ -1,10 +1,16 @@
 #!/bin/sh
+#
+# Set or get allowed(s) ip(s) of <jailname>
+# Usage: ip <jailname> [<ip>|all]
+#
 
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
 
 jail="${1:-}"
 ip="${2:-}"
-[ -n "${jail}" ] || usage
+if [ ! -n "${jail}" ]; then
+    "${LIBDIR}/bkctld-help" && exit 1
+fi
 check_jail "${jail}" || error "${jail} : inexistant jail'"
 
 if [ -z "${ip}" ]; then
