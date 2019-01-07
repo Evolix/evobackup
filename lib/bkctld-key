@@ -23,5 +23,5 @@ else
     chmod 600 "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}"
     notice "${jail} : update key => ${keyfile}"
 
-    check_jail_on "${jail}" && . "${LIBDIR}/bkctld-reload" "${jail}"
+    "${LIBDIR}/bkctld-is-on" "${jail}" && "${LIBDIR}/bkctld-reload" "${jail}"
 fi

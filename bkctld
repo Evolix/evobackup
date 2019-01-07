@@ -29,7 +29,7 @@ case "${subcommand}" in
     "inc" | "rm" | "check" | "stats" | "help")
         "${LIBDIR}/bkctld-${subcommand}"
     ;;
-        "init")
+        "init" | "is-on")
         "${LIBDIR}/bkctld-${subcommand}" "${jail}"
     ;;
     "key" | "port" | "ip")
