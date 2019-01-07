@@ -1,4 +1,7 @@
 #!/bin/sh
+#
+# Config for bkctld
+#
 
 [ -f /etc/default/bkctld ] && . /etc/default/bkctld
 LIBDIR=${LIBDIR:-/usr/lib/bkctld}
@@ -19,4 +22,43 @@ CRITICAL="${CRITICAL:-48}"
 WARNING="${WARNING:-24}"
 DUC=$(command -v duc-nox||command -v duc)
 
-. "${LIBDIR}/logging"
+debug() {
+    msg="${1:-$(cat /dev/stdin)}"
+    if [ "${LOGLEVEL}" -ge 7 ]; then
+        echo "${msg}"
+        logger -t bkctld -p daemon.debug "${msg}"
+    fi
+}
+
+info() {
+    msg="${1:-$(cat /dev/stdin)}"
+    if [ "${LOGLEVEL}" -ge 6 ]; then
+        tty -s && echo "${msg}"
+        logger -t bkctld -p daemon.info "${msg}"
+    fi
+}
+
+notice() {
+    msg="${1:-$(cat /dev/stdin)}"
+    tty -s && echo "${msg}"
+    [ "${LOGLEVEL}" -ge 5 ] && logger -t bkctld -p daemon.notice "${msg}"
+}
+
+warning() {
+    msg="${1:-$(cat /dev/stdin)}"
+    tty -s && echo "WARNING : ${msg}" >&2
+    if [ "${LOGLEVEL}" -ge 4 ]; then
+        tty -s || echo "WARNING : ${msg}" >&2
+        logger -t bkctld -p daemon.warning "${msg}"
+    fi
+}
+
+error() {
+    msg="${1:-$(cat /dev/stdin)}"
+    tty -s && echo "ERROR : ${msg}" >&2
+    if [ "${LOGLEVEL}" -ge 5 ]; then
+        tty -s || echo "ERROR : ${msg}" >&2
+        logger -t bkctld -p daemon.error "${msg}"
+    fi
+    exit 1
+}
