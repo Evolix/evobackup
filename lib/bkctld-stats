@@ -7,7 +7,7 @@
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
 
 lsof "${IDX_FILE}" >/dev/null 2>&1 || nohup sh -s -- <<EOF >/dev/null 2>&1 &
-ce -c3 "${DUC}" index -d "${IDX_FILE}" "${JAILDIR}"
+ionice -c3 "${DUC}" index -d "${IDX_FILE}" "${JAILDIR}"
 touch "${INDEX_DIR}/.lastrun.duc"
 EOF
 [ ! -f "${INDEX_DIR}/.lastrun.duc" ] && notice "First run of DUC always in progress ..." && exit 0
