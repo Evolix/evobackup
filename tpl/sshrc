@@ -1,5 +1,3 @@
 #!/bin/sh
 
-# lastlog -S isn't available in login package on Debian Jessie (need Debian Stretch or superior)
-#/usr/bin/lastlog -Su root
-/usr/bin/touch /var/log/lastlog
+/usr/bin/lastlog -Su root
