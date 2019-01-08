@@ -32,8 +32,7 @@ if [ -b "${BACKUP_DISK}" ]; then
     fi
 fi
 
-jails=$(ls "${JAILDIR}")
-for jail in ${jails}; do
+for jail in $("${LIBDIR}/bkctld-list"); do
     if [ -f "${JAILDIR}/${jail}/var/log/lastlog" ]; then
         last_conn=$(stat --format=%Y "${JAILDIR}/${jail}/var/log/lastlog")
         date_diff=$(( (cur_time - last_conn) / (60*60) ))
