@@ -1,0 +1,14 @@
+[Unit]
+Documentation=man:bkctld(8)
+Description=Backup manager using rsync and OpenSSH chroot.
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/bkctld start all
+ExecStop=/usr/sbin/bkctld stop all
+RemainAfterExit=true
+KillMode=control-group
+GuessMainPID=no
+
+[Install]
+WantedBy=multi-user.target

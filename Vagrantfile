@@ -20,6 +20,7 @@ ln -fs /vagrant/lib /usr/lib/bkctld
 ln -fs /vagrant/tpl /usr/share/bkctld
 ln -fs /vagrant/bash_completion /usr/share/bash-completion/completions/bkctld
 ln -fs /vagrant/bkctld.conf /etc/default/bkctld
+ln -fs /vagrant/bkctld.service /etc/systemd/system/bkctld.service && systemctl daemon-reload
 mkdir -p /usr/lib/nagios/plugins/
 SCRIPT
 
