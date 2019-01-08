@@ -6,6 +6,7 @@
 
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
 
+mkdir -p "${INDEX_DIR}"
 lsof "${IDX_FILE}" >/dev/null 2>&1 || nohup sh -s -- <<EOF >/dev/null 2>&1 &
 ionice -c3 "${DUC}" index -d "${IDX_FILE}" "${JAILDIR}"
 touch "${INDEX_DIR}/.lastrun.duc"
