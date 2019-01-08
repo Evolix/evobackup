@@ -5,129 +5,129 @@ setup() {
     date=$(date +"%Y-%m-%d-%H")
     inode=$(stat --format=%i /backup)
     rm -f /root/bkctld.key* && ssh-keygen -t rsa -N "" -f /root/bkctld.key -q
-    [ -f /etc/default/bkctld ] && . /etc/default/bkctld
-    CONFDIR="${CONFDIR:-/etc/evobackup}"
-    JAILDIR="${JAILDIR:-/backup/jails}"
-    INCDIR="${INCDIR:-/backup/incs}"
-    TPLDIR="${TPLDIR:-/usr/share/bkctld}"
-    LOCALTPLDIR="${LOCALTPLDIR:-/usr/local/share/bkctld}"
-    SSHD_PID="${SSHD_PID:-/run/sshd.pid}"
-    SSHD_CONFIG="${SSHD_CONFIG:-/etc/ssh/sshd_config}"
-    AUTHORIZED_KEYS="${AUTHORIZED_KEYS:-/root/.ssh/authorized_keys}"
-    FIREWALL_RULES="${FIREWALL_RULES:-}"
-    LOGLEVEL="${LOGLEVEL:-6}"
+    . /usr/lib/bkctld/config
+    JAILNAME=$(tr -cd '[:alnum:]' < /dev/urandom | fold -w15 | head -n1)
 }
 
 teardown() {
-    bkctld remove all && rm -rf "${INCDIR}/*"
+    /usr/lib/bkctld/bkctld-remove "${JAILNAME}" && rm -rf "${INCDIR}/*"
 }
 
 @test "init" {
-    bkctld init test
+    /usr/lib/bkctld/bkctld-init "${JAILNAME}"
+    inode=$(stat --format=%i /backup)
     if [ "${inode}" -eq 256 ]; then
-        run stat --format=%i "${JAILDIR}/test"
+        run stat --format=%i "${JAILDIR}/${JAILNAME}"
         [ "${output}" -eq 256 ]
     else
-        run test -d "${JAILDIR}/test"
+        run test -d "${JAILDIR}/${JAILNAME}"
         [ "${status}" -eq 0 ]
     fi
 }
 
-@test "update" {
-    skip
-}
-
 @test "start" {
-    bkctld init test
-    bkctld start test
-    pid=$(cat "${JAILDIR}/test/${SSHD_PID}")
+    /usr/lib/bkctld/bkctld-init "${JAILNAME}"
+    /usr/lib/bkctld/bkctld-start "${JAILNAME}"
+    pid=$(cat "${JAILDIR}/${JAILNAME}/${SSHD_PID}")
     run ps --pid "${pid}"
     [ "${status}" -eq 0 ]
 }
 
 @test "stop" {
-    bkctld init test
-    bkctld start test
-    pid=$(cat "${JAILDIR}/test/${SSHD_PID}")
-    bkctld stop test
+    /usr/lib/bkctld/bkctld-init "${JAILNAME}"
+    /usr/lib/bkctld/bkctld-start "${JAILNAME}"
+    pid=$(cat "${JAILDIR}/${JAILNAME}/${SSHD_PID}")
+    /usr/lib/bkctld/bkctld-stop "${JAILNAME}"
     run ps --pid "${pid}"
     [ "${status}" -ne 0 ]
 }
 
 @test "reload" {
-    bkctld init test
-    bkctld start test
-    bkctld reload test
-    run grep "Received SIGHUP; restarting." "${JAILDIR}/test/var/log/authlog"
+    /usr/lib/bkctld/bkctld-init "${JAILNAME}"
+    /usr/lib/bkctld/bkctld-start "${JAILNAME}"
+    /usr/lib/bkctld/bkctld-reload "${JAILNAME}"
+    run grep "Received SIGHUP; restarting." "${JAILDIR}/${JAILNAME}/var/log/authlog"
     [ "${status}" -eq 0 ]
 }
 
 @test "restart" {
-    bkctld init test
-    bkctld start test
-    bpid=$(cat "${JAILDIR}/test/${SSHD_PID}")
-    bkctld restart test
-    apid=$(cat "${JAILDIR}/test/${SSHD_PID}")
+    /usr/lib/bkctld/bkctld-init "${JAILNAME}"
+    /usr/lib/bkctld/bkctld-start "${JAILNAME}"
+    bpid=$(cat "${JAILDIR}/${JAILNAME}/${SSHD_PID}")
+    /usr/lib/bkctld/bkctld-restart "${JAILNAME}"
+    apid=$(cat "${JAILDIR}/${JAILNAME}/${SSHD_PID}")
     [ "${bpid}" -ne "${apid}" ]
 }
 
 @test "status" {
-    bkctld init test
-    run bkctld status test
+    /usr/lib/bkctld/bkctld-init "${JAILNAME}"
+    run /usr/lib/bkctld/bkctld-status "${JAILNAME}"
     [ "${status}" -eq 0 ]
 }
 
 @test "key" {
-    bkctld init test
-    bkctld start test
-    bkctld key test /root/bkctld.key.pub
-    run cat /backup/jails/test/root/.ssh/authorized_keys
+    /usr/lib/bkctld/bkctld-init "${JAILNAME}"
+    /usr/lib/bkctld/bkctld-start "${JAILNAME}"
+    /usr/lib/bkctld/bkctld-key "${JAILNAME}" /root/bkctld.key.pub
+    run cat "/backup/jails/${JAILNAME}/root/.ssh/authorized_keys"
     [ "${status}" -eq 0 ]
     [ "${output}" = $(cat /root/bkctld.key.pub) ]
 }
 
 @test "port" {
-    bkctld init test
-    bkctld start test
-    bkctld port test "${port}"
+    /usr/lib/bkctld/bkctld-init "${JAILNAME}"
+    /usr/lib/bkctld/bkctld-start "${JAILNAME}"
+    /usr/lib/bkctld/bkctld-port "${JAILNAME}" "${port}"
     run nc -vz 127.0.0.1 "${port}"
     [ "${status}" -eq 0 ]
 }
 
-@test "ip" {
-    skip
-}
-
 @test "inc" {
-    bkctld init test
-    bkctld inc
+    /usr/lib/bkctld/bkctld-init "${JAILNAME}"
+    /usr/lib/bkctld/bkctld-inc
     if [ "${inode}" -eq 256 ]; then
-        run stat --format=%i "${INCDIR}/test/${date}"
+        run stat --format=%i "${INCDIR}/${JAILNAME}/${date}"
         [ "${output}" -eq 256 ]
     else
-        run test -d "${INCDIR}/test/${date}"
+        run test -d "${INCDIR}/${JAILNAME}/${date}"
         [ "${status}" -eq 0 ]
     fi
 }
 
-@test "rm" {
-    skip
-}
-
 @test "ssh" {
-    bkctld init test
-    bkctld start test
-    bkctld port test "${port}"
-    bkctld key test /root/bkctld.key.pub
+    /usr/lib/bkctld/bkctld-init "${JAILNAME}"
+    /usr/lib/bkctld/bkctld-start "${JAILNAME}"
+    /usr/lib/bkctld/bkctld-port "${JAILNAME}" "${port}"
+    /usr/lib/bkctld/bkctld-key "${JAILNAME}" /root/bkctld.key.pub
     run ssh -p "${port}" -i /root/bkctld.key -oStrictHostKeyChecking=no root@127.0.0.1 ls
     [ "$status" -eq 0 ]
 }
 
 @test "rsync" {
-    bkctld init test
-    bkctld start test
-    bkctld port test "${port}"
-    bkctld key test /root/bkctld.key.pub
+    /usr/lib/bkctld/bkctld-init "${JAILNAME}"
+    /usr/lib/bkctld/bkctld-start "${JAILNAME}"
+    /usr/lib/bkctld/bkctld-port "${JAILNAME}" "${port}"
+    /usr/lib/bkctld/bkctld-key "${JAILNAME}" /root/bkctld.key.pub
     run rsync -a -e "ssh -p ${port} -i /root/bkctld.key -oStrictHostKeyChecking=no" /tmp/ root@127.0.0.1:/var/backup/
     [ "$status" -eq 0 ]
+}
+
+@test "check-ok" {
+    /usr/lib/bkctld/bkctld-init "${JAILNAME}"
+    run /usr/lib/bkctld/bkctld-check
+    [ "$status" -eq 0 ]
+}
+
+@test "check-warning" {
+    /usr/lib/bkctld/bkctld-init "${JAILNAME}"
+    touch --date="$(date -d -2days)" "/backup/jails/${JAILNAME}/var/log/lastlog"
+    run /usr/lib/bkctld/bkctld-check
+    [ "$status" -eq 1 ]
+}
+
+@test "check-critical" {
+    /usr/lib/bkctld/bkctld-init "${JAILNAME}"
+    touch --date="$(date -d -3days)" "/backup/jails/${JAILNAME}/var/log/lastlog"
+    run /usr/lib/bkctld/bkctld-check
+    [ "$status" -eq 2 ]
 }
