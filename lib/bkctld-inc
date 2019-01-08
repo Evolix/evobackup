@@ -7,8 +7,7 @@
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
 
 date=$(date +"%Y-%m-%d-%H")
-jails=$(ls "${JAILDIR}")
-for jail in ${jails}; do
+for jail in $("${LIBDIR}/bkctld-list"); do
     inc="${INCDIR}/${jail}/${date}"
     mkdir -p "${INCDIR}/${jail}"
     if [ ! -d "${inc}" ]; then

@@ -26,7 +26,7 @@ if [ ! -x "${LIBDIR}/bkctld-${subcommand}" ]; then
 fi
 
 case "${subcommand}" in
-    "inc" | "rm" | "check" | "stats" | "help")
+    "inc" | "rm" | "check" | "stats" | "help" | "list")
         "${LIBDIR}/bkctld-${subcommand}"
     ;;
         "init" | "is-on")
@@ -37,17 +37,14 @@ case "${subcommand}" in
     ;;
     "start" | "stop" | "reload" | "restart" | "sync" | "update" | "remove" | "firewall")
     if [ "${jail}" = "all" ]; then
-        ls "${JAILDIR}"|xargs --no-run-if-empty --max-args=1 --max-procs=0 "${LIBDIR}/bkctld-${subcommand}"
+        "${LIBDIR}/bkctld-list"|xargs --no-run-if-empty --max-args=1 --max-procs=0 "${LIBDIR}/bkctld-${subcommand}"
     else
         "${LIBDIR}/bkctld-${subcommand}" "${jail}"
     fi
     ;;
     "status")
     if [ -z "${jail}" ]; then
-        jails=$(ls "${JAILDIR}")
-        for jail in ${jails}; do
-            "${LIBDIR}/bkctld-${subcommand}" "${jail}"
-        done
+        "${LIBDIR}/bkctld-list"|xargs --no-run-if-empty --max-args=1 "${LIBDIR}/bkctld-${subcommand}"
     else
         "${LIBDIR}/bkctld-${subcommand}" "${jail}"
     fi

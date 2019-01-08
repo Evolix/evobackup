@@ -19,8 +19,7 @@ if [ -f "${pidfile}" ]; then
     rm "${pidfile}"
     fi
 echo "${$}" > "${pidfile}"
-jails=$(ls "${JAILDIR}")
-for jail in ${jails}; do
+for jail in $("${LIBDIR}/bkctld-list"); do
     incs=$(ls "${INCDIR}/${jail}")
     if [ -f "${CONFDIR}/${jail}" ]; then
         keepfile="${CONFDIR}/.keep-${jail}"
