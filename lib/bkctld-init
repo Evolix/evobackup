@@ -12,6 +12,7 @@ if [ ! -n "${jail}" ]; then
 fi
 [ -d "${JAILDIR}/${jail}" ] && error "${jail} : trying to create existant jail"
 
+mkdir -p "${CONFDIR}" "${JAILDIR}"
 sshd_config="${TPLDIR}/sshd_config"
 inctpl="${TPLDIR}/inc.tpl"
 [ -f "${LOCALTPLDIR}/sshd_config" ] && sshd_config="${LOCALTPLDIR}/sshd_config"

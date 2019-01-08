@@ -16,7 +16,6 @@ set -u
 [ -d '/usr/lib/bkctld' ] && LIBDIR='/usr/lib/bkctld'
 . "${LIBDIR}/config"
 
-mkdir -p "${CONFDIR}" "${JAILDIR}" "${INCDIR}" "${INDEX_DIR}"
 subcommand="${1:-}"
 jail="${2:-}"
 option="${3:-}"
