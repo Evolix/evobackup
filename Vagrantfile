@@ -9,6 +9,7 @@ load File.expand_path(vagrantfile) if File.exists?(vagrantfile)
 
 Vagrant.configure('2') do |config|
   config.vm.synced_folder "./", "/vagrant", type: "rsync", rsync__exclude: [ '.vagrant', '.git' ]
+  config.ssh.shell="/bin/sh"
 
   config.vm.provider :libvirt do |libvirt|
     libvirt.storage :file, :size => '10G', :device => 'vdb'
