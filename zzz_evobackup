@@ -4,7 +4,13 @@
 # See https://gitea.evolix.org/evolix/evobackup
 # 
 # Author: Gregory Colpart <reg@evolix.fr>
-# Contributor: Romain Dessort <rdessort@evolix.fr>, Benoît Série <bserie@evolix.fr>, Tristan Pilat <tpilat@evolix.fr>, Victor Laborie <vlaborie@evolix.fr>,  Jérémy Lecour <jlecour@evolix.fr>
+# Contributors:
+# Romain Dessort <rdessort@evolix.fr>
+# Benoît Série <bserie@evolix.fr>
+# Tristan Pilat <tpilat@evolix.fr>
+# Victor Laborie <vlaborie@evolix.fr>
+# Jérémy Lecour <jlecour@evolix.fr>
+#
 # Licence: AGPLv3
 #
 # The following variables must be changed:
