@@ -1,20 +1,86 @@
-# CONFIGURATION VARS
+BKCTLD.CONF(5) - File Formats Manual
 
-bkctld configuration has to be set in /etc/default/bkctld file.
+# NAME
 
-## REQUIREDS VARS
+**bkctld.conf** - configuration file for
+bkctld(8)
 
-Default required vars are defined in bkctld script. Alter them to override default values.
+# SYNOPSIS
 
-* CONFDIR (default: /etc/evobackup) : Dir where incremental backup is configured. See INCS CONFIGURATION section for details.
-* JAILDIR (default : /backup/jails) : Dir for jail's root dir. BTRFS recommended.
-* INCDIR (default : /backups/incs) : Dir where incremental backup is stored. BTRFS recommended.
-* TPLDIR (default : /usr/share/bkctld) : Dir where jail template file is stored.
-* LOCALTPLDIR (default : /usr/local/share/bkctld) : Dir for surcharge jail templates.
-* LOGLEVEL (default : 6) : Define loglevel, based on syslog severity level.
+> name=\[value]
 
-## OPTIONALS VARS
+# DESCRIPTION
 
-Optionnals vars are no default value. No set them desactivate correspondant fonctionnality.
+The
+**bkctld.conf**
+file contains variables that override the behavior of the
+bkctld(8)
+script.
+By default, it is located at
+*/etc/default/bkctld*.
 
-* FIREWALL_RULES (default: no firewall auto configuration) : Configuration file were firewall was configured to allow jail access. This file must be sourced by your firewall configuration tool.
+Each line must be a valid
+bash(1)
+variable definition.
+Lines beginning with the
+'#'
+character are comments and are ignored.
+The order of the definitions does not matter.
+
+The following variables may be defined:
+
+*CONFDIR*
+
+> Directory where
+> evobackup-incl(5)
+> files are kept.
+> It's default value is
+> */etc/evobackup/*.
+
+*JAILDIR*
+
+> Directory where the jails are stored,
+> it is recommended that this be inside a BTRFS file system.
+> It's default value is
+> */backup/jails/*.
+
+*INCDIR*
+
+> Directory where incremental backups are stored,
+> it is recommended that this be inside a BTRFS file system.
+> It's default value is
+> */backup/incs/*.
+
+*TPLDIR*
+
+> Directory where the default configuration files are stored.
+> It's default value is
+> */usr/share/bkctld/*.
+
+*LOCALTPLDIR*
+
+> Directory where custom configuration files are stored.
+> It's default is
+> */usr/local/share/bkctld/*.
+
+*LOGLEVEL*
+
+> Defines the amount of information to log, follows the same scale as in
+> &lt;*syslog.h*>
+> and defaults to 6.
+
+*FIREWALL\_RULES*
+
+> Configuration file containing the firewall rules that govern jail access.
+> This file must be sourced by your firewall.
+> It does not have a default value and, if unset,
+> bkctld(8)
+> will not automatically update the firewall.
+
+# SEE ALSO
+
+bash(1),
+evobackup-incl(5),
+bkctld(8)
+
+OpenBSD 6.4 - December 28, 2018
