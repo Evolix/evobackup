@@ -28,8 +28,8 @@ Prior backups are stored incrementally outside of the
 .Xr chroot 8
 using
 .Xr ln 1
-hard links or BTRFS snapshots. 
-(So they can not be affected by the client), 
+hard links or BTRFS snapshots.
+(So they can not be affected by the client),
 which backups are kept over time can be configured in the jail's nominal
 .Xr evobackup-incl 5
 configuration file.
@@ -93,7 +93,7 @@ Remove old incremental backups
 .El
 .Sh FILES
 .Bl -tag -width Ds
-.It Pa /usr/share/bkctld/bkctld.conf
+.It Pa /etc/default/bkctld
 Template for
 .Xr bkctld.conf 5
 .It Pa /usr/share/bkctld/incl.tpl

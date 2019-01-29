@@ -123,7 +123,7 @@ The following operands are available:
 
 # FILES
 
-*/usr/share/bkctld/bkctld.conf*
+*/etc/default/bkctld*
 
 > Template for
 > bkctld.conf(5)

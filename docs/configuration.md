@@ -17,7 +17,7 @@ file contains variables that override the behavior of the
 bkctld(8)
 script.
 By default, it is located at
-*/usr/share/bkctld/bkctld.conf*.
+*/etc/default/bkctld*.
 
 Each line must be a valid
 bash(1)
