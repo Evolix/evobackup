@@ -1,0 +1,24 @@
+#!/bin/sh
+#
+# Update firewall rules of <jailname> or all
+# Usage: firewall <jailname>|all
+#
+
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+
+jail="${1:-}"
+if [ ! -n "${jail}" ]; then
+    "${LIBDIR}/bkctld-help" && exit 1
+fi
+
+if [ -n "${FIREWALL_RULES}" ]; then
+    [ -f "${FIREWALL_RULES}" ] && sed -i "/#${jail}$/d" "${FIREWALL_RULES}"
+    if [ -d "${JAILDIR}/${jail}" ]; then
+        port=$("${LIBDIR}/bkctld-port" "${jail}")
+        for ip in $("${LIBDIR}/bkctld-ip" "${jail}"); do
+            echo "/sbin/iptables -A INPUT -p tcp --sport 1024: --dport ${port} -s ${ip} -j ACCEPT #${jail}" >> "${FIREWALL_RULES}"
+        done
+        [ -f /etc/init.d/minifirewall ] && /etc/init.d/minifirewall restart >/dev/null
+    fi
+    notice "${jail} : firewall rules updated"
+fi

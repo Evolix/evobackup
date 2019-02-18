@@ -1,0 +1,79 @@
+.Dd December 28, 2018
+.Dt EVOBACKUP-INCL 5
+.Os
+.Sh NAME
+.Nm evobackup-incl
+.Nd incremental backup configuration
+.Sh SYNOPSIS
+.D1 +%Y-%m-%d.-%day
+.Sh DESCRIPTION
+Located by default in
+.Pa /etc/evobackup/ ,
+each
+.Nm
+file is named after the
+.Xr bkctld 8
+backup for which the rules it contains must apply.
+.Pp
+The rules it defines decide which incremental backups are kept when running
+.Bd -literal -offset indent
+# bkctld rm
+.Ed
+.Pp
+Each line defines a single rule.
+The first part of the rule describes when the backup was taken,
+the second part decides how long to keep it.
+Lines beginning with the
+.Sq #
+character are comments and are ignored.
+The order of the rules does not matter.
+.Pp
+Evobackups that do not have their nominal
+.Nm
+file use the default rules defined in
+.Pa /usr/share/bkctld/inc.tpl
+.Sh EXAMPLES
+Keep today's backup:
+.Bd -literal -offset indent
++%Y-%m-%d.-0day
+.Ed
+.Pp
+Keep yesterday's backup:
+.Bd -literal -offset indent
++%Y-%m-%d.-1day
+.Ed
+.Pp
+Keep the first day of this month:
+.Bd -literal -offset indent
++%Y-%m-01.-0month
+.Ed
+.Pp
+Keep the first day of last month:
+.Bd -literal -offset indent
++%Y-%m-01.-1month
+.Ed
+.Pp
+Keep backups for every 15 days:
+.Bd -literal -offset indent
++%Y-%m-01.-1month
++%Y-%m-15.-1month
+.Ed
+.Pp
+Keep a backup of the first day of january:
+.Bd -literal -offset indent
++%Y-01-01.-1month
+.Ed
+.Pp
+Keep backups of the last 4 days and the first day of the last 2 months:
+.Bd -literal -offset indent
++%Y-%m-%d.-0day
++%Y-%m-%d.-1day
++%Y-%m-%d.-2day
++%Y-%m-%d.-3day
++%Y-%m-01.-0month
++%Y-%m-01.-1month
+.Ed
+.Sh SEE ALSO
+.Xr bkctld 8 ,
+.Xr cron 8 ,
+.Pa /etc/evobackup/tpl/inc.tpl

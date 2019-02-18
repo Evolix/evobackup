@@ -1,11 +1,25 @@
 #!/bin/sh
 #
 # Script Evobackup client
-# See https://forge.evolix.org/projects/evobackup
+# See https://gitea.evolix.org/evolix/evobackup
 # 
 # Author: Gregory Colpart <reg@evolix.fr>
-# Contributor: Romain Dessort <rdessort@evolix.fr>, Benoît Série <bserie@evolix.fr>, Tristan Pilat <tpilat@evolix.fr>, Victor Laborie <vlaborie@evolix.fr>,  Jérémy Lecour <jlecour@evolix.fr>
+# Contributors:
+# Romain Dessort <rdessort@evolix.fr>
+# Benoît Série <bserie@evolix.fr>
+# Tristan Pilat <tpilat@evolix.fr>
+# Victor Laborie <vlaborie@evolix.fr>
+# Jérémy Lecour <jlecour@evolix.fr>
+#
 # Licence: AGPLv3
+#
+# The following variables must be changed:
+# SSH_PORT: The Port used for the ssh(1) jail on the backup server
+# MAIL: The email address to send notifications to.
+# SRV: The hostname or IP address of the backup server.
+# 
+# You must then uncomment the various
+# examples that best suit your case
 #
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/sbin:/usr/local/bin

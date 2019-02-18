@@ -1,0 +1,48 @@
+#!/bin/sh
+#
+# Remove old incremtal inc of all jails
+# Usage: rm
+#
+
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+
+empty="/tmp/bkctld-${$}-$(date +%N))"
+mkdir "${empty}"
+pidfile="/var/run/bkctld-rm.pid"
+if [ -f "${pidfile}" ]; then
+    pid=$(cat "${pidfile}")
+    ps -u "${pid}" >/dev/null
+    if [ "${?}" -eq 0 ]; then
+        kill -9 "${pid}"
+        warning "${0} rm always run (PID ${pid}), killed by ${$} !"
+    fi
+    rm "${pidfile}"
+    fi
+echo "${$}" > "${pidfile}"
+for jail in $("${LIBDIR}/bkctld-list"); do
+    incs=$(ls "${INCDIR}/${jail}")
+    if [ -f "${CONFDIR}/${jail}" ]; then
+        keepfile="$(mktemp)"
+        while read j; do
+            date=$( echo "${j}" | cut -d. -f1 )
+            before=$( echo "${j}" | cut -d. -f2 )
+            date -d "$(date "${date}") ${before}" "+%Y-%m-%d"
+        done < "${CONFDIR}/${jail}" > "${keepfile}"
+        for j in $(echo "${incs}" | grep -v -f "${keepfile}"); do
+            start=$(date +"%H:%M:%S")
+            inc_inode=$(stat --format=%i "${INCDIR}/${jail}/${j}")
+            if [ "${inc_inode}" -eq 256 ]; then
+                /bin/btrfs subvolume delete "${INCDIR}/${jail}/${j}" | debug
+            else
+                cd "${INCDIR}/${jail}"
+                rsync -a --delete "${empty}/" "${j}/"
+                rmdir "${j}"
+            fi
+            end=$(date +"%H:%M:%S")
+            notice "${jail} : deleted ${j} inc [${start}/${end}]"
+        done
+        rm "${keepfile}"
+    fi
+done
+rmdir "${empty}"
+rm "${pidfile}"

@@ -1,0 +1,26 @@
+#!/bin/sh
+#
+# Make incremental inc of all jails
+# Usage: inc
+#
+
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+
+date=$(date +"%Y-%m-%d-%H")
+for jail in $("${LIBDIR}/bkctld-list"); do
+    inc="${INCDIR}/${jail}/${date}"
+    mkdir -p "${INCDIR}/${jail}"
+    if [ ! -d "${inc}" ]; then
+        start=$(date +"%H:%M:%S")
+        jail_inode=$(stat --format=%i "${JAILDIR}/${jail}")
+        if [ "$jail_inode" -eq 256 ]; then
+            /bin/btrfs subvolume snapshot -r "${JAILDIR}/${jail}" "${inc}" | debug
+        else
+            cp -alx "${JAILDIR}/${jail}/" "${inc}" | debug
+        fi
+        end=$(date +"%H:%M:%S")
+        notice "${jail} : made ${date} inc [${start}/${end}]"
+    else
+        warning "${jail} : trying to made already existant inc"
+    fi
+done

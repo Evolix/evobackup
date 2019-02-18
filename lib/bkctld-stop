@@ -1,0 +1,22 @@
+#!/bin/sh
+#
+# Stop jail <jailname> or all
+# Usage: stop <jailname>|all
+#
+
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+
+jail="${1:-}"
+if [ ! -n "${jail}" ]; then
+    "${LIBDIR}/bkctld-help" && exit 1
+fi
+[ -d "${JAILDIR}/${jail}" ] || error "${jail} : trying to stop inexistant jail"
+"${LIBDIR}/bkctld-is-on" "${jail}" || exit 0
+
+pid=$(cat "${JAILDIR}/${jail}/${SSHD_PID}")
+for conn in $(ps --ppid "${pid}" -o pid=); do
+    kill "${conn}"
+done
+kill "${pid}" && notice "${jail} was stopped [${pid}]"
+umount --lazy --recursive "${JAILDIR}/${jail}/dev"
+umount --lazy "${JAILDIR}/${jail}/proc/"

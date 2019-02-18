@@ -1,0 +1,25 @@
+#!/bin/sh
+#
+# Print status of <jailname> (default all jail)
+# Usage: status [<jailname>]
+#
+
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+
+jail="${1:-}"
+if [ ! -n "${jail}" ]; then
+    "${LIBDIR}/bkctld-help" && exit 1
+fi
+[ -d "${JAILDIR}/${jail}" ] || error "${jail} : inexistant jail ! Use '$0 status' for list all"
+
+inc="0"
+if [ -f "${CONFDIR}/${jail}" ]; then
+    day=$(grep -c "day" "${CONFDIR}/${jail}")
+    month=$(grep -c "month" "${CONFDIR}/${jail}")
+    inc="${day}/${month}"
+fi
+status="OFF"
+"${LIBDIR}/bkctld-is-on" "${jail}" && status="ON "
+port=$("${LIBDIR}/bkctld-port" "${jail}")
+ip=$("${LIBDIR}/bkctld-ip" "${jail}"|xargs|tr -s ' ' ',')
+echo "${jail} ${status} ${port} ${inc} ${ip}" | awk '{ printf("%- 30s %- 10s %- 10s %- 10s %- 40s\n", $1, $2, $3, $4, $5); }'

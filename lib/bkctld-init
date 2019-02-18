@@ -1,0 +1,35 @@
+#!/bin/sh
+#
+# Init jail <jailname>
+# Usage: init <jailname>
+#
+
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+
+jail="${1:-}"
+if [ ! -n "${jail}" ]; then
+    "${LIBDIR}/bkctld-help" && exit 1
+fi
+[ -d "${JAILDIR}/${jail}" ] && error "${jail} : trying to create existant jail"
+
+mkdir -p "${CONFDIR}" "${JAILDIR}"
+sshd_config="${TPLDIR}/sshd_config"
+inctpl="${TPLDIR}/inc.tpl"
+[ -f "${LOCALTPLDIR}/sshd_config" ] && sshd_config="${LOCALTPLDIR}/sshd_config"
+[ -f "${LOCALTPLDIR}/inc.tpl" ] && inctpl="${LOCALTPLDIR}/inc.tpl"
+
+rootdir=$(dirname "${JAILDIR}")
+rootdir_inode=$(stat --format=%i "${rootdir}")
+jaildir_inode=$(stat --format=%i "${JAILDIR}")
+if [ "${rootdir_inode}" -eq 256 ] || [ "${jaildir_inode}" -eq 256 ]; then
+    /bin/btrfs subvolume create "${JAILDIR}/${jail}"
+else
+    mkdir -p "${JAILDIR}/${jail}"
+fi
+. "${LIBDIR}/mkjail"
+info "4 - Copie default sshd_config"
+install -m 0640 "${sshd_config}" "${JAILDIR}/${jail}/${SSHD_CONFIG}"
+info "5 - Copie default inc configuration"
+install -m 0640 "${inctpl}" "${CONFDIR}/${jail}"
+"${LIBDIR}/bkctld-port" "${jail}" auto
+notice "${jail} : created jail"

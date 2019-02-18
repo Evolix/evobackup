@@ -1,0 +1,26 @@
+#!/bin/sh
+#
+# Check if a jail is on or not
+# Usage: is-on <jailname>
+#
+
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+
+jail="${1:-}"
+if [ ! -n "${jail}" ]; then
+    "${LIBDIR}/bkctld-help" && exit 1
+fi
+[ -d "${JAILDIR}/${jail}" ] || error "${jail} : trying to check inexistant jail"
+
+jail="${1}"
+return=1
+if [ -f "${JAILDIR}/${jail}/${SSHD_PID}" ]; then
+    pid=$(cat "${JAILDIR}/${jail}/${SSHD_PID}")
+    ps -p "${pid}" > /dev/null && return=0
+fi
+if [ "${return}" -eq 1 ]; then
+    rm -f "${JAILDIR}/${jail}/${SSHD_PID}"
+    grep -q "${JAILDIR}/${jail}/proc" /proc/mounts && umount --lazy "${JAILDIR}/${jail}/proc/"
+    grep -q "${JAILDIR}/${jail}/dev" /proc/mounts && umount --lazy --recursive "${JAILDIR}/${jail}/dev"
+fi
+exit "${return}"

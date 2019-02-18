@@ -1,0 +1,64 @@
+#!/bin/sh
+#
+# Config for bkctld
+#
+
+[ -f /etc/default/bkctld ] && . /etc/default/bkctld
+LIBDIR=${LIBDIR:-/usr/lib/bkctld}
+CONFDIR="${CONFDIR:-/etc/evobackup}"
+BACKUP_DISK="${BACKUP_DISK:-}"
+JAILDIR="${JAILDIR:-/backup/jails}"
+INCDIR="${INCDIR:-/backup/incs}"
+TPLDIR="${TPLDIR:-/usr/share/bkctld}"
+INDEX_DIR="${INDEX_DIR:-/backup/index}"
+IDX_FILE="${IDX_FILE:-${INDEX_DIR}/bkctld-jails.idx}"
+LOCALTPLDIR="${LOCALTPLDIR:-/usr/local/share/bkctld}"
+SSHD_PID="${SSHD_PID:-/run/sshd.pid}"
+SSHD_CONFIG="${SSHD_CONFIG:-/etc/ssh/sshd_config}"
+AUTHORIZED_KEYS="${AUTHORIZED_KEYS:-/root/.ssh/authorized_keys}"
+FIREWALL_RULES="${FIREWALL_RULES:-}"
+LOGLEVEL="${LOGLEVEL:-6}"
+CRITICAL="${CRITICAL:-48}"
+WARNING="${WARNING:-24}"
+DUC=$(command -v duc-nox||command -v duc)
+
+debug() {
+    msg="${1:-$(cat /dev/stdin)}"
+    if [ "${LOGLEVEL}" -ge 7 ]; then
+        echo "${msg}"
+        logger -t bkctld -p daemon.debug "${msg}"
+    fi
+}
+
+info() {
+    msg="${1:-$(cat /dev/stdin)}"
+    if [ "${LOGLEVEL}" -ge 6 ]; then
+        tty -s && echo "${msg}"
+        logger -t bkctld -p daemon.info "${msg}"
+    fi
+}
+
+notice() {
+    msg="${1:-$(cat /dev/stdin)}"
+    tty -s && echo "${msg}"
+    [ "${LOGLEVEL}" -ge 5 ] && logger -t bkctld -p daemon.notice "${msg}"
+}
+
+warning() {
+    msg="${1:-$(cat /dev/stdin)}"
+    tty -s && echo "WARNING : ${msg}" >&2
+    if [ "${LOGLEVEL}" -ge 4 ]; then
+        tty -s || echo "WARNING : ${msg}" >&2
+        logger -t bkctld -p daemon.warning "${msg}"
+    fi
+}
+
+error() {
+    msg="${1:-$(cat /dev/stdin)}"
+    tty -s && echo "ERROR : ${msg}" >&2
+    if [ "${LOGLEVEL}" -ge 5 ]; then
+        tty -s || echo "ERROR : ${msg}" >&2
+        logger -t bkctld -p daemon.error "${msg}"
+    fi
+    exit 1
+}

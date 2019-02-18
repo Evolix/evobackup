@@ -1,0 +1,35 @@
+#!/bin/sh
+#
+# Set or get allowed(s) ip(s) of <jailname>
+# Usage: ip <jailname> [<ip>|all]
+#
+
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+
+jail="${1:-}"
+ip="${2:-}"
+if [ ! -n "${jail}" ]; then
+    "${LIBDIR}/bkctld-help" && exit 1
+fi
+[ -d "${JAILDIR}/${jail}" ] || error "${jail} : inexistant jail'"
+
+if [ -z "${ip}" ]; then
+    grep -E "^AllowUsers" "${JAILDIR}/$jail/${SSHD_CONFIG}"|grep -Eo "root@[^ ]+"| while read allow; do
+        echo "${allow}"|cut -d'@' -f2
+    done
+else
+    if [ "${ip}" = "all" ] || [ "${ip}" = "0.0.0.0/0" ]; then
+        ips="0.0.0.0/0"
+    else
+        ips=$("${LIBDIR}/bkctld-ip" "${jail}")
+        ips=$(echo "${ips}" "${ip}"|xargs -n1|grep -v "0.0.0.0/0"|sort|uniq)
+    fi
+    allow="AllowUsers"
+    for ip in $ips; do
+        allow="${allow} root@${ip}"
+    done
+    sed -i "s~^AllowUsers .*~${allow}~" "${JAILDIR}/$jail/${SSHD_CONFIG}"
+    notice "${jail} : update ip => ${ip}"
+    "${LIBDIR}/bkctld-is-on" "${jail}" && "${LIBDIR}/bkctld-reload" "${jail}"
+    "${LIBDIR}/bkctld-firewall" "${jail}"
+fi

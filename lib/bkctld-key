@@ -1,0 +1,27 @@
+#!/bin/sh
+#
+# Set or get ssh pubic key of <jailname>
+# Usage: key <jailname> [<keyfile>]
+#
+
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+
+jail="${1:-}"
+keyfile="${2:-}"
+if [ ! -n "${jail}" ]; then
+    "${LIBDIR}/bkctld-help" && exit 1
+fi
+[ -d "${JAILDIR}/${jail}" ] || error "${jail} : inexistant jail'"
+
+if [ -z "${keyfile}" ]; then
+    if [ -f "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}" ]; then
+        cat "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}"
+    fi
+else
+    [ -e "${keyfile}" ] || error "Keyfile ${keyfile} dosen't exist !"
+    cat "${keyfile}" > "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}"
+    chmod 600 "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}"
+    notice "${jail} : update key => ${keyfile}"
+
+    "${LIBDIR}/bkctld-is-on" "${jail}" && "${LIBDIR}/bkctld-reload" "${jail}"
+fi

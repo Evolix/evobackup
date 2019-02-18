@@ -1,232 +1,207 @@
+BKCTLD(8) - System Manager's Manual
+
 # NAME
 
-bkctld - tool to manage evobackup jail
+**bkctld** - tool to manage evobackup jails
 
 # SYNOPSIS
 
-~~~
-bkctld <command> [<args>]
-~~~
+**bkctld**
+\[*operand...*]
 
 # DESCRIPTION
 
-bkctld is a shell script used to set up and manage a backup server able to receive data from many servers (clients).
+**bkctld**
+is a shell script that creates and manages a backup server
+which can handle the backups of many other servers (clients).
 
-The aim is to run a SSH chroot environment (called "jails" in the FreeBSD world) for every single client. The client will then be able to send data over SSH using rsync in his own chroot environment (using root account).
+It uses
+ssh(1)
+and
+chroot(8)
+to sandbox every client's backups.
+Each client will upload it's data every day
+using
+rsync(1)
+in it's
+chroot(8)
+(using the root account).
 
-Incrementals are stored outside the chroot using hard links or btrfs snapshots (thus incrementals are not accessible by clients). This method has the advantage to keep incrementals securely isolated using low space on device.
+Prior backups are stored incrementally outside of the
+chroot(8)
+using
+ln(1)
+hard links or BTRFS snapshots.
+(So they can not be affected by the client),
+which backups are kept over time can be configured in the jail's nominal
+evobackup-incl(5)
+configuration file.
 
-A suitable volume size must be mounted on /backup (usage of **btrfs** is preferable, providing subvolume and snapshot fonctionnality). For security reason, you can use an encrypted volume (e.g. **luks**)
+A large enough volume must be mounted on
+*/backup*,
+if the filesystem is formatted with BTRFS,
+**bkctld**
+will use sub-volumes and snapshots to save space.
 
-# BKCTLD COMMANDS
+It's default settings can be overridden in
+bkctld.conf(5)
+file.
 
-Create an evobackup jail :
+The following operands are available:
 
-~~~
-bkctld init <jailname>
-~~~
+**init** *jailname*
 
-Update an evobackup jail or all :
+> Create an evobackup jail
 
-~~~
-bkctld update <jailname>|all
-~~~
+**update** **all** | *jailname*
 
-Remove an evobackup jail or all :
+> Update an evobackup jail
 
-~~~
-bkctld remove <jailname>|all
-~~~
+**remove** **all** | *jailname*
 
-Start an evobackup jail or all :
+> Remove an evobackup jail
 
-~~~
-bkctld start <jailname>|all
-~~~
+**start** **all** | *jailname*
 
-Stop an evobackup jail or all :
+> Start an evobackup jail
 
-~~~
-bkctld stop <jailname>|all
-~~~
+**stop** **all** | *jailname*
 
-Reload an evobackup jail or all :
+> Stop an evobackup jail
 
-~~~
-bkctld reload <jailname>|all
-~~~
-        
-Restart an evobackup jail or all :
+**reload** **all** | *jailname*
 
-~~~
-bkctld restart <jailname>|all
-~~~
+> Reload an evobackup jail
 
-Sync an evobackup jail or all.
-Second server is defined by $NODE var in /etc/default/bkctld :
+**restart** **all** | *jailname*
 
-~~~
-bkctld sync <jailname>|all
-~~~
+> Restart an evobackup jail
 
-Print status of all evobackup jail or one jail :
+**sync** **all** | *jailname*
 
-~~~
-bkctld status [<jailname>]
-~~~
+> Sync an evobackup jail, the mirror server is defined by the
+> `$NODE`
+> variable in
+> */etc/default/bkctld*
 
-Print or set the SSH public key of an evobackup jail :
+**status** \[*jailname*]
 
-~~~
-bkctld key <jailname> [<keyfile>]
-~~~
+> Print the status of all jails or only
+> \[*jailname*].
 
-Print or set the SSH port of an evobackup jail.
-Auto to set next available port (last + 1) :
+**key** *jailname* \[*keyfile*]
 
-~~~
-bkctld port <jailname> [<ssh_port>|auto]
-~~~
+> Print or set the
+> ssh(1)
+> public key of an evobackup jail
 
-Print or set allowed IP of an evobackup jail.
-All for unrestricted access (default) :
+**port** *jailname* \[**auto** | *port*]
 
-~~~
-bkctld ip <jailname> [<ip>|all]
-~~~
+> Print or set the
+> ssh(1)
+> \[*port*]
+> of an evobackup jail.
+> Using
+> \[**auto**]
+> will set it to the next available port.
 
-Generate inc of an evobackup jail :
+**ip** *jailname* \[**all** | *address*]
 
-~~~
-bkctld inc
-~~~
+> Print or set the whitelisted IP
+> \[*address*]
+> for an evobackup jail.
+> \[**all**]
+> allows unrestricted access and is the default.
 
-Remove old inc of an evobackup jail :
+**inc**
 
-~~~
-bkctld rm
-~~~
+> Generate incremental backups
 
-# CONFIGURATION VARS
+**rm**
 
-bkctld configuration has to be set in /etc/default/bkctld file.
+> Remove old incremental backups
 
-## REQUIREDS VARS
+# FILES
 
-Default required vars are defined in bkctld script. Alter them to override default values.
+*/etc/default/bkctld*
 
-* CONFDIR (default: /etc/evobackup) : Dir where incremental backup is configured. See INCS CONFIGURATION section for details.
-* JAILDIR (default : /backup/jails) : Dir for jail's root dir. BTRFS recommended.
-* INCDIR (default : /backups/incs) : Dir where incremental backup is stored. BTRFS recommended.
-* TPLDIR (default : /usr/share/bkctld) : Dir where jail template file is stored.
-* LOCALTPLDIR (default : /usr/local/share/bkctld) : Dir for surcharge jail templates.
-* LOGLEVEL (default : 6) : Define loglevel, based on syslog severity level.
+> Template for
+> bkctld.conf(5)
 
-## OPTIONALS VARS
+*/usr/share/bkctld/incl.tpl*
 
-Optionnals vars are no default value. No set them desactivate correspondant fonctionnality.
+> Default rules for the incremental backups are stored here.
 
-* FIREWALL_RULES (default: no firewall auto configuration) : Configuration file were firewall was configured to allow jail access. This file must be sourced by your firewall configuration tool.
+# EXAMPLES
 
-# INCS CONFIGURATION
+Before creating a jail and backing up a client,
+the backup server administrator will need:
 
-Incremental backups was configured in $CONFDIR/<jailname>. Some example of syntax. 
+*	The host name of the client system.
 
-Keep the incrememtal backup of today :
+*	The public RSA
+	ssh(1)
+	key for the
+	"root"
+	user of the client system,
+	it is recommended the private key be password-less if automation is desired.
 
-~~~
-+%Y-%m-%d.-0day
-~~~
+*	The IPv4 address of the client system is needed
+	if the administrator wishes to maintain a whitelist,
+	see
+	*FIREWALL\_RULES*
+	in
+	bkctld.conf(5)
 
-Keep the incremental backup of yesterday :
+He can then create the jail:
 
-~~~
-+%Y-%m-%d.-1day
-~~~
+	# bkctld init CLIENT_HOST_NAME
+	# bkctld key CLIENT_HOST_NAME /root/CLIENT_HOST_NAME.pub
+	# bkctld ip CLIENT_HOST_NAME CLIENT_IP_ADDRESS
+	# bkctld start CLIENT_HOST_NAME
+	# bkctld status CLIENT_HOST_NAME
 
-Keep the incremental backup of the first day of this month :
+And override the default
+evobackup-incl(5)
+rules
 
-~~~
-+%Y-%m-01.-0month
-~~~
+	# $EDITOR /etc/evobackup/CLIENT_HOST_NAME
 
-Keep the incremental backup of the first day of last month :
+To sync itself,
+the client server will need to install
+rsync(1).
+It can then be run manually:
 
-~~~
-+%Y-%m-01.-1month
-~~~
+	# rsync -av -e "ssh -p JAIL_PORT" /home/ root@BACKUP_SERVER:/var/backup/home/
 
-Keep the incremental backup of every 15 days :
+If a more automated setup is required,
+a script can be written in any programming language.
+In this case,
+it may be useful to validate the backup server's identity before hand.
 
-~~~
-+%Y-%m-01.-1month
-+%Y-%m-15.-1month
-~~~
+	# ssh -p JAIL_PORT BACKUP_SERVER
 
-Keep the incremental backup of the first january :
-
-~~~
-+%Y-01-01.-1month
-~~~
-
-Default value : keep incremental of last 4 days and last 2 months. Change default in $LOCALTPLDIR/inc.tpl :
-
-~~~
-+%Y-%m-%d.-0day
-+%Y-%m-%d.-1day
-+%Y-%m-%d.-2day
-+%Y-%m-%d.-3day
-+%Y-%m-01.-0month
-+%Y-%m-01.-1month
-~~~
-
-# CLIENT CONFIGURATION
-
-You can save various systems on evobackup jail :  Linux, BSD, Windows, MacOSX. Only prequisites is rsync command.
-
-~~~
-rsync -av -e "ssh -p SSH_PORT" /home/ root@SERVER_NAME:/var/backup/home/
-~~~
-
-You  can  simply create a shell script which use rsync for backup your's servers. An example script is available in zzz_evobackup for quickstart.
-
-This documentation explain how to use this example script.
-
-Install example script in crontab :
-
-~~~
-# For Linux
-install -v -m700 zzz_evobackup /etc/cron.daily/
-
-# For FreeBSD
-install -v -m700 zzz_evobackup /etc/periodic/daily/
-~~~
-
-Generate an SSH key for root account with no passphrase :
-
-~~~
-ssh-keygen
-~~~
-
-Sent /root/.ssh/id_rsa.pub to backup server administrator or read BKCTLD COMMANDS section.
-
-Edit zzz_evobackup script and update this variables :
-
-* SSH_PORT : Port of corespondant evobackup jail.
-* MAIL : Email address for notification.
-* NODE : Use for alternate between mutiple backup servers. Default value permit to save on node0 on pair day and on node1 on impair day.
-* SRV : Adress of your backup serveur.
-
-Uncomment service dump, ex Mysql / LDAP / PostgreQL / ...
-
-Itiniate SSH connection and validate fingerprint :
-
-~~~
-ssh -p SSH_PORT SERVER_NAME
-~~~
-
-Your daily evobackup is in place !
+A
+bash(1)
+example to be run under the
+"root"
+user's
+crontab(5)
+can be found in the
+[source repository](https://gitea.evolix.org/evolix/evobackup/src/branch/master/zzz_evobackup)
 
 # SEE ALSO
 
-rsync(1), sshd(8), chroot(8).
+rsync(1),
+ssh-keygen(1),
+bkctld(5),
+evobackup-incl(5),
+chroot(8),
+cron(8),
+sshd(8)
+
+# AUTHORS
+
+Victor Laborie
+
+OpenBSD 6.4 - December 27, 2018
