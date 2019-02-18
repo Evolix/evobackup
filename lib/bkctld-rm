@@ -22,7 +22,7 @@ echo "${$}" > "${pidfile}"
 for jail in $("${LIBDIR}/bkctld-list"); do
     incs=$(ls "${INCDIR}/${jail}")
     if [ -f "${CONFDIR}/${jail}" ]; then
-        keepfile="${CONFDIR}/.keep-${jail}"
+        keepfile="$(mktemp)"
         while read j; do
             date=$( echo "${j}" | cut -d. -f1 )
             before=$( echo "${j}" | cut -d. -f2 )
@@ -41,6 +41,7 @@ for jail in $("${LIBDIR}/bkctld-list"); do
             end=$(date +"%H:%M:%S")
             notice "${jail} : deleted ${j} inc [${start}/${end}]"
         done
+        rm "${keepfile}"
     fi
 done
 rmdir "${empty}"
