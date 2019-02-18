@@ -1,1 +1,3 @@
-docs/bkctld.8
+bkctld.8
+bkctld.conf.5
+evobackup-incl.5

@@ -1,3 +1,15 @@
+bkctld (2.0.0-1) unstable; urgency=low
+
+  * Split bkctld into multiples scripts
+  * Drop Debian Jessie support
+  * Parallelize bkctld <subcommand> all
+  * Subcommand list are now dynamic in bash completion
+  * Transform bkctld SysVinit script into systemd oneshot service
+  * Do not create dirs in bkctld script
+  * Use mktemp for keepfile and rm it after usage
+
+ -- Victor Laborie <vlaborie@evolix.fr>  Mon, 18 Feb 2019 11:39:45 +0100
+
 bkctld (1.7.1-1) unstable; urgency=high
 
   * btrfs is now in /bin 
