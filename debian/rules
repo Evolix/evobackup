@@ -1,14 +1,4 @@
 #!/usr/bin/make -f
 
-DEBIAN_VERSION := $(shell dpkg-parsechangelog| sed -n -e 's/^Version: //p')
-DEBIAN_DATE := $(shell dpkg-parsechangelog| sed -n -e 's/^Date: //p')
-
-build:
-	pandoc -f markdown -t man docs/usage.md --template default.man -V title=bkctld -V section=8 -V date="${DEBIAN_DATE}" -V footer="${DEBIAN_VERSION}" -V header="bkctld man page" -o docs/bkctld.8
-
-override_dh_clean:
-	dh_clean
-	rm -f docs/bkctld.8
-
 %:
 	dh $@
