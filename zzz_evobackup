@@ -78,20 +78,20 @@ pick_server() {
 }
 
 ## Verify other evobackup process and kill if needed
-PIDFILE=/var/run/evobackup.pid
-if [ -e $PIDFILE ]; then
-    pid=$(cat "$PIDFILE")
+PIDFILE="/var/run/evobackup.pid"
+if [ -e "${PIDFILE}" ]; then
+    pid=$(cat "${PIDFILE}")
     # Killing the childs of evobackup.
-    for ppid in $(ps h --ppid "$pid" -o pid | tr -s '\n' ' '); do
-        kill -9 "$ppid";
+    for ppid in $(ps h --ppid "${pid}" -o pid | tr -s '\n' ' '); do
+        kill -9 "${ppid}";
     done
     # Then kill the main PID.
-    kill -9 "$pid"
+    kill -9 "${pid}"
     echo "$0 is still running (PID ${pid}). Process has been killed" >&2
 fi
-echo "$$" > $PIDFILE
+echo "$$" > ${PIDFILE}
 # shellcheck disable=SC2064
-trap "rm -f $PIDFILE" EXIT
+trap "rm -f ${PIDFILE}" EXIT
 
 ##### LOCAL BACKUP #############################################################
 
