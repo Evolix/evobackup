@@ -87,7 +87,7 @@ if [ -e $PIDFILE ]; then
     done
     # Then kill the main PID.
     kill -9 "$pid"
-    echo "$0 tourne encore (PID $pid). Processus killé" >&2
+    echo "$0 is still running (PID ${pid}). Process has been killed" >&2
 fi
 echo "$$" > $PIDFILE
 # shellcheck disable=SC2064
