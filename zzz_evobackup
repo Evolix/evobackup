@@ -229,7 +229,7 @@ done
 ## Dump process with ps
 ps auwwx >${LOCAL_BACKUP_DIR}/ps.out
 
-if [ "$SYSTEM" = "linux" ]; then
+if [ "${SYSTEM}" = "linux" ]; then
     ## Dump network connections with netstat
     netstat -taupen > ${LOCAL_BACKUP_DIR}/netstat.out
 
@@ -249,7 +249,7 @@ HOSTNAME=$(hostname)
 
 BEGINNING=$(/bin/date +"%d-%m-%Y ; %H:%M")
 
-if [ "$SYSTEM" = "linux" ]; then
+if [ "${SYSTEM}" = "linux" ]; then
     rep="/bin /boot /lib /opt /sbin /usr"
 else
     rep="/bsd /bin /sbin /usr"
@@ -285,7 +285,7 @@ rsync -avzh --stats --delete --delete-excluded --force --ignore-errors --partial
     --exclude "/var/lib/clamav/*.tmp"                  \
     --exclude "/home/mysqltmp"                         \
     --exclude "/var/lib/php/sessions"                  \
-        $rep                                           \
+        ${rep}                                         \
         /etc                                           \
         /root                                          \
         /var                                           \
@@ -297,12 +297,12 @@ rsync -avzh --stats --delete --delete-excluded --force --ignore-errors --partial
 
 END=$(/bin/date +"%d-%m-%Y ; %H:%M")
 
-echo "EvoBackup - $HOSTNAME - START $BEGINNING"            \
+echo "EvoBackup - ${HOSTNAME} - START ${BEGINNING}"    \
     >> /var/log/evobackup.log
 
-echo "EvoBackup - $HOSTNAME - STOP $END"               \
+echo "EvoBackup - ${HOSTNAME} - STOP ${END}"           \
     >> /var/log/evobackup.log
 
 tail -10 /var/log/evobackup.log |                      \
-    mail -s "[info] EvoBackup - Client $HOSTNAME"      \
-    $MAIL
+    mail -s "[info] EvoBackup - Client ${HOSTNAME}"    \
+    ${MAIL}
