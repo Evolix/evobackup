@@ -15,7 +15,7 @@
 #
 # /!\ DON'T FORGET TO SET "MAIL" and "SERVERS" VARIABLES
 
-##### Configuration ############################################################
+##### Configuration ###################################################
 
 # email adress for notifications
 MAIL=jdoe@example.com
@@ -32,7 +32,7 @@ LOCAL_BACKUP_DIR="/home/backup"
 # You can set "linux" or "bsd" manually or let it choose automatically
 SYSTEM=$(uname | tr '[:upper:]' '[:lower:]')
 
-##### SETUP AND FUNCTIONS ######################################################
+##### SETUP AND FUNCTIONS #############################################
 
 # shellcheck disable=SC2174
 mkdir -p -m 700 ${LOCAL_BACKUP_DIR}
@@ -93,7 +93,7 @@ echo "$$" > ${PIDFILE}
 # shellcheck disable=SC2064
 trap "rm -f ${PIDFILE}" EXIT
 
-##### LOCAL BACKUP #############################################################
+##### LOCAL BACKUP ####################################################
 
 # You can comment or uncomment sections below to customize the backup
 
@@ -236,7 +236,7 @@ else
     pkg_info -m > ${LOCAL_BACKUP_DIR}/packages
 fi
 
-##### REMOTE BACKUP ############################################################
+##### REMOTE BACKUP ###################################################
 
 n=0
 server=""
@@ -310,7 +310,7 @@ rsync -avzh --stats --delete --delete-excluded --force --ignore-errors --partial
 
 END=$(/bin/date +"%d-%m-%Y ; %H:%M")
 
-##### REPORTING ################################################################
+##### REPORTING #######################################################
 
 echo "EvoBackup - ${HOSTNAME} - START ${BEGINNING}"    \
     >> /var/log/evobackup.log
