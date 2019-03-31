@@ -207,9 +207,9 @@ mkdir -p -m 700 ${LOCAL_BACKUP_DIR}
 ## Dump MBR / table partitions with dd and sfdisk
 ## Linux
 #for disk in $(ls /dev/[sv]d[a-z] 2>/dev/null); do
-#	name=$(basename $disk)
-#	dd if=$disk of=${LOCAL_BACKUP_DIR}/MBR-$name bs=512 count=1 2>&1 | egrep -v "(records in|records out|512 bytes)"
-#	fdisk -l $disk > ${LOCAL_BACKUP_DIR}/partitions-$name
+#    name=$(basename $disk)
+#    dd if=$disk of=${LOCAL_BACKUP_DIR}/MBR-$name bs=512 count=1 2>&1 | egrep -v "(records in|records out|512 bytes)"
+#    fdisk -l $disk > ${LOCAL_BACKUP_DIR}/partitions-$name
 #done
 #cat ${LOCAL_BACKUP_DIR}/partitions-* > ${LOCAL_BACKUP_DIR}/partitions
 ## OpenBSD
