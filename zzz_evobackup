@@ -102,16 +102,18 @@ SSH_SERVER=$(echo $SERVER | cut -d':' -f1)
 SSH_PORT=$(echo $SERVER | cut -d':' -f2)
 
 ## We use /home/backup : feel free to use your own dir
-mkdir -p -m 700 /home/backup
+LOCAL_BACKUP_DIR=/home/backup
+# shellcheck disable=SC2174
+mkdir -p -m 700 ${LOCAL_BACKUP_DIR}
 
 ## OpenLDAP : example with slapcat
-# slapcat -l /home/backup/ldap.bak
+# slapcat -l ${LOCAL_BACKUP_DIR}/ldap.bak
 
 ### MySQL
 
 ## example with global and compressed mysqldump
 # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
-#  --opt --all-databases --force --events --hex-blob | gzip --best > /home/backup/mysql.bak.gz
+#  --opt --all-databases --force --events --hex-blob | gzip --best > ${LOCAL_BACKUP_DIR}/mysql.bak.gz
 
 ## example with two dumps for each table (.sql/.txt) for all databases
 # for i in $(echo SHOW DATABASES | mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
@@ -143,7 +145,7 @@ mkdir -p -m 700 /home/backup
 #     instance=$(echo "$instance"|awk '{ print $3 }')
 #     if [ "$instance" != "3306" ]
 #     then
-#         mysqldump -P $instance --opt --all-databases --hex-blob -u mysqladmin -p$mysqladminpasswd > /home/backup/mysql.$instance.bak
+#         mysqldump -P $instance --opt --all-databases --hex-blob -u mysqladmin -p$mysqladminpasswd > ${LOCAL_BACKUP_DIR}/mysql.$instance.bak
 #     fi
 # done
 
@@ -151,31 +153,31 @@ mkdir -p -m 700 /home/backup
 
 ## example with pg_dumpall (warning: you need space in ~postgres)
 # su - postgres -c "pg_dumpall > ~/pg.dump.bak"
-# mv ~postgres/pg.dump.bak /home/backup/
+# mv ~postgres/pg.dump.bak ${LOCAL_BACKUP_DIR}/
 ## another method with gzip directly piped
 # cd /var/lib/postgresql
-# sudo -u postgres pg_dumpall | gzip > /home/backup/pg.dump.bak.gz
+# sudo -u postgres pg_dumpall | gzip > ${LOCAL_BACKUP_DIR}/pg.dump.bak.gz
 # cd - > /dev/null
 
 ## example with all tables from MYBASE excepts TABLE1 and TABLE2
-# pg_dump -p 5432 -h 127.0.0.1 -U USER --clean -F t --inserts -f /home/backup/pg-backup.tar -t 'TABLE1' -t 'TABLE2' MYBASE
+# pg_dump -p 5432 -h 127.0.0.1 -U USER --clean -F t --inserts -f ${LOCAL_BACKUP_DIR}/pg-backup.tar -t 'TABLE1' -t 'TABLE2' MYBASE
 
 ## example with only TABLE1 and TABLE2 from MYBASE
-# pg_dump -p 5432 -h 127.0.0.1 -U USER --clean -F t --inserts -f /home/backup/pg-backup.tar -T 'TABLE1' -T 'TABLE2' MYBASE
+# pg_dump -p 5432 -h 127.0.0.1 -U USER --clean -F t --inserts -f ${LOCAL_BACKUP_DIR}/pg-backup.tar -T 'TABLE1' -T 'TABLE2' MYBASE
 
 ## MongoDB : example with mongodump
 ## don't forget to create use with read-only access
 ## > use admin
 ## > db.createUser( { user: "mongobackup", pwd: "PASS", roles: [ "backup", ] } )
-# test -d /home/backup/mongodump/ && rm -rf /home/backup/mongodump/
-# mkdir -p -m 700 /home/backup/mongodump/
-# mongodump --quiet -u mongobackup -pPASS -o /home/backup/mongodump/
+# test -d ${LOCAL_BACKUP_DIR}/mongodump/ && rm -rf ${LOCAL_BACKUP_DIR}/mongodump/
+# mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mongodump/
+# mongodump --quiet -u mongobackup -pPASS -o ${LOCAL_BACKUP_DIR}/mongodump/
 # if [ $? -ne 0 ]; then
 #   echo "Error with mongodump!"
 # fi
 
 ## Redis : example with copy .rdb file
-# cp /var/lib/redis/dump.rdb /home/backup/
+# cp /var/lib/redis/dump.rdb ${LOCAL_BACKUP_DIR}/
 
 ## ElasticSearch, take a snapshot as a backup.
 ## Warning: You need to have a path.repo configured.
@@ -199,48 +201,48 @@ mkdir -p -m 700 /home/backup
 # curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot_${date}?wait_for_completion=true" -o /tmp/es_snapshot_${date}.log
 
 ## RabbitMQ : export config
-#rabbitmqadmin export /home/backup/rabbitmq.config >> /var/log/evobackup.log
+#rabbitmqadmin export ${LOCAL_BACKUP_DIR}/rabbitmq.config >> /var/log/evobackup.log
 
 ## Dump MBR / table partitions with dd and sfdisk
 ## Linux
 #for disk in $(ls /dev/[sv]d[a-z] 2>/dev/null); do
 #	name=$(basename $disk)
-#	dd if=$disk of=/home/backup/MBR-$name bs=512 count=1 2>&1 | egrep -v "(records in|records out|512 bytes)"
-#	fdisk -l $disk > /home/backup/partitions-$name
+#	dd if=$disk of=${LOCAL_BACKUP_DIR}/MBR-$name bs=512 count=1 2>&1 | egrep -v "(records in|records out|512 bytes)"
+#	fdisk -l $disk > ${LOCAL_BACKUP_DIR}/partitions-$name
 #done
-#cat /home/backup/partitions-* > /home/backup/partitions
+#cat ${LOCAL_BACKUP_DIR}/partitions-* > ${LOCAL_BACKUP_DIR}/partitions
 ## OpenBSD
-# disklabel sd0 > /home/backup/partitions
+# disklabel sd0 > ${LOCAL_BACKUP_DIR}/partitions
 
 # backup MegaCli config
-#megacli -CfgSave -f /home/backup/megacli_conf.dump -a0 >/dev/null
+#megacli -CfgSave -f ${LOCAL_BACKUP_DIR}/megacli_conf.dump -a0 >/dev/null
 
 ## Dump system and kernel versions
-uname -a > /home/backup/uname
+uname -a > ${LOCAL_BACKUP_DIR}/uname
 
 ## Dump network routes with mtr and traceroute (warning: could be long with aggressive firewalls)
 for addr in 8.8.8.8 www.evolix.fr travaux.evolix.net; do
-    mtr -r $addr > /home/backup/mtr-${addr}
-    traceroute -n $addr > /home/backup/traceroute-${addr} 2>&1
+    mtr -r ${addr} > ${LOCAL_BACKUP_DIR}/mtr-${addr}
+    traceroute -n ${addr} > ${LOCAL_BACKUP_DIR}/traceroute-${addr} 2>&1
 done
 
 ## Dump process with ps
-ps auwwx >/home/backup/ps.out
+ps auwwx >${LOCAL_BACKUP_DIR}/ps.out
 
 if [ "$SYSTEM" = "linux" ]; then
     ## Dump network connections with netstat
-    netstat -taupen >/home/backup/netstat.out
+    netstat -taupen > ${LOCAL_BACKUP_DIR}/netstat.out
 
     ## List Debian packages
-    dpkg -l >/home/backup/packages
-    dpkg --get-selections >/home/backup/packages.getselections
-    apt-cache dumpavail >/home/backup/packages.available
+    dpkg -l > ${LOCAL_BACKUP_DIR}/packages
+    dpkg --get-selections > ${LOCAL_BACKUP_DIR}/packages.getselections
+    apt-cache dumpavail > ${LOCAL_BACKUP_DIR}/packages.available
 else
     ## Dump network connections with netstat
-    netstat -finet -atn >/home/backup/netstat.out
+    netstat -finet -atn > ${LOCAL_BACKUP_DIR}/netstat.out
 
     ## List OpenBSD packages
-    pkg_info -m >/home/backup/packages
+    pkg_info -m > ${LOCAL_BACKUP_DIR}/packages
 fi
 
 HOSTNAME=$(hostname)
