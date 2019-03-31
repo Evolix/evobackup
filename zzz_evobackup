@@ -14,13 +14,11 @@
 # Licence: AGPLv3
 #
 # The following variables must be changed:
-# SSH_PORT: The Port used for the ssh(1) jail on the backup server
 # MAIL: The email address to send notifications to.
-# SRV: The hostname or IP address of the backup server.
-# 
-# You must then uncomment the various
-# examples that best suit your case
+# SERVERS: The list of hosts (hostname or IP address) and SSH port
+#          to send backup files to.
 #
+# You must then uncomment the various examples that best suit your case.#
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
@@ -46,20 +44,62 @@ fi
 echo "$$" > $PIDFILE
 trap "rm -f $PIDFILE" EXIT
 
-# port SSH
-SSH_PORT=2XXX
-
 # email adress for notifications
 MAIL=jdoe@example.com
 
 # choose "linux" or "bsd"
 SYSTEM=$(uname | tr '[:upper:]' '[:lower:]')
 
-# Variable to choose different backup server with date
-NODE=$(($(date +%e) % 2))
+SERVERS="node0.backup.example.com:2XXX node1.backup.example.com:2XXX"
+SSH_CONNECT_TIMEOUT=10
 
-# serveur address for rsync
-SRV="node$NODE.backup.example.com"
+test_server() {
+    item=$1
+    host=$(echo ${item} | cut -d':' -f1)
+    port=$(echo ${item} | cut -d':' -f2)
+
+    # Test if the server is accepting connections
+    ssh -q -o "ConnectTimeout ${SSH_CONNECT_TIMEOUT}" ${host} -p ${port} -t "exit"
+
+    if [ $? = 0 ]; then
+        return 0
+    else
+        echo "Failed to connect to \`${item}' within ${SSH_CONNECT_TIMEOUT} seconds" >&2
+        return 1
+    fi
+}
+pick_server() {
+    inc=${1:-0}
+    list_length=$(echo "${SERVERS}" | wc -w)
+
+    if [ "${inc}" -ge "${list_length}" ]; then
+        echo "No more server available" >&2
+        return 1
+    fi
+
+    salt=$(hostname | cksum | cut -d' ' -f1)
+    item=$(echo $(( ($(date +%d) + salt + inc) % list_length )))
+    field=$(( item + 1 ))
+
+    echo "${SERVERS}" | cut -d' ' -f${field}
+}
+
+n=0
+SERVER=""
+while :; do
+    server=$(pick_server "${n}")
+    test $? = 0 || exit 2
+
+    if test_server "${server}"; then
+        SERVER="${server}"
+        break
+    else
+        n=$(( n + 1 ))
+    fi
+done
+
+SSH_SERVER=$(echo $SERVER | cut -d':' -f1)
+SSH_PORT=$(echo $SERVER | cut -d':' -f2)
 
 ## We use /home/backup : feel free to use your own dir
 mkdir -p -m 700 /home/backup
@@ -249,8 +289,8 @@ rsync -avzh --stats --delete --delete-excluded --force --ignore-errors --partial
         /var                                           \
         /home                                          \
         /srv                                           \
-    -e "ssh -p $SSH_PORT"                              \
-    "root@$SRV:/var/backup/"                           \
+    -e "ssh -p ${SSH_PORT}"                            \
+    "root@${SSH_SERVER}:/var/backup/"                  \
     | tail -30 >> /var/log/evobackup.log
 
 END=$(/bin/date +"%d-%m-%Y ; %H:%M")
