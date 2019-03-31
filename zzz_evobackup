@@ -13,12 +13,29 @@
 #
 # Licence: AGPLv3
 #
-# The following variables must be changed:
-# MAIL: The email address to send notifications to.
-# SERVERS: The list of hosts (hostname or IP address) and SSH port
-#          to send backup files to.
-#
-# You must then uncomment the various examples that best suit your case.#
+# /!\ DON'T FORGET TO SET "MAIL" and "SERVERS" VARIABLES
+
+##### Configuration ############################################################
+
+# email adress for notifications
+MAIL=jdoe@example.com
+
+# list of hosts (hostname or IP) and SSH port for Rsync
+SERVERS="node0.backup.example.com:2XXX node1.backup.example.com:2XXX"
+
+# timeout (in seconds) for the SSH test
+SSH_CONNECT_TIMEOUT=10
+
+## We use /home/backup : feel free to use your own dir
+LOCAL_BACKUP_DIR="/home/backup"
+
+# You can set "linux" or "bsd" manually or let it choose automatically
+SYSTEM=$(uname | tr '[:upper:]' '[:lower:]')
+
+##### SETUP AND FUNCTIONS ######################################################
+
+# shellcheck disable=SC2174
+mkdir -p -m 700 ${LOCAL_BACKUP_DIR}
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
@@ -28,31 +45,6 @@ export LANG=C
 
 ## Force umask
 umask 077
-
-## Verify other evobackup process and kill if needed
-PIDFILE=/var/run/evobackup.pid
-if [ -e $PIDFILE ]; then
-    pid=$(cat "$PIDFILE")
-    # Killing the childs of evobackup.
-    for ppid in $(ps h --ppid "$pid" -o pid | tr -s '\n' ' '); do
-        kill -9 "$ppid";
-    done
-    # Then kill the main PID.
-    kill -9 "$pid"
-    echo "$0 tourne encore (PID $pid). Processus killé" >&2
-fi
-echo "$$" > $PIDFILE
-# shellcheck disable=SC2064
-trap "rm -f $PIDFILE" EXIT
-
-# email adress for notifications
-MAIL=jdoe@example.com
-
-# choose "linux" or "bsd"
-SYSTEM=$(uname | tr '[:upper:]' '[:lower:]')
-
-SERVERS="node0.backup.example.com:2XXX node1.backup.example.com:2XXX"
-SSH_CONNECT_TIMEOUT=10
 
 test_server() {
     item=$1
@@ -85,27 +77,25 @@ pick_server() {
     echo "${SERVERS}" | cut -d' ' -f${field}
 }
 
-n=0
-SERVER=""
-while :; do
-    server=$(pick_server "${n}")
-    test $? = 0 || exit 2
+## Verify other evobackup process and kill if needed
+PIDFILE=/var/run/evobackup.pid
+if [ -e $PIDFILE ]; then
+    pid=$(cat "$PIDFILE")
+    # Killing the childs of evobackup.
+    for ppid in $(ps h --ppid "$pid" -o pid | tr -s '\n' ' '); do
+        kill -9 "$ppid";
+    done
+    # Then kill the main PID.
+    kill -9 "$pid"
+    echo "$0 tourne encore (PID $pid). Processus killé" >&2
+fi
+echo "$$" > $PIDFILE
+# shellcheck disable=SC2064
+trap "rm -f $PIDFILE" EXIT
 
-    if test_server "${server}"; then
-        SERVER="${server}"
-        break
-    else
-        n=$(( n + 1 ))
-    fi
-done
+##### LOCAL BACKUP #############################################################
 
-SSH_SERVER=$(echo "${SERVER}" | cut -d':' -f1)
-SSH_PORT=$(echo "${SERVER}" | cut -d':' -f2)
-
-## We use /home/backup : feel free to use your own dir
-LOCAL_BACKUP_DIR="/home/backup"
-# shellcheck disable=SC2174
-mkdir -p -m 700 ${LOCAL_BACKUP_DIR}
+# You can comment or uncomment sections below to customize the backup
 
 ## OpenLDAP : example with slapcat
 # slapcat -l ${LOCAL_BACKUP_DIR}/ldap.bak
@@ -246,6 +236,25 @@ else
     pkg_info -m > ${LOCAL_BACKUP_DIR}/packages
 fi
 
+##### REMOTE BACKUP ############################################################
+
+n=0
+server=""
+while :; do
+    server=$(pick_server "${n}")
+    test $? = 0 || exit 2
+
+    if test_server "${server}"; then
+        break
+    else
+        server=""
+        n=$(( n + 1 ))
+    fi
+done
+
+SSH_SERVER=$(echo "${server}" | cut -d':' -f1)
+SSH_PORT=$(echo "${server}" | cut -d':' -f2)
+
 HOSTNAME=$(hostname)
 
 BEGINNING=$(/bin/date +"%d-%m-%Y ; %H:%M")
@@ -255,6 +264,9 @@ if [ "${SYSTEM}" = "linux" ]; then
 else
     rep="/bsd /bin /sbin /usr"
 fi
+
+# /!\ DO NOT USE COMMENTS in the rsync command /!\
+# It breaks the command and destroys data, simply remove (or add) lines.
 
 rsync -avzh --stats --delete --delete-excluded --force --ignore-errors --partial \
     --exclude "lost+found"                             \
@@ -297,6 +309,8 @@ rsync -avzh --stats --delete --delete-excluded --force --ignore-errors --partial
     | tail -30 >> /var/log/evobackup.log
 
 END=$(/bin/date +"%d-%m-%Y ; %H:%M")
+
+##### REPORTING ################################################################
 
 echo "EvoBackup - ${HOSTNAME} - START ${BEGINNING}"    \
     >> /var/log/evobackup.log
