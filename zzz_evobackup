@@ -24,7 +24,7 @@ MAIL=jdoe@example.com
 SERVERS="node0.backup.example.com:2XXX node1.backup.example.com:2XXX"
 
 # timeout (in seconds) for the SSH test
-SSH_CONNECT_TIMEOUT=10
+SSH_CONNECT_TIMEOUT=30
 
 ## We use /home/backup : feel free to use your own dir
 LOCAL_BACKUP_DIR="/home/backup"
