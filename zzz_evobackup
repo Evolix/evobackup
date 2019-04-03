@@ -91,20 +91,20 @@ pick_server() {
 }
 
 ## Verify other evobackup process and kill if needed
-PIDFILE=/var/run/evobackup.pid
-if [ -e $PIDFILE ]; then
-    pid=$(cat "$PIDFILE")
+PIDFILE="/var/run/evobackup.pid"
+if [ -e "${PIDFILE}" ]; then
+    pid=$(cat "${PIDFILE}")
     # Killing the childs of evobackup.
-    for ppid in $(ps h --ppid "$pid" -o pid | tr -s '\n' ' '); do
-        kill -9 "$ppid";
+    for ppid in $(ps h --ppid "${pid}" -o pid | tr -s '\n' ' '); do
+        kill -9 "${ppid}";
     done
     # Then kill the main PID.
-    kill -9 "$pid"
-    echo "$0 is still running (PID $pid). Process has been killed" >&2
+    kill -9 "${pid}"
+    echo "$0 is still running (PID ${pid}). Process has been killed" >&2
 fi
-echo "$$" > $PIDFILE
+echo "$$" > ${PIDFILE}
 # shellcheck disable=SC2064
-trap "rm -f $PIDFILE" EXIT
+trap "rm -f ${PIDFILE}" EXIT
 
 ##### LOCAL BACKUP ####################################################
 
@@ -226,27 +226,27 @@ uname -a > ${LOCAL_BACKUP_DIR}/uname
 
 ## Dump network routes with mtr and traceroute (warning: could be long with aggressive firewalls)
 for addr in 8.8.8.8 www.evolix.fr travaux.evolix.net; do
-    mtr -r $addr > ${LOCAL_BACKUP_DIR}/mtr-${addr}
-    traceroute -n $addr > ${LOCAL_BACKUP_DIR}/traceroute-${addr} 2>&1
+    mtr -r ${addr} > ${LOCAL_BACKUP_DIR}/mtr-${addr}
+    traceroute -n ${addr} > ${LOCAL_BACKUP_DIR}/traceroute-${addr} 2>&1
 done
 
 ## Dump process with ps
 ps auwwx >${LOCAL_BACKUP_DIR}/ps.out
 
-if [ "$SYSTEM" = "linux" ]; then
+if [ "${SYSTEM}" = "linux" ]; then
     ## Dump network connections with netstat
-    netstat -taupen >${LOCAL_BACKUP_DIR}/netstat.out
+    netstat -taupen > ${LOCAL_BACKUP_DIR}/netstat.out
 
     ## List Debian packages
-    dpkg -l >${LOCAL_BACKUP_DIR}/packages
-    dpkg --get-selections >${LOCAL_BACKUP_DIR}/packages.getselections
-    apt-cache dumpavail >${LOCAL_BACKUP_DIR}/packages.available
+    dpkg -l > ${LOCAL_BACKUP_DIR}/packages
+    dpkg --get-selections > ${LOCAL_BACKUP_DIR}/packages.getselections
+    apt-cache dumpavail > ${LOCAL_BACKUP_DIR}/packages.available
 else
     ## Dump network connections with netstat
-    netstat -finet -atn >${LOCAL_BACKUP_DIR}/netstat.out
+    netstat -finet -atn > ${LOCAL_BACKUP_DIR}/netstat.out
 
     ## List OpenBSD packages
-    pkg_info -m >${LOCAL_BACKUP_DIR}/packages
+    pkg_info -m > ${LOCAL_BACKUP_DIR}/packages
 fi
 
 ##### REMOTE BACKUP ###################################################
@@ -272,7 +272,7 @@ HOSTNAME=$(hostname)
 
 BEGINNING=$(/bin/date +"%d-%m-%Y ; %H:%M")
 
-if [ "$SYSTEM" = "linux" ]; then
+if [ "${SYSTEM}" = "linux" ]; then
     rep="/bin /boot /lib /opt /sbin /usr"
 else
     rep="/bsd /bin /sbin /usr"
@@ -311,26 +311,26 @@ rsync -avzh --stats --delete --delete-excluded --force --ignore-errors --partial
     --exclude "/var/lib/clamav/*.tmp"                  \
     --exclude "/home/mysqltmp"                         \
     --exclude "/var/lib/php/sessions"                  \
-        $rep                                           \
+        ${rep}                                         \
         /etc                                           \
         /root                                          \
         /var                                           \
         /home                                          \
         /srv                                           \
-    -e "ssh -p $SSH_PORT"                              \
-    "root@$SSH_SERVER:/var/backup/"                    \
+    -e "ssh -p ${SSH_PORT}"                            \
+    "root@${SSH_SERVER}:/var/backup/"                  \
     | tail -30 >> /var/log/evobackup.log
 
 END=$(/bin/date +"%d-%m-%Y ; %H:%M")
 
 ##### REPORTING #######################################################
 
-echo "EvoBackup - $HOSTNAME - START $BEGINNING"        \
+echo "EvoBackup - ${HOSTNAME} - START ${BEGINNING}"    \
     >> /var/log/evobackup.log
 
-echo "EvoBackup - $HOSTNAME - STOP $END"               \
+echo "EvoBackup - ${HOSTNAME} - STOP ${END}"           \
     >> /var/log/evobackup.log
 
 tail -10 /var/log/evobackup.log |                      \
-    mail -s "[info] EvoBackup - Client $HOSTNAME"      \
-    $MAIL
+    mail -s "[info] EvoBackup - Client ${HOSTNAME}"    \
+    ${MAIL}
