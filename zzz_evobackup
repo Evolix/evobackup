@@ -2,7 +2,7 @@
 #
 # Script Evobackup client
 # See https://gitea.evolix.org/evolix/evobackup
-# 
+#
 # Author: Gregory Colpart <reg@evolix.fr>
 # Contributors:
 # Romain Dessort <rdessort@evolix.fr>
@@ -13,14 +13,26 @@
 #
 # Licence: AGPLv3
 #
-# The following variables must be changed:
-# SSH_PORT: The Port used for the ssh(1) jail on the backup server
-# MAIL: The email address to send notifications to.
-# SRV: The hostname or IP address of the backup server.
-# 
-# You must then uncomment the various
-# examples that best suit your case
-#
+# /!\ DON'T FORGET TO SET "MAIL" and "SERVERS" VARIABLES
+
+##### Configuration ###################################################
+
+# email adress for notifications
+MAIL=jdoe@example.com
+
+# list of hosts (hostname or IP) and SSH port for Rsync
+SERVERS="node0.backup.example.com:2XXX node1.backup.example.com:2XXX"
+
+# timeout (in seconds) for the SSH test
+SSH_CONNECT_TIMEOUT=30
+
+# You can set "linux" or "bsd" manually or let it choose automatically
+SYSTEM=$(uname | tr '[:upper:]' '[:lower:]')
+
+##### SETUP AND FUNCTIONS #############################################
+
+# shellcheck disable=SC2174
+mkdir -p -m 700 /home/backup
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
@@ -30,6 +42,50 @@ export LANG=C
 
 ## Force umask
 umask 077
+
+# Call test_server with "HOST:PORT" string
+# It will return with 0 if the server is reachable.
+# It will return with 1 and a message on stderr if not.
+test_server() {
+    item=$1
+    # split HOST and PORT from the input string
+    host=$(echo "${item}" | cut -d':' -f1)
+    port=$(echo "${item}" | cut -d':' -f2)
+
+    # Test if the server is accepting connections
+    ssh -q -o "ConnectTimeout ${SSH_CONNECT_TIMEOUT}" "${host}" -p "${port}" -t "exit"
+    # shellcheck disable=SC2181
+    if [ $? = 0 ]; then
+        # SSH connection is OK
+        return 0
+    else
+        # SSH connection failed
+        echo "Failed to connect to \`${item}' within ${SSH_CONNECT_TIMEOUT} seconds" >&2
+        return 1
+    fi
+}
+# Call pick_server with an optional positive integer to get the nth server in the list.
+pick_server() {
+    increment=${1:-0}
+    list_length=$(echo "${SERVERS}" | wc -w)
+
+    if [ "${increment}" -ge "${list_length}" ]; then
+        # We've reached the end of the list
+        echo "No more server available" >&2
+        return 1
+    fi
+
+    # A salt is useful to randomize the starting point in the list
+    # but stay identical each time it's called for a server (based on hostname).
+    salt=$(hostname | cksum | cut -d' ' -f1)
+    # Pick an integer between 0 and the length of the SERVERS list
+    # It changes each day
+    item=$(( ($(date +%d) + salt + increment) % list_length ))
+    # cut starts counting fields at 1, not 0.
+    field=$(( item + 1 ))
+
+    echo "${SERVERS}" | cut -d' ' -f${field}
+}
 
 ## Verify other evobackup process and kill if needed
 PIDFILE=/var/run/evobackup.pid
@@ -41,28 +97,15 @@ if [ -e $PIDFILE ]; then
     done
     # Then kill the main PID.
     kill -9 "$pid"
-    echo "$0 tourne encore (PID $pid). Processus killé" >&2
+    echo "$0 is still running (PID $pid). Process has been killed" >&2
 fi
 echo "$$" > $PIDFILE
+# shellcheck disable=SC2064
 trap "rm -f $PIDFILE" EXIT
 
-# port SSH
-SSH_PORT=2XXX
+##### LOCAL BACKUP ####################################################
 
-# email adress for notifications
-MAIL=jdoe@example.com
-
-# choose "linux" or "bsd"
-SYSTEM=$(uname | tr '[:upper:]' '[:lower:]')
-
-# Variable to choose different backup server with date
-NODE=$(($(date +%e) % 2))
-
-# serveur address for rsync
-SRV="node$NODE.backup.example.com"
-
-## We use /home/backup : feel free to use your own dir
-mkdir -p -m 700 /home/backup
+# You can comment or uncomment sections below to customize the backup
 
 ## OpenLDAP : example with slapcat
 # slapcat -l /home/backup/ldap.bak
@@ -164,9 +207,9 @@ mkdir -p -m 700 /home/backup
 ## Dump MBR / table partitions with dd and sfdisk
 ## Linux
 #for disk in $(ls /dev/[sv]d[a-z] 2>/dev/null); do
-#	name=$(basename $disk)
-#	dd if=$disk of=/home/backup/MBR-$name bs=512 count=1 2>&1 | egrep -v "(records in|records out|512 bytes)"
-#	fdisk -l $disk > /home/backup/partitions-$name
+#    name=$(basename $disk)
+#    dd if=$disk of=/home/backup/MBR-$name bs=512 count=1 2>&1 | egrep -v "(records in|records out|512 bytes)"
+#    fdisk -l $disk > /home/backup/partitions-$name
 #done
 #cat /home/backup/partitions-* > /home/backup/partitions
 ## OpenBSD
@@ -203,6 +246,25 @@ else
     pkg_info -m >/home/backup/packages
 fi
 
+##### REMOTE BACKUP ###################################################
+
+n=0
+server=""
+while :; do
+    server=$(pick_server "${n}")
+    test $? = 0 || exit 2
+
+    if test_server "${server}"; then
+        break
+    else
+        server=""
+        n=$(( n + 1 ))
+    fi
+done
+
+SSH_SERVER=$(echo "${server}" | cut -d':' -f1)
+SSH_PORT=$(echo "${server}" | cut -d':' -f2)
+
 HOSTNAME=$(hostname)
 
 BEGINNING=$(/bin/date +"%d-%m-%Y ; %H:%M")
@@ -212,6 +274,9 @@ if [ "$SYSTEM" = "linux" ]; then
 else
     rep="/bsd /bin /sbin /usr"
 fi
+
+# /!\ DO NOT USE COMMENTS in the rsync command /!\
+# It breaks the command and destroys data, simply remove (or add) lines.
 
 rsync -avzh --stats --delete --delete-excluded --force --ignore-errors --partial \
     --exclude "lost+found"                             \
@@ -250,12 +315,14 @@ rsync -avzh --stats --delete --delete-excluded --force --ignore-errors --partial
         /home                                          \
         /srv                                           \
     -e "ssh -p $SSH_PORT"                              \
-    "root@$SRV:/var/backup/"                           \
+    "root@$SSH_SERVER:/var/backup/"                    \
     | tail -30 >> /var/log/evobackup.log
 
 END=$(/bin/date +"%d-%m-%Y ; %H:%M")
 
-echo "EvoBackup - $HOSTNAME - START $BEGINNING"            \
+##### REPORTING #######################################################
+
+echo "EvoBackup - $HOSTNAME - START $BEGINNING"        \
     >> /var/log/evobackup.log
 
 echo "EvoBackup - $HOSTNAME - STOP $END"               \
