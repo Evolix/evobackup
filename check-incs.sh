@@ -1,4 +1,5 @@
 #!/bin/sh
+shopt -s nullglob
 
 EVOBACKUP_CONFIGS="/etc/evobackup/*"
 
@@ -12,10 +13,10 @@ relative_date() {
     echo ${past_date}
 }
 inc_exists() {
-    ls -d /backup/incs/$1 > /dev/null 2>&1 
+    test -d /backup/incs/$1
 }
 jail_exists() {
-    ls -d /backup/jails/$1 > /dev/null 2>&1 
+    test -d /backup/jails/$1
 }
 # default return value is 0 (succes)
 rc=0
@@ -34,11 +35,13 @@ for file in ${EVOBACKUP_CONFIGS}; do
             inc_age=$(date --date "${inc_date}" +%s)
             # check if the configuration changed after the inc date 
             if [ $jail_config_age -lt $inc_age ]; then
+            for inc in ${jail_name}/${inc_date}*; do
                 # Error if inc is not found
-                if ! inc_exists ${jail_name}/${inc_date}*; then
+                if ! inc_exists ${inc}; then
                     echo "ERROR: inc is missing \`${jail_name}/${inc_date}'" >&2
                     rc=1
                 fi
+            done
             else
                 echo "INFO: no inc expected for ${inc_date} \`${jail_name}'"
             fi
