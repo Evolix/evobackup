@@ -78,12 +78,14 @@ pick_server() {
         return 1
     fi
 
+    # Extract the day of month, without leading 0 (which would give an octal based number) 
+    today=$(date +%e)
     # A salt is useful to randomize the starting point in the list
     # but stay identical each time it's called for a server (based on hostname).
     salt=$(hostname | cksum | cut -d' ' -f1)
     # Pick an integer between 0 and the length of the SERVERS list
     # It changes each day
-    item=$(( ($(date +%e) + salt + increment) % list_length ))
+    item=$(( (today + salt + increment) % list_length ))
     # cut starts counting fields at 1, not 0.
     field=$(( item + 1 ))
 
