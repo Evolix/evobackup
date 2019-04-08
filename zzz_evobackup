@@ -80,7 +80,7 @@ pick_server() {
     salt=$(hostname | cksum | cut -d' ' -f1)
     # Pick an integer between 0 and the length of the SERVERS list
     # It changes each day
-    item=$(( ($(date +%d) + salt + increment) % list_length ))
+    item=$(( ($(date +%e) + salt + increment) % list_length ))
     # cut starts counting fields at 1, not 0.
     field=$(( item + 1 ))
 
