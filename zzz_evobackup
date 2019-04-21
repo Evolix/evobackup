@@ -39,12 +39,15 @@ mkdir -p -m 700 ${LOCAL_BACKUP_DIR}
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
-## lang = C for english outputs
+# lang = C for english outputs
 export LANGUAGE=C
 export LANG=C
 
-## Force umask
+# Force umask
 umask 077
+
+# gzip binary, use pigz if available
+GZIP_BIN=${$(command -v pigz):-$(command -v gzip)}
 
 # Call test_server with "HOST:PORT" string
 # It will return with 0 if the server is reachable.
@@ -92,7 +95,7 @@ pick_server() {
     echo "${SERVERS}" | cut -d' ' -f${field}
 }
 
-## Verify other evobackup process and kill if needed
+# Verify other evobackup process and kill if needed
 PIDFILE="/var/run/evobackup.pid"
 if [ -e "${PIDFILE}" ]; then
     pid=$(cat "${PIDFILE}")
@@ -109,41 +112,80 @@ echo "$$" > ${PIDFILE}
 trap "rm -f ${PIDFILE}" EXIT
 
 ##### LOCAL BACKUP ####################################################
+## To enable a backup, set the variable to true
+#######################################################################
 
-# You can comment or uncomment sections below to customize the backup
+# OpenLDAP with slapcat command
+slapcatBackup=false
+if $slapcatBackup; then
+    slapcat -l ${LOCAL_BACKUP_DIR}/ldap.bak
+fi
 
-## OpenLDAP : example with slapcat
-# slapcat -l ${LOCAL_BACKUP_DIR}/ldap.bak
+##### MySQL Section ###################################################
+mysqlPort=3306
+mysqlDefaultsExtraFile="--defaults-extra-file=/etc/mysql/debian.cnf"
+mysqlCommonArgs="--opt --force --events --hex-blob"
+mysqlDatabases=$(echo SHOW DATABASES \
+    | mysql $mysqlDefaultsExtraFile -P $mysqlPort \
+    | egrep -v "^(Database|information_schema|performance_schema|sys)"
+)
 
-### MySQL
+# MySQL global compressed dump
+mysqlGlobalDump=false
+if $mysqlGlobalDump; then
+    mysqldump \
+        $mysqlDefaultsExtraFile \
+        -P $mysqlPort \
+        --all-databases \
+        $mysqlCommonArgs \
+        | $GZIP_BIN --best \
+        > ${LOCAL_BACKUP_DIR}/backup/mysql.bak.gz
+fi
 
-## example with global and compressed mysqldump
-# mysqldump --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
-#  --opt --all-databases --force --events --hex-blob | gzip --best > ${LOCAL_BACKUP_DIR}/mysql.bak.gz
+# MySQL with data (.txt) separed from SQL structure (.sql)
+mysqlDataStructure=false
+if mysqlDataStructure; then
+    for database in ${mysqlDatabases}; do
+        mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysqldump/${database}
+        chown -RL mysql ${LOCAL_BACKUP_DIR}/mysqldump
+        mysqldump \
+            $mysqlDefaultsExtraFile \
+            -P $mysqlPort \
+            $mysqlCommonArgs \
+            -Q \
+            --skip-comments \
+            --fields-enclosed-by='\"' \
+            --fields-terminated-by=',' \
+            -T ${LOCAL_BACKUP_DIR}/mysqldump/${database} \
+            ${database}
+    done
+fi
 
-## example with two dumps for each table (.sql/.txt) for all databases
-# for i in $(echo SHOW DATABASES | mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
-# | egrep -v "^(Database|information_schema|performance_schema|sys)" ); \
-# do mkdir -p -m 700 /home/mysqldump/$i ; chown -RL mysql /home/mysqldump ; \
-# mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 -Q --opt --events --hex-blob --skip-comments \
-#  --fields-enclosed-by='\"' --fields-terminated-by=',' -T /home/mysqldump/$i $i; done
+# MySQL compressed dump for each database
+mysqlEachDBDump=false
+if $mysqlEachDBDump; then
+    mysqlDatabases 3306
+    mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysqldump/
+    for database in ${databases}; do
+        mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force\
+            -P 3306 --events --hex-blob $database \
+            | $GZIP_BIN --best \
+            > ${LOCAL_BACKUP_DIR}/mysqldump/${database}.sql.gz
+    done
+fi
 
-## example with compressed SQL dump for each databases
-# mkdir -p -m 700 /home/mysqldump/
-# for i in $(mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 -e 'show databases' -s --skip-column-names \
-# | egrep -v "^(Database|information_schema|performance_schema|sys)"); do
-#     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --events --hex-blob $i | gzip --best > /home/mysqldump/${i}.sql.gz
-# done
-
-## example with *one* uncompressed SQL dump for *one* database (MYBASE)
-# mkdir -p -m 700 /home/mysqldump/MYBASE
-# chown -RL mysql /home/mysqldump/
-# mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -Q \
-# --opt --events --hex-blob --skip-comments -T /home/mysqldump/MYBASE MYBASE
-
-## example with mysqlhotcopy
-# mkdir -p -m 700 /home/mysqlhotcopy/
-# mysqlhotcopy BASE /home/mysqlhotcopy/
+# MySQL uncompressed dump for selected database(s)
+mysqlSelectedDBDump=false
+if $mysqlSelectedDBDump; then
+    databases="exampledb1 exampledb2"
+    for database in ${databases}; do
+        mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysqldump/${database}
+        chown -RL mysql ${LOCAL_BACKUP_DIR}/mysqldump/
+        mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -Q \
+            --opt --events --hex-blob --skip-comments -T \
+            ${LOCAL_BACKUP_DIR}/mysqldump/${database} ${database}
+    done
+fi
 
 ## example for multiples MySQL instances
 # mysqladminpasswd=$(grep -m1 'password = .*' /root/.my.cnf|cut -d" " -f3)
