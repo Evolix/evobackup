@@ -236,8 +236,8 @@ done
 ps auwwx >${LOCAL_BACKUP_DIR}/ps.out
 
 if [ "${SYSTEM}" = "linux" ]; then
-    ## Dump network connections with netstat
-    netstat -taupen > ${LOCAL_BACKUP_DIR}/netstat.out
+    ## Dump network connections with ss
+    ss -taupen > ${LOCAL_BACKUP_DIR}/netstat.out
 
     ## List Debian packages
     dpkg -l > ${LOCAL_BACKUP_DIR}/packages
