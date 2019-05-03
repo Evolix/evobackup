@@ -8,19 +8,20 @@ LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
 
 date=$(date +"%Y-%m-%d-%H")
 for jail in $("${LIBDIR}/bkctld-list"); do
-    inc="${INCDIR}/${jail}/${date}"
-    mkdir -p "${INCDIR}/${jail}"
-    if [ ! -d "${inc}" ]; then
-        start=$(date +"%H:%M:%S")
-        jail_inode=$(stat --format=%i "${JAILDIR}/${jail}")
-        if [ "$jail_inode" -eq 256 ]; then
-            /bin/btrfs subvolume snapshot -r "${JAILDIR}/${jail}" "${inc}" | debug
+    inc="${MOUNT_POINT}/${jail}/${date}"
+    if [ -d "${MOUNT_POINT}/${jail}/last" ]; then
+        if [ ! -d "${inc}" ]; then
+            start=$(date +"%H:%M:%S")
+            jail_inode=$(stat --format=%i "${MOUNT_POINT}/${jail}/last")
+            if [ "$jail_inode" -eq 256 ]; then
+                /bin/btrfs subvolume snapshot -r "${MOUNT_POINT}/${jail}/last" "${inc}" | debug
+            else
+                cp -alx "${MOUNT_POINT}/${jail}/last" "${inc}" | debug
+            fi
+            end=$(date +"%H:%M:%S")
+            notice "${jail} : made ${date} inc [${start}/${end}]"
         else
-            cp -alx "${JAILDIR}/${jail}/" "${inc}" | debug
+            warning "${jail} : trying to made already existant inc"
         fi
-        end=$(date +"%H:%M:%S")
-        notice "${jail} : made ${date} inc [${start}/${end}]"
-    else
-        warning "${jail} : trying to made already existant inc"
-    fi
+     fi
 done

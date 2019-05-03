@@ -10,14 +10,12 @@ jail="${1:-}"
 if [ ! -n "${jail}" ]; then
     "${LIBDIR}/bkctld-help" && exit 1
 fi
-[ -d "${JAILDIR}/${jail}" ] || error "${jail} : trying to sync inexistant jail"
+[ -d "${CONFDIR}/${jail}" ] || error "${jail} : trying to sync inexistant jail"
 
 [ -n "${NODE}" ] || error "Sync need config of \$NODE in /etc/default/bkctld !"
 
 jail="${1}"
-ssh "${NODE}" "${LIBDIR}/bkctld-init" "${jail}" | debug
-rsync -a "${JAILDIR}/${jail}/" "${NODE}:${JAILDIR}/${jail}/" --exclude proc/* --exclude sys/* --exclude dev/* --exclude run --exclude var/backup/*
-rsync -a "${CONFDIR}/${jail}" "${NODE}:${CONFDIR}/${jail}"
+rsync -a "${CONFDIR}/${jail}/" "${NODE}:${CONFDIR}/${jail}/" | debug
 "${LIBDIR}/bkctld-is-on" "${jail}" && ssh "${NODE}" "${LIBDIR}/bkctld-start" "${jail}" | debug
 if [ -n "${FIREWALL_RULES}" ]; then
     rsync -a "${FIREWALL_RULES}" "${NODE}:${FIREWALL_RULES}"

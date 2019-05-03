@@ -16,19 +16,14 @@ teardown() {
 @test "init" {
     /usr/lib/bkctld/bkctld-init "${JAILNAME}"
     inode=$(stat --format=%i /backup)
-    if [ "${inode}" -eq 256 ]; then
-        run stat --format=%i "${JAILDIR}/${JAILNAME}"
-        [ "${output}" -eq 256 ]
-    else
-        run test -d "${JAILDIR}/${JAILNAME}"
-        [ "${status}" -eq 0 ]
-    fi
+    run test -d "${CONFDIR}/${JAILNAME}"
+    [ "${status}" -eq 0 ]
 }
 
 @test "start" {
     /usr/lib/bkctld/bkctld-init "${JAILNAME}"
     /usr/lib/bkctld/bkctld-start "${JAILNAME}"
-    pid=$(cat "${JAILDIR}/${JAILNAME}/${SSHD_PID}")
+    pid=$(cat "${RUNDIR}/${JAILNAME}/sshd.pid")
     run ps --pid "${pid}"
     [ "${status}" -eq 0 ]
 }
@@ -36,7 +31,7 @@ teardown() {
 @test "stop" {
     /usr/lib/bkctld/bkctld-init "${JAILNAME}"
     /usr/lib/bkctld/bkctld-start "${JAILNAME}"
-    pid=$(cat "${JAILDIR}/${JAILNAME}/${SSHD_PID}")
+    pid=$(cat "${RUNDIR}/${JAILNAME}/sshd.pid")
     /usr/lib/bkctld/bkctld-stop "${JAILNAME}"
     run ps --pid "${pid}"
     [ "${status}" -ne 0 ]
@@ -53,9 +48,9 @@ teardown() {
 @test "restart" {
     /usr/lib/bkctld/bkctld-init "${JAILNAME}"
     /usr/lib/bkctld/bkctld-start "${JAILNAME}"
-    bpid=$(cat "${JAILDIR}/${JAILNAME}/${SSHD_PID}")
+    bpid=$(cat "${RUNDIR}/${JAILNAME}/sshd.pid")
     /usr/lib/bkctld/bkctld-restart "${JAILNAME}"
-    apid=$(cat "${JAILDIR}/${JAILNAME}/${SSHD_PID}")
+    apid=$(cat "${RUNDIR}/${JAILNAME}/sshd.pid")
     [ "${bpid}" -ne "${apid}" ]
 }
 
@@ -67,9 +62,8 @@ teardown() {
 
 @test "key" {
     /usr/lib/bkctld/bkctld-init "${JAILNAME}"
-    /usr/lib/bkctld/bkctld-start "${JAILNAME}"
     /usr/lib/bkctld/bkctld-key "${JAILNAME}" /root/bkctld.key.pub
-    run cat "/backup/jails/${JAILNAME}/root/.ssh/authorized_keys"
+    run cat "${CONFDIR}/${JAILNAME}/ssh/authorized_keys"
     [ "${status}" -eq 0 ]
     [ "${output}" = $(cat /root/bkctld.key.pub) ]
 }
@@ -84,12 +78,13 @@ teardown() {
 
 @test "inc" {
     /usr/lib/bkctld/bkctld-init "${JAILNAME}"
+    /usr/lib/bkctld/bkctld-start "${JAILNAME}"
     /usr/lib/bkctld/bkctld-inc
     if [ "${inode}" -eq 256 ]; then
-        run stat --format=%i "${INCDIR}/${JAILNAME}/${date}"
+        run stat --format=%i "${MOUNT_POINT}/${JAILNAME}/${date}"
         [ "${output}" -eq 256 ]
     else
-        run test -d "${INCDIR}/${JAILNAME}/${date}"
+        run test -d "${MOUNT_POINT}/${JAILNAME}/${date}"
         [ "${status}" -eq 0 ]
     fi
 }
@@ -120,14 +115,14 @@ teardown() {
 
 @test "check-warning" {
     /usr/lib/bkctld/bkctld-init "${JAILNAME}"
-    touch --date="$(date -d -2days)" "/backup/jails/${JAILNAME}/var/log/lastlog"
+    touch --date="$(date -d -2days)" "${LOGDIR}/${JAILNAME}/lastlog"
     run /usr/lib/bkctld/bkctld-check
     [ "$status" -eq 1 ]
 }
 
 @test "check-critical" {
     /usr/lib/bkctld/bkctld-init "${JAILNAME}"
-    touch --date="$(date -d -3days)" "/backup/jails/${JAILNAME}/var/log/lastlog"
+    touch --date="$(date -d -3days)" "${LOGDIR}/${JAILNAME}/lastlog"
     run /usr/lib/bkctld/bkctld-check
     [ "$status" -eq 2 ]
 }

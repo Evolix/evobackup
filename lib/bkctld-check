@@ -14,27 +14,16 @@ nb_ok=0
 nb_unkn=0
 output=""
 
-if [ -b "${BACKUP_DISK}" ]; then
-    cryptsetup isLuks "${BACKUP_DISK}"
-    if [ "$?" -eq 0 ]; then
-        if [ ! -b '/dev/mapper/backup' ]; then
-            echo "Luks disk ${BACKUP_DISK} is not mounted !\n"
-            echo "cryptsetup luksOpen ${BACKUP_DISK} backup"
-            exit 2
-        fi
-        BACKUP_DISK='/dev/mapper/backup'
-    fi
-    grep -qE "^${BACKUP_DISK} " /etc/mtab
-    if [ "$?" -ne 0 ]; then
-         echo "Backup disk ${BACKUP_DISK} is not mounted !\n"
-         echo "mount ${BACKUP_DISK} /backup"
-         exit 2
-    fi
+grep -qE " ${MOUNT_POINT} " /etc/mtab
+if [ "$?" -ne 0 ]; then
+    echo "Backup disk is not mounted on ${MOUNT_POINT} !\n"
+    echo "You need to run bkctld mount !"
+    exit 2
 fi
 
 for jail in $("${LIBDIR}/bkctld-list"); do
-    if [ -f "${JAILDIR}/${jail}/var/log/lastlog" ]; then
-        last_conn=$(stat --format=%Y "${JAILDIR}/${jail}/var/log/lastlog")
+    if [ -f "${LOGDIR}/${jail}/lastlog" ]; then
+        last_conn=$(stat --format=%Y "${LOGDIR}/${jail}/lastlog")
         date_diff=$(( (cur_time - last_conn) / (60*60) ))
         if [ "${date_diff}" -gt "${CRITICAL}" ]; then
             nb_crit=$((nb_crit + 1))

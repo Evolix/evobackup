@@ -11,10 +11,10 @@ ip="${2:-}"
 if [ ! -n "${jail}" ]; then
     "${LIBDIR}/bkctld-help" && exit 1
 fi
-[ -d "${JAILDIR}/${jail}" ] || error "${jail} : inexistant jail'"
+[ -d "${CONFDIR}/${jail}" ] || error "${jail} : inexistant jail'"
 
 if [ -z "${ip}" ]; then
-    grep -E "^AllowUsers" "${JAILDIR}/$jail/${SSHD_CONFIG}"|grep -Eo "root@[^ ]+"| while read allow; do
+    grep -E "^AllowUsers" "${CONFDIR}/$jail/ssh/sshd_config"|grep -Eo "root@[^ ]+"| while read allow; do
         echo "${allow}"|cut -d'@' -f2
     done
 else
@@ -28,7 +28,7 @@ else
     for ip in $ips; do
         allow="${allow} root@${ip}"
     done
-    sed -i "s~^AllowUsers .*~${allow}~" "${JAILDIR}/$jail/${SSHD_CONFIG}"
+    sed -i "s~^AllowUsers .*~${allow}~" "${CONFDIR}/$jail/ssh/sshd_config"
     notice "${jail} : update ip => ${ip}"
     "${LIBDIR}/bkctld-is-on" "${jail}" && "${LIBDIR}/bkctld-reload" "${jail}"
     "${LIBDIR}/bkctld-firewall" "${jail}"

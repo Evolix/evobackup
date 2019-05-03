@@ -10,9 +10,9 @@ jail="${1:-}"
 if [ ! -n "${jail}" ]; then
     "${LIBDIR}/bkctld-help" && exit 1
 fi
-[ -d "${JAILDIR}/${jail}" ] || error "${jail} : trying to reload inexistant jail"
+[ -d "${CONFDIR}/${jail}" ] || error "${jail} : trying to reload inexistant jail"
 "${LIBDIR}/bkctld-is-on" "${jail}" || exit 0
 
-pid=$(cat "${JAILDIR}/${jail}/${SSHD_PID}")
+pid=$(cat "${RUNDIR}/${jail}/sshd.pid")
 
 kill -HUP "${pid}" && notice "${jail} was reloaded [${pid}]"

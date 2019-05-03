@@ -8,5 +8,5 @@ set -eu
 
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
 
-[ -d "${JAILDIR}" ] || exit 0
-find "${JAILDIR}" -mindepth 1 -maxdepth 1 -type d|sed 's!.*/!!'
+[ -d "${CONFDIR}" ] || exit 0
+find "${CONFDIR}" -mindepth 1 -maxdepth 1 -type d|sed 's!.*/!!'

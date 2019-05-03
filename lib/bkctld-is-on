@@ -10,17 +10,16 @@ jail="${1:-}"
 if [ ! -n "${jail}" ]; then
     "${LIBDIR}/bkctld-help" && exit 1
 fi
-[ -d "${JAILDIR}/${jail}" ] || error "${jail} : trying to check inexistant jail"
+[ -d "${CONFDIR}/${jail}" ] || error "${jail} : trying to check inexistant jail"
 
-jail="${1}"
 return=1
-if [ -f "${JAILDIR}/${jail}/${SSHD_PID}" ]; then
-    pid=$(cat "${JAILDIR}/${jail}/${SSHD_PID}")
+if [ -f "${RUNDIR}/${jail}/sshd.pid" ]; then
+    pid=$(cat "${RUNDIR}/${jail}/sshd.pid")
     ps -p "${pid}" > /dev/null && return=0
 fi
 if [ "${return}" -eq 1 ]; then
-    rm -f "${JAILDIR}/${jail}/${SSHD_PID}"
-    grep -q "${JAILDIR}/${jail}/proc" /proc/mounts && umount --lazy "${JAILDIR}/${jail}/proc/"
-    grep -q "${JAILDIR}/${jail}/dev" /proc/mounts && umount --lazy --recursive "${JAILDIR}/${jail}/dev"
+    [ -f "${LOGDIR}/${jail}/authlog" ] && lsof -t "${LOGDIR}/${jail}/authlog"|xargs --no-run-if-empty kill -9
+    rm -rf "${RUNDIR}/${jail}"
+    grep -q "${JAILDIR}/${jail}" /proc/mounts && umount --lazy --recursive "${JAILDIR}/${jail}"
 fi
 exit "${return}"

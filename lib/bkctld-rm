@@ -20,29 +20,27 @@ if [ -f "${pidfile}" ]; then
     fi
 echo "${$}" > "${pidfile}"
 for jail in $("${LIBDIR}/bkctld-list"); do
-    incs=$(ls "${INCDIR}/${jail}")
-    if [ -f "${CONFDIR}/${jail}" ]; then
-        keepfile="$(mktemp)"
-        while read j; do
-            date=$( echo "${j}" | cut -d. -f1 )
-            before=$( echo "${j}" | cut -d. -f2 )
-            date -d "$(date "${date}") ${before}" "+%Y-%m-%d"
-        done < "${CONFDIR}/${jail}" > "${keepfile}"
-        for j in $(echo "${incs}" | grep -v -f "${keepfile}"); do
-            start=$(date +"%H:%M:%S")
-            inc_inode=$(stat --format=%i "${INCDIR}/${jail}/${j}")
-            if [ "${inc_inode}" -eq 256 ]; then
-                /bin/btrfs subvolume delete "${INCDIR}/${jail}/${j}" | debug
-            else
-                cd "${INCDIR}/${jail}"
-                rsync -a --delete "${empty}/" "${j}/"
-                rmdir "${j}"
-            fi
-            end=$(date +"%H:%M:%S")
-            notice "${jail} : deleted ${j} inc [${start}/${end}]"
-        done
-        rm "${keepfile}"
-    fi
+    keepfile="$(mktemp)"
+    while read j; do
+        date=$( echo "${j}" | cut -d. -f1 )
+        before=$( echo "${j}" | cut -d. -f2 )
+        date -d "$(date "${date}") ${before}" "+%Y-%m-%d"
+    done < "${CONFDIR}/${jail}" > "${keepfile}"
+    incs=$(find "${MOUNT_POINT}/${jail}" -mindepth 1 -maxdepth 1 -type d ! -name last -exec basename {} \;)
+    for j in ${incs}; do
+        start=$(date +"%H:%M:%S")
+        inc_inode=$(stat --format=%i "${MOUNT_POINT}/${jail}/${j}")
+        if [ "${inc_inode}" -eq 256 ]; then
+            /bin/btrfs subvolume delete "${MOUNT_POINT}/${jail}/${j}" | debug
+        else
+            cd "${MOUNT_POINT}/${jail}"
+            rsync -a --delete "${empty}/" "${j}/"
+            rmdir "${j}"
+        fi
+        end=$(date +"%H:%M:%S")
+        notice "${jail} : deleted ${j} inc [${start}/${end}]"
+    done
+    rm "${keepfile}"
 done
 rmdir "${empty}"
 rm "${pidfile}"

@@ -10,12 +10,40 @@ jail="${1:-}"
 if [ ! -n "${jail}" ]; then
     "${LIBDIR}/bkctld-help" && exit 1
 fi
-[ -d "${JAILDIR}/${jail}" ] || error "${jail} : trying to start inexistant jail"
+[ -d "${CONFDIR}/${jail}" ] || error "${jail} : trying to start inexistant jail"
 "${LIBDIR}/bkctld-is-on" "${jail}" && exit 0
 
-cd "${JAILDIR}/${jail}"
-grep -q "${JAILDIR}/${jail}/proc" /proc/mounts || mount -t proc "proc-${jail}" proc
-grep -q "${JAILDIR}/${jail}/dev" /proc/mounts || mount -nt tmpfs "dev-${jail}" dev
+install --directory --mode 0750 "${RUNDIR}/${jail}"
+
+mount -t tmpfs -o size=15M,noatime,x-mount.mkdir=0750,mode=0750 tmpfs "${JAILDIR}/${jail}"
+
+mount -o bind,x-mount.mkdir=0750 "${LOGDIR}/${jail}" "${JAILDIR}/${jail}/var/log"
+mount -o bind,x-mount.mkdir=0750 "${RUNDIR}/${jail}" "${JAILDIR}/${jail}/var/run"
+mount -o bind,x-mount.mkdir=0750 -o ro "${CONFDIR}/${jail}" "${JAILDIR}/${jail}/etc"
+mount -t proc -o x-mount.mkdir=0750 none "${JAILDIR}/${jail}/proc"
+mount -t devpts -o gid=4,mode=620,x-mount.mkdir=0750 none "${JAILDIR}/${jail}/dev/pts"
+
+cd "${JAILDIR}/${jail}/"
+
+mkdir -p usr/bin usr/sbin usr/lib usr/lib/x86_64-linux-gnu usr/lib/openssh usr/lib64 dev/shm
+ln -s usr/bin bin
+ln -s usr/lib lib
+ln -s usr/lib64 lib64
+ln -s var/run run
+mkdir run/sshd
+touch run/utmp
+mkdir var/backup
+
+cp -f /lib/ld-linux.so.2 lib 2>/dev/null || cp -f /lib64/ld-linux-x86-64.so.2 lib64
+cp /lib/x86_64-linux-gnu/libnss* lib/x86_64-linux-gnu
+
+for dbin in /bin/sh /usr/bin/rsync /usr/bin/lastlog /usr/sbin/sshd; do
+    cp -f "${dbin}" "${JAILDIR}/${jail}/${dbin}";
+    for lib in $(ldd "${dbin}" | grep -Eo "/.*so.[0-9\.]+"); do
+        cp -p "${lib}" "${JAILDIR}/${jail}/${lib}"
+    done
+done
+
 [ -e "dev/console" ] || mknod -m 622 dev/console c 5 1
 [ -e "dev/null" ] || mknod -m 666 dev/null c 1 3
 [ -e "dev/zero" ] || mknod -m 666 dev/zero c 1 5
@@ -29,14 +57,27 @@ ln -fs proc/self/fd/0 dev/stdin
 ln -fs proc/self/fd/1 dev/stdout
 ln -fs proc/self/fd/2 dev/stderr
 ln -fs proc/kcore dev/core
-mkdir -p dev/pts
-mkdir -p dev/shm
-grep -q "${JAILDIR}/${jail}/dev/pts" /proc/mounts || mount -t devpts -o gid=4,mode=620 none dev/pts
-grep -q "${JAILDIR}/${jail}/dev/shm" /proc/mounts || mount -t tmpfs none dev/shm
+
+mount -o remount,ro "${JAILDIR}/${jail}"
+
 chroot "${JAILDIR}/${jail}" /usr/sbin/sshd -E /var/log/authlog || error "${jail} : error on starting sshd"
-pidfile="${JAILDIR}/${jail}/${SSHD_PID}"
+pidfile="${RUNDIR}/${jail}/sshd.pid"
 for try in {1..10}; do
     [ -f "${pidfile}" ] || sleep 0.3
 done
 pid=$(cat "${pidfile}")
 notice "${jail} was started [${pid}]"
+
+grep -qE " ${MOUNT_POINT} " /etc/mtab
+if [ "$?" -eq 0 ]; then
+    [ -d "${MOUNT_POINT}/${jail}" ] || install --directory --mode 0750 "${MOUNT_POINT}/${jail}"
+    if [ ! -d "${MOUNT_POINT}/${jail}/last" ]; then
+        rootdir_inode=$(stat --format=%i "${MOUNT_POINT}")
+        if [ "${rootdir_inode}" -eq 256 ]; then
+            /bin/btrfs subvolume create "${MOUNT_POINT}/${jail}/last"
+        else
+            install --directory --mode 0750 "${MOUNT_POINT}/${jail}/last"
+        fi
+    fi
+    mount -o bind "${MOUNT_POINT}/${jail}/last" "${JAILDIR}/${jail}/var/backup"
+fi

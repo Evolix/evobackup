@@ -11,17 +11,15 @@ keyfile="${2:-}"
 if [ ! -n "${jail}" ]; then
     "${LIBDIR}/bkctld-help" && exit 1
 fi
-[ -d "${JAILDIR}/${jail}" ] || error "${jail} : inexistant jail'"
+[ -d "${CONFDIR}/${jail}" ] || error "${jail} : inexistant jail'"
 
 if [ -z "${keyfile}" ]; then
-    if [ -f "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}" ]; then
-        cat "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}"
+    if [ -f "${CONFDIR}/${jail}/ssh/authorized_keys" ]; then
+        cat "${CONFDIR}/${jail}/ssh/authorized_keys"
     fi
 else
     [ -e "${keyfile}" ] || error "Keyfile ${keyfile} dosen't exist !"
-    cat "${keyfile}" > "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}"
-    chmod 600 "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}"
+    cat "${keyfile}" > "${CONFDIR}/${jail}/ssh/authorized_keys"
+    chmod 600 "${CONFDIR}/${jail}/ssh/authorized_keys"
     notice "${jail} : update key => ${keyfile}"
-
-    "${LIBDIR}/bkctld-is-on" "${jail}" && "${LIBDIR}/bkctld-reload" "${jail}"
 fi

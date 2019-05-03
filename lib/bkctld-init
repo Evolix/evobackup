@@ -10,26 +10,34 @@ jail="${1:-}"
 if [ ! -n "${jail}" ]; then
     "${LIBDIR}/bkctld-help" && exit 1
 fi
-[ -d "${JAILDIR}/${jail}" ] && error "${jail} : trying to create existant jail"
+[ -d "${CONFDIR}/${jail}" ] && error "${jail} : trying to create existant jail"
 
-mkdir -p "${CONFDIR}" "${JAILDIR}"
+passwd="${TPLDIR}/passwd"
+shadow="${TPLDIR}/shadow"
+group="${TPLDIR}/group"
+sshrc="${TPLDIR}/sshrc"
 sshd_config="${TPLDIR}/sshd_config"
 inctpl="${TPLDIR}/inc.tpl"
+[ -f "${LOCALTPLDIR}/passwd" ] && passwd="${LOCALTPLDIR}/passwd"
+[ -f "${LOCALTPLDIR}/shadow" ] && shadow="${LOCALTPLDIR}/shadow"
+[ -f "${LOCALTPLDIR}/group" ] && group="${LOCALTPLDIR}/group"
+[ -f "${LOCALTPLDIR}/sshrc" ] && group="${LOCALTPLDIR}/sshrc"
 [ -f "${LOCALTPLDIR}/sshd_config" ] && sshd_config="${LOCALTPLDIR}/sshd_config"
 [ -f "${LOCALTPLDIR}/inc.tpl" ] && inctpl="${LOCALTPLDIR}/inc.tpl"
 
-rootdir=$(dirname "${JAILDIR}")
-rootdir_inode=$(stat --format=%i "${rootdir}")
-jaildir_inode=$(stat --format=%i "${JAILDIR}")
-if [ "${rootdir_inode}" -eq 256 ] || [ "${jaildir_inode}" -eq 256 ]; then
-    /bin/btrfs subvolume create "${JAILDIR}/${jail}"
-else
-    mkdir -p "${JAILDIR}/${jail}"
-fi
-. "${LIBDIR}/mkjail"
-info "4 - Copie default sshd_config"
-install -m 0640 "${sshd_config}" "${JAILDIR}/${jail}/${SSHD_CONFIG}"
-info "5 - Copie default inc configuration"
-install -m 0640 "${inctpl}" "${CONFDIR}/${jail}"
-"${LIBDIR}/bkctld-port" "${jail}" auto
-notice "${jail} : created jail"
+install --directory --mode 0750 "${CONFDIR}/${jail}"
+install --directory --mode 0750 "${CONFDIR}/${jail}/ssh"
+install --directory --mode 2750 --group adm "${LOGDIR}/${jail}"
+
+touch "${LOGDIR}/${jail}/lastlog" "${LOGDIR}/${jail}/wtmp"
+
+ssh-keygen -qf "${CONFDIR}/${jail}/ssh/ssh_host_rsa_key" -N '' -t rsa
+ssh-keygen -qf "${CONFDIR}/${jail}/ssh/ssh_host_ed25519_key" -N '' -t ed25519
+ssh-keygen -qf "${CONFDIR}/${jail}/ssh/ssh_host_ecdsa_key" -N '' -t ecdsa
+
+install -m 0640 "${passwd}" "${CONFDIR}/${jail}/passwd"
+install -m 0640 "${shadow}" "${CONFDIR}/${jail}/shadow"
+install -m 0640 "${group}" "${CONFDIR}/${jail}/group"
+install -m 0750 "${sshrc}" "${CONFDIR}/${jail}/ssh/sshrc"
+install -m 0640 "${sshd_config}" "${CONFDIR}/${jail}/ssh/sshd_config"
+install -m 0640 "${inctpl}" "${CONFDIR}/${jail}/inc.tpl"

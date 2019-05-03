@@ -12,6 +12,5 @@ jail="${1:-}"
 if [ ! -n "${jail}" ]; then
     "${LIBDIR}/bkctld-help" && exit 1
 fi
-[ -d "${JAILDIR}/${jail}" ] || error "${jail} : trying to restart inexistant jail"
-"${LIBDIR}/bkctld-is-on" "${jail}" && "${LIBDIR}/bkctld-stop" "${jail}"
-"${LIBDIR}/bkctld-start" "${jail}"
+[ -d "${CONFDIR}/${jail}" ] || error "${jail} : trying to restart inexistant jail"
+"${LIBDIR}/bkctld-is-on" "${jail}" && "${LIBDIR}/bkctld-stop" "${jail}" && "${LIBDIR}/bkctld-start" "${jail}"

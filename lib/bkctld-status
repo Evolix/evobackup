@@ -10,12 +10,12 @@ jail="${1:-}"
 if [ ! -n "${jail}" ]; then
     "${LIBDIR}/bkctld-help" && exit 1
 fi
-[ -d "${JAILDIR}/${jail}" ] || error "${jail} : inexistant jail ! Use '$0 status' for list all"
+[ -d "${CONFDIR}/${jail}" ] || error "${jail} : inexistant jail ! Use '$0 status' for list all"
 
 inc="0"
-if [ -f "${CONFDIR}/${jail}" ]; then
-    day=$(grep -c "day" "${CONFDIR}/${jail}")
-    month=$(grep -c "month" "${CONFDIR}/${jail}")
+if [ -f "${CONFDIR}/${jail}/inc.tpl" ]; then
+    day=$(grep -c "day" "${CONFDIR}/${jail}/inc.tpl")
+    month=$(grep -c "month" "${CONFDIR}/${jail}/inc.tpl")
     inc="${day}/${month}"
 fi
 status="OFF"

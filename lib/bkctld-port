@@ -11,17 +11,17 @@ port="${2:-}"
 if [ ! -n "${jail}" ]; then
     "${LIBDIR}/bkctld-help" && exit 1
 fi
-[ -d "${JAILDIR}/${jail}" ] || error "${jail} : inexistant jail'"
+[ -d "${CONFDIR}/${jail}" ] || error "${jail} : inexistant jail'"
 
 if [ -z "${port}" ]; then
-    grep -E "Port [0-9]+" "${JAILDIR}/${jail}/${SSHD_CONFIG}"|grep -oE "[0-9]+"
+    grep -E "Port [0-9]+" "${CONFDIR}/${jail}/ssh/sshd_config"|grep -oE "[0-9]+"
 else
     if [ "${port}" = "auto" ]; then
-        port=$(grep -h Port "${JAILDIR}"/*/"${SSHD_CONFIG}" 2>/dev/null | grep -Eo "[0-9]+" | sort -n | tail -1)
+        port=$(grep -h Port "${CONFDIR}"/*/ssh/sshd_config 2>/dev/null | grep -Eo "[0-9]+" | sort -n | tail -1)
         port=$((port+1))
         [ "${port}" -le 1 ] && port=2222
     fi
-    sed -i "s/^Port .*/Port ${port}/" "${JAILDIR}/$jail/${SSHD_CONFIG}"
+    sed -i "s/^Port .*/Port ${port}/" "${CONFDIR}/$jail/ssh/sshd_config"
     notice "${jail} : update port => ${port}"
     "${LIBDIR}/bkctld-is-on" "${jail}" && "${LIBDIR}/bkctld-reload" "${jail}"
     "${LIBDIR}/bkctld-firewall" "${jail}"

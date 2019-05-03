@@ -6,23 +6,24 @@
 
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
 
-mkdir -p "${INDEX_DIR}"
+grep -qE " ${MOUNT_POINT} " /etc/mtab || error "Backup disk is not mounted !"
+
 lsof "${IDX_FILE}" >/dev/null 2>&1 || nohup sh -s -- <<EOF >/dev/null 2>&1 &
-ionice -c3 "${DUC}" index -d "${IDX_FILE}" "${JAILDIR}"
-touch "${INDEX_DIR}/.lastrun.duc"
+ionice -c3 "${DUC}" index -e "*\.*" -d "${IDX_FILE}" "${MOUNT_POINT}"
+touch "${MOUNT_POINT}/.lastrun.duc"
 EOF
-[ ! -f "${INDEX_DIR}/.lastrun.duc" ] && notice "First run of DUC always in progress ..." && exit 0
+[ ! -f "${MOUNT_POINT}/.lastrun.duc" ] && notice "First run of DUC always in progress ..." && exit 0
 [ ! -f ${IDX_FILE} ] && error "Index file do not exits !"
 printf "Last update of index file : "
-stat --format=%Y "${INDEX_DIR}/.lastrun.duc" | xargs -i -n1 date -R -d "@{}"
+stat --format=%Y "${MOUNT_POINT}/.lastrun.duc" | xargs -i -n1 date -R -d "@{}"
 echo "<jail> <size> <incs> <lastconn>" | awk '{ printf("%- 30s %- 10s %- 10s %- 15s\n", $1, $2, $3, $4); }'
 duc_output=$(mktemp)
 stat_output=$(mktemp)
 incs_output=$(mktemp)
 trap "rm ${duc_output} ${incs_output} ${stat_output}" 0
-"${DUC}" ls -d "${IDX_FILE}" "${JAILDIR}" > "${duc_output}"
+"${DUC}" ls -d "${IDX_FILE}" "${MOUNT_POINT}" > "${duc_output}"
 awk '{ print $2 }' "${duc_output}" | while read jail; do
-    stat --format=%Y "/backup/jails/${jail}/var/log/lastlog" | xargs -i -n1 date -d "@{}" "+%d-%m-%Y" >> "${stat_output}"
+    stat --format=%Y "${LOGDIR}/${jail}/lastlog" | xargs -i -n1 date -d "@{}" "+%d-%m-%Y" >> "${stat_output}"
     inc=0
     if [ -f "${CONFDIR}/${jail}" ]; then
         day=$(grep -c "day" "${CONFDIR}/${jail}")

@@ -13,7 +13,7 @@ fi
 
 if [ -n "${FIREWALL_RULES}" ]; then
     [ -f "${FIREWALL_RULES}" ] && sed -i "/#${jail}$/d" "${FIREWALL_RULES}"
-    if [ -d "${JAILDIR}/${jail}" ]; then
+    if [ -d "${CONFDIR}/${jail}" ]; then
         port=$("${LIBDIR}/bkctld-port" "${jail}")
         for ip in $("${LIBDIR}/bkctld-ip" "${jail}"); do
             echo "/sbin/iptables -A INPUT -p tcp --sport 1024: --dport ${port} -s ${ip} -j ACCEPT #${jail}" >> "${FIREWALL_RULES}"

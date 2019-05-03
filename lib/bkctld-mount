@@ -1,0 +1,33 @@
+#!/bin/sh
+#
+# Mount backup disk
+# Usage: mount
+#
+
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+
+[ -b "${BACKUP_DISK}" ] || error "${BACKUP_DISK} is not a block device !"
+
+cryptsetup isLuks "${BACKUP_DISK}"
+if [ "$?" -eq 0 ]; then
+    if [ ! -b '/dev/mapper/bkctld' ]; then
+        tty -s
+        if [ "${?}" -eq 0 ]; then
+            notice "Mount LUKS device ${BACKUP_DISK}"
+            cryptsetup luksOpen ${BACKUP_DISK} bkctld
+            notice "LUKS device ${BACKUP_DISK} was mounted"
+        else
+            error "You need a TTY for mount LUKS device !"
+        fi
+    fi
+    BACKUP_DISK='/dev/mapper/bkctld'
+fi
+
+if [ -b "${BACKUP_DISK}" ]; then
+     grep -qE "^${BACKUP_DISK} " /etc/mtab
+     if [ "$?" -ne 0 ]; then
+         mount -o nobarrier,sync,noatime,nodev,noexec "${BACKUP_DISK}" "${MOUNT_POINT}" && notice "Backup disk ${BACKUP_DISK} was mounted"
+     fi
+fi
+
+"${LIBDIR}/bkctld-list"|xargs --no-run-if-empty --max-args=1 --max-procs=0 "${LIBDIR}/bkctld-restart"
