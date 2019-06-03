@@ -327,10 +327,10 @@ END=$(/bin/date +"%d-%m-%Y ; %H:%M")
 
 ##### REPORTING #######################################################
 
-echo "EvoBackup - ${HOSTNAME} - START ${BEGINNING}"    \
+echo "EvoBackup - ${HOSTNAME} - START ${BEGINNING} ON ${SSH_SERVER}" \
     >> /var/log/evobackup.log
 
-echo "EvoBackup - ${HOSTNAME} - STOP ${END}"           \
+echo "EvoBackup - ${HOSTNAME} - STOP ${END} ON ${SSH_SERVER}" \
     >> /var/log/evobackup.log
 
 tail -10 /var/log/evobackup.log |                      \
