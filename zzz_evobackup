@@ -209,17 +209,6 @@ trap "rm -f ${PIDFILE}" EXIT
 ## RabbitMQ : export config
 #rabbitmqadmin export ${LOCAL_BACKUP_DIR}/rabbitmq.config >> /var/log/evobackup.log
 
-## Dump MBR / table partitions with dd and sfdisk
-## Linux
-#for disk in $(ls /dev/[sv]d[a-z] 2>/dev/null); do
-#    name=$(basename $disk)
-#    dd if=$disk of=${LOCAL_BACKUP_DIR}/MBR-$name bs=512 count=1 2>&1 | egrep -v "(records in|records out|512 bytes)"
-#    fdisk -l $disk > ${LOCAL_BACKUP_DIR}/partitions-$name
-#done
-#cat ${LOCAL_BACKUP_DIR}/partitions-* > ${LOCAL_BACKUP_DIR}/partitions
-## OpenBSD
-# disklabel sd0 > ${LOCAL_BACKUP_DIR}/partitions
-
 # backup MegaCli config
 #megacli -CfgSave -f ${LOCAL_BACKUP_DIR}/megacli_conf.dump -a0 >/dev/null
 
@@ -243,12 +232,23 @@ if [ "${SYSTEM}" = "linux" ]; then
     dpkg -l > ${LOCAL_BACKUP_DIR}/packages
     dpkg --get-selections > ${LOCAL_BACKUP_DIR}/packages.getselections
     apt-cache dumpavail > ${LOCAL_BACKUP_DIR}/packages.available
+
+    ## Dump MBR / table partitions
+    for disk in /dev/[sv]d[a-z]; do
+        name=$(basename "${disk}")
+        dd if="${disk}" of="${LOCAL_BACKUP_DIR}/MBR-${name}" bs=512 count=1 2>&1 | egrep -v "(records in|records out|512 bytes)"
+        fdisk -l "${disk}" > "${LOCAL_BACKUP_DIR}/partitions-${name}"
+    done
+    cat ${LOCAL_BACKUP_DIR}/partitions-* > ${LOCAL_BACKUP_DIR}/partitions
 else
     ## Dump network connections with netstat
     netstat -finet -atn > ${LOCAL_BACKUP_DIR}/netstat.out
 
     ## List OpenBSD packages
     pkg_info -m > ${LOCAL_BACKUP_DIR}/packages
+
+    ## Dump MBR / table partitions
+    ##disklabel sd0 > ${LOCAL_BACKUP_DIR}/partitions
 fi
 
 ##### REMOTE BACKUP ###################################################
