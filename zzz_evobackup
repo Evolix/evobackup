@@ -24,7 +24,7 @@ MAIL=jdoe@example.com
 SERVERS="node0.backup.example.com:2XXX node1.backup.example.com:2XXX"
 
 # timeout (in seconds) for the SSH test
-SSH_CONNECT_TIMEOUT=30
+SSH_CONNECT_TIMEOUT=60
 
 ## We use /home/backup : feel free to use your own dir
 LOCAL_BACKUP_DIR="/home/backup"
@@ -251,17 +251,6 @@ fi
 ## RabbitMQ : export config
 #rabbitmqadmin export ${LOCAL_BACKUP_DIR}/rabbitmq.config >> /var/log/evobackup.log
 
-## Dump MBR / table partitions with dd and sfdisk
-## Linux
-#for disk in $(ls /dev/[sv]d[a-z] 2>/dev/null); do
-#    name=$(basename $disk)
-#    dd if=$disk of=${LOCAL_BACKUP_DIR}/MBR-$name bs=512 count=1 2>&1 | egrep -v "(records in|records out|512 bytes)"
-#    fdisk -l $disk > ${LOCAL_BACKUP_DIR}/partitions-$name
-#done
-#cat ${LOCAL_BACKUP_DIR}/partitions-* > ${LOCAL_BACKUP_DIR}/partitions
-## OpenBSD
-# disklabel sd0 > ${LOCAL_BACKUP_DIR}/partitions
-
 # backup MegaCli config
 #megacli -CfgSave -f ${LOCAL_BACKUP_DIR}/megacli_conf.dump -a0 >/dev/null
 
@@ -278,19 +267,31 @@ done
 ps auwwx >${LOCAL_BACKUP_DIR}/ps.out
 
 if [ "${SYSTEM}" = "linux" ]; then
-    ## Dump network connections with netstat
-    netstat -taupen > ${LOCAL_BACKUP_DIR}/netstat.out
+    ## Dump network connections with ss
+    ss -taupen > ${LOCAL_BACKUP_DIR}/netstat.out
 
     ## List Debian packages
     dpkg -l > ${LOCAL_BACKUP_DIR}/packages
     dpkg --get-selections > ${LOCAL_BACKUP_DIR}/packages.getselections
     apt-cache dumpavail > ${LOCAL_BACKUP_DIR}/packages.available
+
+    ## Dump MBR / table partitions
+    disks=$(find /dev/ -regex '/dev/\([sv]d[a-z]\|nvme[0-9]+n[0-9]+\)')
+    for disk in ${disks}; do
+        name=$(basename "${disk}")
+        dd if="${disk}" of="${LOCAL_BACKUP_DIR}/MBR-${name}" bs=512 count=1 2>&1 | egrep -v "(records in|records out|512 bytes)"
+        fdisk -l "${disk}" > "${LOCAL_BACKUP_DIR}/partitions-${name}"
+    done
+    cat ${LOCAL_BACKUP_DIR}/partitions-* > ${LOCAL_BACKUP_DIR}/partitions
 else
     ## Dump network connections with netstat
     netstat -finet -atn > ${LOCAL_BACKUP_DIR}/netstat.out
 
     ## List OpenBSD packages
     pkg_info -m > ${LOCAL_BACKUP_DIR}/packages
+
+    ## Dump MBR / table partitions
+    ##disklabel sd0 > ${LOCAL_BACKUP_DIR}/partitions
 fi
 
 ##### REMOTE BACKUP ###################################################
@@ -369,10 +370,10 @@ END=$(/bin/date +"%d-%m-%Y ; %H:%M")
 
 ##### REPORTING #######################################################
 
-echo "EvoBackup - ${HOSTNAME} - START ${BEGINNING}"    \
+echo "EvoBackup - ${HOSTNAME} - START ${BEGINNING} ON ${SSH_SERVER}" \
     >> /var/log/evobackup.log
 
-echo "EvoBackup - ${HOSTNAME} - STOP ${END}"           \
+echo "EvoBackup - ${HOSTNAME} - STOP ${END} ON ${SSH_SERVER}" \
     >> /var/log/evobackup.log
 
 tail -10 /var/log/evobackup.log |                      \
