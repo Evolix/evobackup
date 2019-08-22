@@ -50,6 +50,9 @@ export LANG=C
 ## Force umask
 umask 077
 
+## Initialize variable to store SSH connection errors
+SERVERS_SSH_ERRORS=""
+
 # Call test_server with "HOST:PORT" string
 # It will return with 0 if the server is reachable.
 # It will return with 1 and a message on stderr if not.
@@ -67,7 +70,9 @@ test_server() {
         return 0
     else
         # SSH connection failed
-        echo "Failed to connect to \`${item}' within ${SSH_CONNECT_TIMEOUT} seconds" >&2
+        new_error=$(printf "Failed to connect to \`%s' within %s seconds" "${item}" "${SSH_CONNECT_TIMEOUT}")
+        SERVERS_SSH_ERRORS=$(printf "%s\n%s" "${SERVERS_SSH_ERRORS}" "${new_error}" | sed -e '/^$/d')
+
         return 1
     fi
 }
@@ -78,7 +83,10 @@ pick_server() {
 
     if [ "${increment}" -ge "${list_length}" ]; then
         # We've reached the end of the list
-        echo "No more server available" >&2
+        new_error="No more server available"
+        SERVERS_SSH_ERRORS=$(printf "%s\n%s" "${SERVERS_SSH_ERRORS}" "${new_error}" | sed -e '/^$/d')
+
+        printf "%s\n" "${SERVERS_SSH_ERRORS}" >&2
         return 1
     fi
 
