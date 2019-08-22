@@ -113,7 +113,7 @@ if [ -e "${PIDFILE}" ]; then
     done
     # Then kill the main PID.
     kill -9 "${pid}"
-    echo "$0 is still running (PID ${pid}). Process has been killed" >&2
+    printf "%s is still running (PID %s). Process has been killed" "$0" "${pid}\n" >&2
 fi
 echo "$$" > ${PIDFILE}
 # shellcheck disable=SC2064
@@ -339,10 +339,10 @@ END=$(/bin/date +"%d-%m-%Y ; %H:%M")
 
 ##### REPORTING #######################################################
 
-echo "EvoBackup - ${HOSTNAME} - START ${BEGINNING} ON ${SSH_SERVER}" \
+printf "EvoBackup - %s - START %s ON %s\n" "${HOSTNAME}" "${BEGINNING}" "${SSH_SERVER}" \
     >> $LOGFILE
 
-echo "EvoBackup - ${HOSTNAME} - STOP ${END} ON ${SSH_SERVER}" \
+printf "EvoBackup - %s - STOP %s ON %s\n" "${HOSTNAME}" "${END}" "${SSH_SERVER}" \
     >> $LOGFILE
 
 tail -10 $LOGFILE |                                    \
