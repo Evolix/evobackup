@@ -32,6 +32,10 @@ LOCAL_BACKUP_DIR="/home/backup"
 # You can set "linux" or "bsd" manually or let it choose automatically
 SYSTEM=$(uname | tr '[:upper:]' '[:lower:]')
 
+# Change these 2 variables if you have more than one backup cron
+PIDFILE="/var/run/evobackup.pid"
+LOGFILE="/var/log/evobackup.log"
+
 ##### SETUP AND FUNCTIONS #############################################
 
 # shellcheck disable=SC2174
@@ -93,7 +97,6 @@ pick_server() {
 }
 
 ## Verify other evobackup process and kill if needed
-PIDFILE="/var/run/evobackup.pid"
 if [ -e "${PIDFILE}" ]; then
     pid=$(cat "${PIDFILE}")
     # Killing the childs of evobackup.
@@ -207,7 +210,7 @@ trap "rm -f ${PIDFILE}" EXIT
 # curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot_${date}?wait_for_completion=true" -o /tmp/es_snapshot_${date}.log
 
 ## RabbitMQ : export config
-#rabbitmqadmin export ${LOCAL_BACKUP_DIR}/rabbitmq.config >> /var/log/evobackup.log
+#rabbitmqadmin export ${LOCAL_BACKUP_DIR}/rabbitmq.config >> $LOGFILE
 
 # backup MegaCli config
 #megacli -CfgSave -f ${LOCAL_BACKUP_DIR}/megacli_conf.dump -a0 >/dev/null
@@ -322,18 +325,18 @@ rsync -avzh --stats --delete --delete-excluded --force --ignore-errors --partial
         /srv                                           \
     -e "ssh -p ${SSH_PORT}"                            \
     "root@${SSH_SERVER}:/var/backup/"                  \
-    | tail -30 >> /var/log/evobackup.log
+    | tail -30 >> $LOGFILE
 
 END=$(/bin/date +"%d-%m-%Y ; %H:%M")
 
 ##### REPORTING #######################################################
 
 echo "EvoBackup - ${HOSTNAME} - START ${BEGINNING} ON ${SSH_SERVER}" \
-    >> /var/log/evobackup.log
+    >> $LOGFILE
 
 echo "EvoBackup - ${HOSTNAME} - STOP ${END} ON ${SSH_SERVER}" \
-    >> /var/log/evobackup.log
+    >> $LOGFILE
 
-tail -10 /var/log/evobackup.log |                      \
+tail -10 $LOGFILE |                                    \
     mail -s "[info] EvoBackup - Client ${HOSTNAME}"    \
     ${MAIL}
