@@ -37,8 +37,8 @@ PIDFILE="/var/run/evobackup.pid"
 LOGFILE="/var/log/evobackup.log"
 
 ## Enable/Disable tasks
-LOCAL_TASKS=1
-SYNC_TASKS=1
+LOCAL_TASKS=${LOCAL_TASKS:-1}
+SYNC_TASKS=${SYNC_TASKS:-1}
 
 ##### SETUP AND FUNCTIONS #############################################
 
