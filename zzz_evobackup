@@ -304,6 +304,9 @@ if [ "${SYNC_TASKS}" = "1" ]; then
     # /!\ DO NOT USE COMMENTS in the rsync command /!\
     # It breaks the command and destroys data, simply remove (or add) lines.
 
+    # Remote shell command
+    RSH_COMMAND="ssh -p ${SSH_PORT} -o 'ConnectTimeout ${SSH_CONNECT_TIMEOUT}'"
+
     rsync -avzh --stats --delete --delete-excluded --force --ignore-errors --partial \
         --exclude "lost+found"                             \
         --exclude ".nfs.*"                                 \
@@ -340,7 +343,7 @@ if [ "${SYNC_TASKS}" = "1" ]; then
             /var                                           \
             /home                                          \
             /srv                                           \
-        -e "ssh -p ${SSH_PORT}"                            \
+        -e "${RSH_COMMAND}"                                \
         "root@${SSH_SERVER}:/var/backup/"                  \
         | tail -30 >> $LOGFILE
 fi
