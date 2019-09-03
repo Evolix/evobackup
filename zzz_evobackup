@@ -252,11 +252,10 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
         apt-cache dumpavail > ${LOCAL_BACKUP_DIR}/packages.available
 
         ## Dump MBR / table partitions
-        disks=$(find /dev/ -regex '/dev/\([sv]d[a-z]\|nvme[0-9]+n[0-9]+\)')
+        disks=$(lsblk -l | grep disk | awk '{print $1}')
         for disk in ${disks}; do
-            name=$(basename "${disk}")
-            dd if="${disk}" of="${LOCAL_BACKUP_DIR}/MBR-${name}" bs=512 count=1 2>&1 | egrep -v "(records in|records out|512 bytes)"
-            fdisk -l "${disk}" > "${LOCAL_BACKUP_DIR}/partitions-${name}"
+            dd if="/dev/${disk}" of="${LOCAL_BACKUP_DIR}/MBR-${disk}" bs=512 count=1 2>&1 | grep -Ev "(records in|records out|512 bytes)"
+            fdisk -l "/disk/${disk}" > "${LOCAL_BACKUP_DIR}/partitions-${disk}"
         done
         cat ${LOCAL_BACKUP_DIR}/partitions-* > ${LOCAL_BACKUP_DIR}/partitions
     else
