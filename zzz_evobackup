@@ -255,7 +255,7 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
         disks=$(lsblk -l | grep disk | awk '{print $1}')
         for disk in ${disks}; do
             dd if="/dev/${disk}" of="${LOCAL_BACKUP_DIR}/MBR-${disk}" bs=512 count=1 2>&1 | grep -Ev "(records in|records out|512 bytes)"
-            fdisk -l "/disk/${disk}" > "${LOCAL_BACKUP_DIR}/partitions-${disk}"
+            fdisk -l "/dev/${disk}" > "${LOCAL_BACKUP_DIR}/partitions-${disk}"
         done
         cat ${LOCAL_BACKUP_DIR}/partitions-* > ${LOCAL_BACKUP_DIR}/partitions
     else
