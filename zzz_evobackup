@@ -114,7 +114,7 @@ pick_server() {
 if [ -e "${PIDFILE}" ]; then
     pid=$(cat "${PIDFILE}")
     # Killing the childs of evobackup.
-    for ppid in $(ps h --ppid "${pid}" -o pid | tr -s '\n' ' '); do
+    for ppid in $(pgrep -P "${pid}"); do
         kill -9 "${ppid}";
     done
     # Then kill the main PID.
