@@ -269,6 +269,12 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
         ##disklabel sd0 > ${LOCAL_BACKUP_DIR}/partitions
     fi
 
+    ## Dump rights
+    #getfacl -R /var > ${LOCAL_BACKUP_DIR}/rights-var.txt
+    #getfacl -R /etc > ${LOCAL_BACKUP_DIR}/rights-etc.txt
+    #getfacl -R /usr > ${LOCAL_BACKUP_DIR}/rights-usr.txt
+    #getfacl -R /home > ${LOCAL_BACKUP_DIR}/rights-home.txt
+
 fi
 
 ##### REMOTE BACKUP ###################################################
