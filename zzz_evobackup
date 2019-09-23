@@ -23,6 +23,9 @@ MAIL=jdoe@example.com
 # list of hosts (hostname or IP) and SSH port for Rsync
 SERVERS="node0.backup.example.com:2XXX node1.backup.example.com:2XXX"
 
+# Should we fallback on servers when the first is unreachable ?
+SERVERS_FALLBACK=${SERVERS_FALLBACK:-1}
+
 # timeout (in seconds) for SSH connections
 SSH_CONNECT_TIMEOUT=30
 
@@ -281,17 +284,23 @@ fi
 
 n=0
 server=""
-while :; do
-    server=$(pick_server "${n}")
-    test $? = 0 || exit 2
+if [ "${SERVERS_FALLBACK}" = "1" ]; then
+    # We try to find a suitable server
+    while :; do
+        server=$(pick_server "${n}")
+        test $? = 0 || exit 2
 
-    if test_server "${server}"; then
-        break
-    else
-        server=""
-        n=$(( n + 1 ))
-    fi
-done
+        if test_server "${server}"; then
+            break
+        else
+            server=""
+            n=$(( n + 1 ))
+        fi
+    done
+else
+    # we force the server
+    server=$(pick_server "${n}")
+fi
 
 SSH_SERVER=$(echo "${server}" | cut -d':' -f1)
 SSH_PORT=$(echo "${server}" | cut -d':' -f2)
