@@ -261,6 +261,10 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
             fdisk -l "/dev/${disk}" > "${LOCAL_BACKUP_DIR}/partitions-${disk}"
         done
         cat ${LOCAL_BACKUP_DIR}/partitions-* > ${LOCAL_BACKUP_DIR}/partitions
+
+        ## Dump iptables
+        test -x /sbin/iptables && /sbin/iptables -L -n -v > ${LOCAL_BACKUP_DIR}/iptables.txt && /sbin/iptables -t filter -L -n -v >> ${LOCAL_BACKUP_DIR}/iptables.txt
+
     else
         ## Dump network connections with netstat
         netstat -finet -atn > ${LOCAL_BACKUP_DIR}/netstat.out
@@ -270,6 +274,10 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
 
         ## Dump MBR / table partitions
         ##disklabel sd0 > ${LOCAL_BACKUP_DIR}/partitions
+
+        ## Dump pf infos
+        pfctl -sa |> ${LOCAL_BACKUP_DIR}/pfctl-sa.txt
+
     fi
 
     ## Dump rights
