@@ -116,13 +116,18 @@ pick_server() {
 ## Verify other evobackup process and kill if needed
 if [ -e "${PIDFILE}" ]; then
     pid=$(cat "${PIDFILE}")
-    # Killing the childs of evobackup.
-    for ppid in $(pgrep -P "${pid}"); do
-        kill -9 "${ppid}";
-    done
-    # Then kill the main PID.
-    kill -9 "${pid}"
-    printf "%s is still running (PID %s). Process has been killed" "$0" "${pid}\n" >&2
+    # Does process still exist ?
+    if kill -O ${pid} 2> /dev/null; then
+        # Killing the childs of evobackup.
+        for ppid in $(pgrep -P "${pid}"); do
+            kill -9 "${ppid}";
+        done
+        # Then kill the main PID.
+        kill -9 "${pid}"
+        printf "%s is still running (PID %s). Process has been killed" "$0" "${pid}\n" >&2
+    else
+        rm -f ${PIDFILE}
+    fi
 fi
 echo "$$" > ${PIDFILE}
 # shellcheck disable=SC2064
