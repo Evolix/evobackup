@@ -268,7 +268,9 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
         cat ${LOCAL_BACKUP_DIR}/partitions-* > ${LOCAL_BACKUP_DIR}/partitions
 
         ## Dump iptables
-        test -x /sbin/iptables && /sbin/iptables -L -n -v > ${LOCAL_BACKUP_DIR}/iptables.txt && /sbin/iptables -t filter -L -n -v >> ${LOCAL_BACKUP_DIR}/iptables.txt
+        if [ -x /sbin/iptables ]; then
+            { /sbin/iptables -L -n -v; /sbin/iptables -t filter -L -n -v; } > ${LOCAL_BACKUP_DIR}/iptables.txt
+        fi
 
     else
         ## Dump network connections with netstat
