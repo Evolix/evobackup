@@ -272,6 +272,11 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
             { /sbin/iptables -L -n -v; /sbin/iptables -t filter -L -n -v; } > ${LOCAL_BACKUP_DIR}/iptables.txt
         fi
 
+        ## Dump findmnt(8) output
+        FINDMNT_BIN=$(command -v findmnt)
+        if [ -x ${FINDMNT_BIN} ]; then
+            ${FINDMNT_BIN} > ${LOCAL_BACKUP_DIR}/findmnt.txt
+        fi
     else
         ## Dump network connections with netstat
         netstat -finet -atn > ${LOCAL_BACKUP_DIR}/netstat.out
