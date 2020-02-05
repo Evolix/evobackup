@@ -3,7 +3,7 @@ name: default
 
 steps:
 - name: build debian package
-  image: vlaborie/gbp:latest
+  image: evolix/gbp:latest
   branches:
   - debian
   commands:
