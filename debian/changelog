@@ -1,3 +1,9 @@
+bkctld (2.0.1-1) unstable; urgency=medium
+
+  * Do not unnecessary use is-on and reload in ip/port/key
+
+ -- vlaborie <vlaborie@evolix.fr>  Wed, 05 Feb 2020 15:00:21 +0100
+
 bkctld (2.0.0-1) unstable; urgency=low
 
   * Split bkctld into multiples scripts
