@@ -2,7 +2,7 @@
 #
 # Script Evobackup client
 # See https://gitea.evolix.org/evolix/evobackup
-# 
+#
 # Author: Gregory Colpart <reg@evolix.fr>
 # Contributors:
 # Romain Dessort <rdessort@evolix.fr>
@@ -13,14 +13,42 @@
 #
 # Licence: AGPLv3
 #
-# The following variables must be changed:
-# SSH_PORT: The Port used for the ssh(1) jail on the backup server
-# MAIL: The email address to send notifications to.
-# SRV: The hostname or IP address of the backup server.
-# 
-# You must then uncomment the various
-# examples that best suit your case
-#
+# /!\ DON'T FORGET TO SET "MAIL" and "SERVERS" VARIABLES
+
+##### Configuration ###################################################
+
+# email adress for notifications
+MAIL=jdoe@example.com
+
+# list of hosts (hostname or IP) and SSH port for Rsync
+SERVERS="node0.backup.example.com:2XXX node1.backup.example.com:2XXX"
+
+# Should we fallback on servers when the first is unreachable ?
+SERVERS_FALLBACK=${SERVERS_FALLBACK:-1}
+
+# timeout (in seconds) for SSH connections
+SSH_CONNECT_TIMEOUT=${SSH_CONNECT_TIMEOUT:-30}
+
+## We use /home/backup : feel free to use your own dir
+LOCAL_BACKUP_DIR="/home/backup"
+
+# You can set "linux" or "bsd" manually or let it choose automatically
+SYSTEM=$(uname | tr '[:upper:]' '[:lower:]')
+
+# Change these 2 variables if you have more than one backup cron
+PIDFILE="/var/run/evobackup.pid"
+LOGFILE="/var/log/evobackup.log"
+
+## Enable/Disable tasks
+LOCAL_TASKS=${LOCAL_TASKS:-1}
+SYNC_TASKS=${SYNC_TASKS:-1}
+
+##### SETUP AND FUNCTIONS #############################################
+
+BEGINNING=$(/bin/date +"%d-%m-%Y ; %H:%M")
+
+# shellcheck disable=SC2174
+mkdir -p -m 700 ${LOCAL_BACKUP_DIR}
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
@@ -31,236 +59,341 @@ export LANG=C
 ## Force umask
 umask 077
 
+## Initialize variable to store SSH connection errors
+SERVERS_SSH_ERRORS=""
+
+# Call test_server with "HOST:PORT" string
+# It will return with 0 if the server is reachable.
+# It will return with 1 and a message on stderr if not.
+test_server() {
+    item=$1
+    # split HOST and PORT from the input string
+    host=$(echo "${item}" | cut -d':' -f1)
+    port=$(echo "${item}" | cut -d':' -f2)
+
+    # Test if the server is accepting connections
+    ssh -q -o "ConnectTimeout ${SSH_CONNECT_TIMEOUT}" "${host}" -p "${port}" -t "exit"
+    # shellcheck disable=SC2181
+    if [ $? = 0 ]; then
+        # SSH connection is OK
+        return 0
+    else
+        # SSH connection failed
+        new_error=$(printf "Failed to connect to \`%s' within %s seconds" "${item}" "${SSH_CONNECT_TIMEOUT}")
+        SERVERS_SSH_ERRORS=$(printf "%s\n%s" "${SERVERS_SSH_ERRORS}" "${new_error}" | sed -e '/^$/d')
+
+        return 1
+    fi
+}
+# Call pick_server with an optional positive integer to get the nth server in the list.
+pick_server() {
+    increment=${1:-0}
+    list_length=$(echo "${SERVERS}" | wc -w)
+
+    if [ "${increment}" -ge "${list_length}" ]; then
+        # We've reached the end of the list
+        new_error="No more server available"
+        SERVERS_SSH_ERRORS=$(printf "%s\n%s" "${SERVERS_SSH_ERRORS}" "${new_error}" | sed -e '/^$/d')
+
+        printf "%s\n" "${SERVERS_SSH_ERRORS}" >&2
+        return 1
+    fi
+
+    # Extract the day of month, without leading 0 (which would give an octal based number) 
+    today=$(date +%e)
+    # A salt is useful to randomize the starting point in the list
+    # but stay identical each time it's called for a server (based on hostname).
+    salt=$(hostname | cksum | cut -d' ' -f1)
+    # Pick an integer between 0 and the length of the SERVERS list
+    # It changes each day
+    item=$(( (today + salt + increment) % list_length ))
+    # cut starts counting fields at 1, not 0.
+    field=$(( item + 1 ))
+
+    echo "${SERVERS}" | cut -d' ' -f${field}
+}
+
 ## Verify other evobackup process and kill if needed
-PIDFILE=/var/run/evobackup.pid
-if [ -e $PIDFILE ]; then
-    pid=$(cat "$PIDFILE")
-    # Killing the childs of evobackup.
-    for ppid in $(ps h --ppid "$pid" -o pid | tr -s '\n' ' '); do
-        kill -9 "$ppid";
+if [ -e "${PIDFILE}" ]; then
+    pid=$(cat "${PIDFILE}")
+    # Does process still exist ?
+    if kill -0 ${pid} 2> /dev/null; then
+        # Killing the childs of evobackup.
+        for ppid in $(pgrep -P "${pid}"); do
+            kill -9 "${ppid}";
+        done
+        # Then kill the main PID.
+        kill -9 "${pid}"
+        printf "%s is still running (PID %s). Process has been killed" "$0" "${pid}\n" >&2
+    else
+        rm -f ${PIDFILE}
+    fi
+fi
+echo "$$" > ${PIDFILE}
+# shellcheck disable=SC2064
+trap "rm -f ${PIDFILE}" EXIT
+
+##### LOCAL BACKUP ####################################################
+
+if [ "${LOCAL_TASKS}" = "1" ]; then
+    # You can comment or uncomment sections below to customize the backup
+
+    ## OpenLDAP : example with slapcat
+    # slapcat -l ${LOCAL_BACKUP_DIR}/ldap.bak
+
+    ### MySQL
+
+    ## example with global and compressed mysqldump
+    # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
+    #  --opt --all-databases --force --events --hex-blob | gzip --best > ${LOCAL_BACKUP_DIR}/mysql.bak.gz
+
+    ## example with two dumps for each table (.sql/.txt) for all databases
+    # for i in $(echo SHOW DATABASES | mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
+    # | egrep -v "^(Database|information_schema|performance_schema|sys)" ); \
+    # do mkdir -p -m 700 /home/mysqldump/$i ; chown -RL mysql /home/mysqldump ; \
+    # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 -Q --opt --events --hex-blob --skip-comments \
+    #  --fields-enclosed-by='\"' --fields-terminated-by=',' -T /home/mysqldump/$i $i; done
+
+    ## example with compressed SQL dump for each databases
+    # mkdir -p -m 700 /home/mysqldump/
+    # for i in $(mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 -e 'show databases' -s --skip-column-names \
+    # | egrep -v "^(Database|information_schema|performance_schema|sys)"); do
+    #     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --events --hex-blob $i | gzip --best > /home/mysqldump/${i}.sql.gz
+    # done
+
+    ## example with *one* uncompressed SQL dump for *one* database (MYBASE)
+    # mkdir -p -m 700 /home/mysqldump/MYBASE
+    # chown -RL mysql /home/mysqldump/
+    # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -Q \
+    # --opt --events --hex-blob --skip-comments -T /home/mysqldump/MYBASE MYBASE
+
+    ## example with mysqlhotcopy
+    # mkdir -p -m 700 /home/mysqlhotcopy/
+    # mysqlhotcopy BASE /home/mysqlhotcopy/
+
+    ## example for multiples MySQL instances
+    # mysqladminpasswd=$(grep -m1 'password = .*' /root/.my.cnf|cut -d" " -f3)
+    # grep -E "^port\s*=\s*\d*" /etc/mysql/my.cnf |while read instance; do
+    #     instance=$(echo "$instance"|awk '{ print $3 }')
+    #     if [ "$instance" != "3306" ]
+    #     then
+    #         mysqldump -P $instance --opt --all-databases --hex-blob -u mysqladmin -p$mysqladminpasswd > ${LOCAL_BACKUP_DIR}/mysql.$instance.bak
+    #     fi
+    # done
+
+    ### PostgreSQL
+
+    ## example with pg_dumpall (warning: you need space in ~postgres)
+    # su - postgres -c "pg_dumpall > ~/pg.dump.bak"
+    # mv ~postgres/pg.dump.bak ${LOCAL_BACKUP_DIR}/
+    ## another method with gzip directly piped
+    # cd /var/lib/postgresql
+    # sudo -u postgres pg_dumpall | gzip > ${LOCAL_BACKUP_DIR}/pg.dump.bak.gz
+    # cd - > /dev/null
+
+    ## example with all tables from MYBASE excepts TABLE1 and TABLE2
+    # pg_dump -p 5432 -h 127.0.0.1 -U USER --clean -F t --inserts -f ${LOCAL_BACKUP_DIR}/pg-backup.tar -t 'TABLE1' -t 'TABLE2' MYBASE
+
+    ## example with only TABLE1 and TABLE2 from MYBASE
+    # pg_dump -p 5432 -h 127.0.0.1 -U USER --clean -F t --inserts -f ${LOCAL_BACKUP_DIR}/pg-backup.tar -T 'TABLE1' -T 'TABLE2' MYBASE
+
+    ## MongoDB : example with mongodump
+    ## don't forget to create use with read-only access
+    ## > use admin
+    ## > db.createUser( { user: "mongobackup", pwd: "PASS", roles: [ "backup", ] } )
+    # test -d ${LOCAL_BACKUP_DIR}/mongodump/ && rm -rf ${LOCAL_BACKUP_DIR}/mongodump/
+    # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mongodump/
+    # mongodump --quiet -u mongobackup -pPASS -o ${LOCAL_BACKUP_DIR}/mongodump/
+    # if [ $? -ne 0 ]; then
+    #   echo "Error with mongodump!"
+    # fi
+
+    ## Redis : example with copy .rdb file
+    # cp /var/lib/redis/dump.rdb ${LOCAL_BACKUP_DIR}/
+
+    ## ElasticSearch, take a snapshot as a backup.
+    ## Warning: You need to have a path.repo configured.
+    ## See: https://wiki.evolix.org/HowtoElasticsearch#snapshots-et-sauvegardes
+    # curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/snapshot.daily" -o /tmp/es_delete_snapshot.daily.log
+    # curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot.daily?wait_for_completion=true" -o /tmp/es_snapshot.daily.log
+    ## Clustered version here
+    ## It basically the same thing except that you need to check that NFS is mounted
+    # if ss | grep ':nfs' | grep -q 'ip\.add\.res\.s1' && ss | grep ':nfs' | grep -q 'ip\.add\.res\.s2'
+    # then
+    #     curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/snapshot.daily" -o /tmp/es_delete_snapshot.daily.log
+    #     curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot.daily?wait_for_completion=true" -o /tmp/es_snapshot.daily.log
+    # else
+    #     echo 'Cannot make a snapshot of elasticsearch, at least one node is not mounting the repository.'
+    # fi
+    ## If you need to keep older snapshot, for example the last 10 daily snapshots, replace the XDELETE and XPUT lines by :
+    # for snapshot in $(curl -s -XGET "localhost:9200/_snapshot/snaprepo/_all?pretty=true" | grep -Eo 'snapshot_[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -n -10); do
+    #     curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/${snapshot}" | grep -v -Fx '{"acknowledged":true}'
+    # done
+    # date=$(date +%F)
+    # curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot_${date}?wait_for_completion=true" -o /tmp/es_snapshot_${date}.log
+
+    ## RabbitMQ : export config
+    #rabbitmqadmin export ${LOCAL_BACKUP_DIR}/rabbitmq.config >> $LOGFILE
+
+    # backup MegaCli config
+    #megacli -CfgSave -f ${LOCAL_BACKUP_DIR}/megacli_conf.dump -a0 >/dev/null
+
+    ## Dump system and kernel versions
+    uname -a > ${LOCAL_BACKUP_DIR}/uname
+
+    ## Dump network routes with mtr and traceroute (warning: could be long with aggressive firewalls)
+    for addr in 8.8.8.8 www.evolix.fr travaux.evolix.net; do
+        mtr -r ${addr} > ${LOCAL_BACKUP_DIR}/mtr-${addr}
+        traceroute -n ${addr} > ${LOCAL_BACKUP_DIR}/traceroute-${addr} 2>&1
     done
-    # Then kill the main PID.
-    kill -9 "$pid"
-    echo "$0 tourne encore (PID $pid). Processus killé" >&2
+
+    ## Dump process with ps
+    ps auwwx >${LOCAL_BACKUP_DIR}/ps.out
+
+    if [ "${SYSTEM}" = "linux" ]; then
+        ## Dump network connections with ss
+        ss -taupen > ${LOCAL_BACKUP_DIR}/netstat.out
+
+        ## List Debian packages
+        dpkg -l > ${LOCAL_BACKUP_DIR}/packages
+        dpkg --get-selections > ${LOCAL_BACKUP_DIR}/packages.getselections
+        apt-cache dumpavail > ${LOCAL_BACKUP_DIR}/packages.available
+
+        ## Dump MBR / table partitions
+        disks=$(lsblk -l | grep disk | grep -v drbd | awk '{print $1}')
+        for disk in ${disks}; do
+            dd if="/dev/${disk}" of="${LOCAL_BACKUP_DIR}/MBR-${disk}" bs=512 count=1 2>&1 | grep -Ev "(records in|records out|512 bytes)"
+            fdisk -l "/dev/${disk}" > "${LOCAL_BACKUP_DIR}/partitions-${disk}"
+        done
+        cat ${LOCAL_BACKUP_DIR}/partitions-* > ${LOCAL_BACKUP_DIR}/partitions
+
+        ## Dump iptables
+        if [ -x /sbin/iptables ]; then
+            { /sbin/iptables -L -n -v; /sbin/iptables -t filter -L -n -v; } > ${LOCAL_BACKUP_DIR}/iptables.txt
+        fi
+
+        ## Dump findmnt(8) output
+        FINDMNT_BIN=$(command -v findmnt)
+        if [ -x ${FINDMNT_BIN} ]; then
+            ${FINDMNT_BIN} > ${LOCAL_BACKUP_DIR}/findmnt.txt
+        fi
+    else
+        ## Dump network connections with netstat
+        netstat -finet -atn > ${LOCAL_BACKUP_DIR}/netstat.out
+
+        ## List OpenBSD packages
+        pkg_info -m > ${LOCAL_BACKUP_DIR}/packages
+
+        ## Dump MBR / table partitions
+        ##disklabel sd0 > ${LOCAL_BACKUP_DIR}/partitions
+
+        ## Dump pf infos
+        pfctl -sa |> ${LOCAL_BACKUP_DIR}/pfctl-sa.txt
+
+    fi
+
+    ## Dump rights
+    #getfacl -R /var > ${LOCAL_BACKUP_DIR}/rights-var.txt
+    #getfacl -R /etc > ${LOCAL_BACKUP_DIR}/rights-etc.txt
+    #getfacl -R /usr > ${LOCAL_BACKUP_DIR}/rights-usr.txt
+    #getfacl -R /home > ${LOCAL_BACKUP_DIR}/rights-home.txt
+
 fi
-echo "$$" > $PIDFILE
-trap "rm -f $PIDFILE" EXIT
 
-# port SSH
-SSH_PORT=2XXX
+##### REMOTE BACKUP ###################################################
 
-# email adress for notifications
-MAIL=jdoe@example.com
+n=0
+server=""
+if [ "${SERVERS_FALLBACK}" = "1" ]; then
+    # We try to find a suitable server
+    while :; do
+        server=$(pick_server "${n}")
+        test $? = 0 || exit 2
 
-# choose "linux" or "bsd"
-SYSTEM=$(uname | tr '[:upper:]' '[:lower:]')
-
-# Variable to choose different backup server with date
-NODE=$(($(date +%e) % 2))
-
-# serveur address for rsync
-SRV="node$NODE.backup.example.com"
-
-## We use /home/backup : feel free to use your own dir
-mkdir -p -m 700 /home/backup
-
-## OpenLDAP : example with slapcat
-# slapcat -l /home/backup/ldap.bak
-
-### MySQL
-
-## example with global and compressed mysqldump
-# mysqldump --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
-#  --opt --all-databases --force --events --hex-blob | gzip --best > /home/backup/mysql.bak.gz
-
-## example with two dumps for each table (.sql/.txt) for all databases
-# for i in $(echo SHOW DATABASES | mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
-# | egrep -v "^(Database|information_schema|performance_schema|sys)" ); \
-# do mkdir -p -m 700 /home/mysqldump/$i ; chown -RL mysql /home/mysqldump ; \
-# mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 -Q --opt --events --hex-blob --skip-comments \
-#  --fields-enclosed-by='\"' --fields-terminated-by=',' -T /home/mysqldump/$i $i; done
-
-## example with compressed SQL dump for each databases
-# mkdir -p -m 700 /home/mysqldump/
-# for i in $(mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 -e 'show databases' -s --skip-column-names \
-# | egrep -v "^(Database|information_schema|performance_schema|sys)"); do
-#     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --events --hex-blob $i | gzip --best > /home/mysqldump/${i}.sql.gz
-# done
-
-## example with *one* uncompressed SQL dump for *one* database (MYBASE)
-# mkdir -p -m 700 /home/mysqldump/MYBASE
-# chown -RL mysql /home/mysqldump/
-# mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -Q \
-# --opt --events --hex-blob --skip-comments -T /home/mysqldump/MYBASE MYBASE
-
-## example with mysqlhotcopy
-# mkdir -p -m 700 /home/mysqlhotcopy/
-# mysqlhotcopy BASE /home/mysqlhotcopy/
-
-## example for multiples MySQL instances
-# mysqladminpasswd=$(grep -m1 'password = .*' /root/.my.cnf|cut -d" " -f3)
-# grep -E "^port\s*=\s*\d*" /etc/mysql/my.cnf |while read instance; do
-#     instance=$(echo "$instance"|awk '{ print $3 }')
-#     if [ "$instance" != "3306" ]
-#     then
-#         mysqldump -P $instance --opt --all-databases --hex-blob -u mysqladmin -p$mysqladminpasswd > /home/backup/mysql.$instance.bak
-#     fi
-# done
-
-### PostgreSQL
-
-## example with pg_dumpall (warning: you need space in ~postgres)
-# su - postgres -c "pg_dumpall > ~/pg.dump.bak"
-# mv ~postgres/pg.dump.bak /home/backup/
-## another method with gzip directly piped
-# cd /var/lib/postgresql
-# sudo -u postgres pg_dumpall | gzip > /home/backup/pg.dump.bak.gz
-# cd - > /dev/null
-
-## example with all tables from MYBASE excepts TABLE1 and TABLE2
-# pg_dump -p 5432 -h 127.0.0.1 -U USER --clean -F t --inserts -f /home/backup/pg-backup.tar -t 'TABLE1' -t 'TABLE2' MYBASE
-
-## example with only TABLE1 and TABLE2 from MYBASE
-# pg_dump -p 5432 -h 127.0.0.1 -U USER --clean -F t --inserts -f /home/backup/pg-backup.tar -T 'TABLE1' -T 'TABLE2' MYBASE
-
-## MongoDB : example with mongodump
-## don't forget to create use with read-only access
-## > use admin
-## > db.createUser( { user: "mongobackup", pwd: "PASS", roles: [ "backup", ] } )
-# test -d /home/backup/mongodump/ && rm -rf /home/backup/mongodump/
-# mkdir -p -m 700 /home/backup/mongodump/
-# mongodump --quiet -u mongobackup -pPASS -o /home/backup/mongodump/
-# if [ $? -ne 0 ]; then
-#   echo "Error with mongodump!"
-# fi
-
-## Redis : example with copy .rdb file
-# cp /var/lib/redis/dump.rdb /home/backup/
-
-## ElasticSearch, take a snapshot as a backup.
-## Warning: You need to have a path.repo configured.
-## See: https://wiki.evolix.org/HowtoElasticsearch#snapshots-et-sauvegardes
-# curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/snapshot.daily" -o /tmp/es_delete_snapshot.daily.log
-# curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot.daily?wait_for_completion=true" -o /tmp/es_snapshot.daily.log
-## Clustered version here
-## It basically the same thing except that you need to check that NFS is mounted
-# if ss | grep ':nfs' | grep -q 'ip\.add\.res\.s1' && ss | grep ':nfs' | grep -q 'ip\.add\.res\.s2'
-# then
-#     curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/snapshot.daily" -o /tmp/es_delete_snapshot.daily.log
-#     curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot.daily?wait_for_completion=true" -o /tmp/es_snapshot.daily.log
-# else
-#     echo 'Cannot make a snapshot of elasticsearch, at least one node is not mounting the repository.'
-# fi
-## If you need to keep older snapshot, for example the last 10 daily snapshots, replace the XDELETE and XPUT lines by :
-# for snapshot in $(curl -s -XGET "localhost:9200/_snapshot/snaprepo/_all?pretty=true" | grep -Eo 'snapshot_[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -n -10); do
-#     curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/${snapshot}" | grep -v -Fx '{"acknowledged":true}'
-# done
-# date=$(date +%F)
-# curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot_${date}?wait_for_completion=true" -o /tmp/es_snapshot_${date}.log
-
-## RabbitMQ : export config
-#rabbitmqadmin export /home/backup/rabbitmq.config >> /var/log/evobackup.log
-
-## Dump MBR / table partitions with dd and sfdisk
-## Linux
-#for disk in $(ls /dev/[sv]d[a-z] 2>/dev/null); do
-#	name=$(basename $disk)
-#	dd if=$disk of=/home/backup/MBR-$name bs=512 count=1 2>&1 | egrep -v "(records in|records out|512 bytes)"
-#	fdisk -l $disk > /home/backup/partitions-$name
-#done
-#cat /home/backup/partitions-* > /home/backup/partitions
-## OpenBSD
-# disklabel sd0 > /home/backup/partitions
-
-# backup MegaCli config
-#megacli -CfgSave -f /home/backup/megacli_conf.dump -a0 >/dev/null
-
-## Dump system and kernel versions
-uname -a > /home/backup/uname
-
-## Dump network routes with mtr and traceroute (warning: could be long with aggressive firewalls)
-for addr in 8.8.8.8 www.evolix.fr travaux.evolix.net; do
-    mtr -r $addr > /home/backup/mtr-${addr}
-    traceroute -n $addr > /home/backup/traceroute-${addr} 2>&1
-done
-
-## Dump process with ps
-ps auwwx >/home/backup/ps.out
-
-if [ "$SYSTEM" = "linux" ]; then
-    ## Dump network connections with netstat
-    netstat -taupen >/home/backup/netstat.out
-
-    ## List Debian packages
-    dpkg -l >/home/backup/packages
-    dpkg --get-selections >/home/backup/packages.getselections
-    apt-cache dumpavail >/home/backup/packages.available
+        if test_server "${server}"; then
+            break
+        else
+            server=""
+            n=$(( n + 1 ))
+        fi
+    done
 else
-    ## Dump network connections with netstat
-    netstat -finet -atn >/home/backup/netstat.out
-
-    ## List OpenBSD packages
-    pkg_info -m >/home/backup/packages
+    # we force the server
+    server=$(pick_server "${n}")
 fi
+
+SSH_SERVER=$(echo "${server}" | cut -d':' -f1)
+SSH_PORT=$(echo "${server}" | cut -d':' -f2)
 
 HOSTNAME=$(hostname)
 
-BEGINNING=$(/bin/date +"%d-%m-%Y ; %H:%M")
-
-if [ "$SYSTEM" = "linux" ]; then
+if [ "${SYSTEM}" = "linux" ]; then
     rep="/bin /boot /lib /opt /sbin /usr"
 else
     rep="/bsd /bin /sbin /usr"
 fi
 
-rsync -avzh --stats --delete --delete-excluded --force --ignore-errors --partial \
-    --exclude "lost+found"                             \
-    --exclude ".nfs.*"                                 \
-    --exclude "/var/log"                               \
-    --exclude "/var/log/evobackup*"                    \
-    --exclude "/var/lib/mysql"                         \
-    --exclude "/var/lib/postgres"                      \
-    --exclude "/var/lib/postgresql"                    \
-    --exclude "/var/lib/sympa"                         \
-    --exclude "/var/lib/metche"                        \
-    --exclude "/var/run"                               \
-    --exclude "/var/lock"                              \
-    --exclude "/var/state"                             \
-    --exclude "/var/apt"                               \
-    --exclude "/var/cache"                             \
-    --exclude "/usr/src"                               \
-    --exclude "/usr/doc"                               \
-    --exclude "/usr/share/doc"                         \
-    --exclude "/usr/obj"                               \
-    --exclude "dev"                                    \
-    --exclude "/var/spool/postfix"                     \
-    --exclude "/var/lib/amavis/amavisd.sock"           \
-    --exclude "/var/lib/munin/*tmp*"                   \
-    --exclude "/var/lib/php5"                          \
-    --exclude "/var/spool/squid"                       \
-    --exclude "/var/lib/elasticsearch"                 \
-    --exclude "/var/lib/amavis/tmp"                    \
-    --exclude "/var/lib/clamav/*.tmp"                  \
-    --exclude "/home/mysqltmp"                         \
-    --exclude "/var/lib/php/sessions"                  \
-        $rep                                           \
-        /etc                                           \
-        /root                                          \
-        /var                                           \
-        /home                                          \
-        /srv                                           \
-    -e "ssh -p $SSH_PORT"                              \
-    "root@$SRV:/var/backup/"                           \
-    | tail -30 >> /var/log/evobackup.log
+
+if [ "${SYNC_TASKS}" = "1" ]; then
+    # /!\ DO NOT USE COMMENTS in the rsync command /!\
+    # It breaks the command and destroys data, simply remove (or add) lines.
+
+    # Remote shell command
+    RSH_COMMAND="ssh -p ${SSH_PORT} -o 'ConnectTimeout ${SSH_CONNECT_TIMEOUT}'"
+
+    rsync -avzh --stats --delete --delete-excluded --force --ignore-errors --partial \
+        --exclude "lost+found"                             \
+        --exclude ".nfs.*"                                 \
+        --exclude "/var/log"                               \
+        --exclude "/var/log/evobackup*"                    \
+        --exclude "/var/lib/mysql"                         \
+        --exclude "/var/lib/postgres"                      \
+        --exclude "/var/lib/postgresql"                    \
+        --exclude "/var/lib/sympa"                         \
+        --exclude "/var/lib/metche"                        \
+        --exclude "/var/run"                               \
+        --exclude "/var/lock"                              \
+        --exclude "/var/state"                             \
+        --exclude "/var/apt"                               \
+        --exclude "/var/cache"                             \
+        --exclude "/usr/src"                               \
+        --exclude "/usr/doc"                               \
+        --exclude "/usr/share/doc"                         \
+        --exclude "/usr/obj"                               \
+        --exclude "dev"                                    \
+        --exclude "/var/spool/postfix"                     \
+        --exclude "/var/lib/amavis/amavisd.sock"           \
+        --exclude "/var/lib/munin/*tmp*"                   \
+        --exclude "/var/lib/php5"                          \
+        --exclude "/var/spool/squid"                       \
+        --exclude "/var/lib/elasticsearch"                 \
+        --exclude "/var/lib/amavis/tmp"                    \
+        --exclude "/var/lib/clamav/*.tmp"                  \
+        --exclude "/home/mysqltmp"                         \
+        --exclude "/var/lib/php/sessions"                  \
+            ${rep}                                         \
+            /etc                                           \
+            /root                                          \
+            /var                                           \
+            /home                                          \
+            /srv                                           \
+        -e "${RSH_COMMAND}"                                \
+        "root@${SSH_SERVER}:/var/backup/"                  \
+        | tail -30 >> $LOGFILE
+fi
+
+##### REPORTING #######################################################
 
 END=$(/bin/date +"%d-%m-%Y ; %H:%M")
 
-echo "EvoBackup - $HOSTNAME - START $BEGINNING"            \
-    >> /var/log/evobackup.log
+printf "EvoBackup - %s - START %s ON %s (LOCAL_TASKS=%s SYNC_TASKS=%s)\n" \
+       "${HOSTNAME}" "${BEGINNING}" "${SSH_SERVER}" "${LOCAL_TASKS}" "${SYNC_TASKS}" \
+       >> $LOGFILE
 
-echo "EvoBackup - $HOSTNAME - STOP $END"               \
-    >> /var/log/evobackup.log
+printf "EvoBackup - %s - STOP %s ON %s (LOCAL_TASKS=%s SYNC_TASKS=%s)\n" \
+       "${HOSTNAME}" "${END}" "${SSH_SERVER}" "${LOCAL_TASKS}" "${SYNC_TASKS}" \
+       >> $LOGFILE
 
-tail -10 /var/log/evobackup.log |                      \
-    mail -s "[info] EvoBackup - Client $HOSTNAME"      \
-    $MAIL
+tail -10 $LOGFILE |                                    \
+    mail -s "[info] EvoBackup - Client ${HOSTNAME}"    \
+    ${MAIL}
