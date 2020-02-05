@@ -22,6 +22,4 @@ else
     cat "${keyfile}" > "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}"
     chmod 600 "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}"
     notice "${jail} : update key => ${keyfile}"
-
-    "${LIBDIR}/bkctld-is-on" "${jail}" && "${LIBDIR}/bkctld-reload" "${jail}"
 fi

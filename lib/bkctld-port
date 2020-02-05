@@ -23,6 +23,6 @@ else
     fi
     sed -i "s/^Port .*/Port ${port}/" "${JAILDIR}/$jail/${SSHD_CONFIG}"
     notice "${jail} : update port => ${port}"
-    "${LIBDIR}/bkctld-is-on" "${jail}" && "${LIBDIR}/bkctld-reload" "${jail}"
+    "${LIBDIR}/bkctld-reload" "${jail}"
     "${LIBDIR}/bkctld-firewall" "${jail}"
 fi
