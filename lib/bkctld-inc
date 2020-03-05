@@ -15,11 +15,22 @@ for jail in $("${LIBDIR}/bkctld-list"); do
         jail_inode=$(stat --format=%i "${JAILDIR}/${jail}")
         if [ "$jail_inode" -eq 256 ]; then
             /bin/btrfs subvolume snapshot -r "${JAILDIR}/${jail}" "${inc}" | debug
+            end=$(date +"%H:%M:%S")
+            notice "${jail} : made ${date} inc [${start}/${end}]"
         else
-            cp -alx "${JAILDIR}/${jail}/" "${inc}" | debug
+            lock="/run/lock/bkctld/inc-${jail}.lock"
+            if [ -f "${lock}" ]; then
+                warning "${jail} : trying to run already running inc"
+            else
+                (
+                    mkdir -p /run/lock/bkctld && touch "${lock}"
+                    trap "rm -f ${lock}" 0
+                    cp -alx "${JAILDIR}/${jail}/" "${inc}"
+                    end=$(date +"%H:%M:%S")
+                    notice "${jail} : made ${date} inc [${start}/${end}]"
+                ) &
+            fi
         fi
-        end=$(date +"%H:%M:%S")
-        notice "${jail} : made ${date} inc [${start}/${end}]"
     else
         warning "${jail} : trying to made already existant inc"
     fi

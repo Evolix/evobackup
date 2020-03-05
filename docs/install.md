@@ -16,16 +16,16 @@ The chroot jails depend on these packages
 
 ~~~
 apt install \
-	bash \
-	coreutils \
-	sed \
-	dash \
-	mount \
-	rsync \
-	openssh-server \
-	openssh-sftp-server \
-	libc6-i386 \
-	libc6
+    bash \
+    coreutils \
+    sed \
+    dash \
+    mount \
+    rsync \
+    openssh-server \
+    openssh-sftp-server \
+    libc6-i386 \
+    libc6
 ~~~
 
 ## Client dependencies
@@ -37,8 +37,10 @@ The clients only require OpenSSH and rsync.
 Edit the root crontab
 
 ~~~
-# crontab -e
-+ 30 10 * * * /usr/sbin/bkctld inc && /usr/sbin/bkctld rm
+# $editor /etc/cron.d/bkctld
++ MAILTO=alert4@evolix.net
++ 30 11 * * * root /usr/sbin/bkctld inc && /usr/sbin/bkctld rm
++ 30 23 * * * root /usr/share/scripts/check-incs.sh 1> /dev/null
 ~~~
 
 ## Notes

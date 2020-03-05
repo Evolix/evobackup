@@ -141,7 +141,7 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
     ## OpenLDAP : example with slapcat
     # slapcat -l ${LOCAL_BACKUP_DIR}/ldap.bak
 
-    ### MySQL
+    ## MySQL
 
     ## example with global and compressed mysqldump
     # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
@@ -154,7 +154,14 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
     # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 -Q --opt --events --hex-blob --skip-comments \
     #  --fields-enclosed-by='\"' --fields-terminated-by=',' -T /home/mysqldump/$i $i; done
 
-    ## example with compressed SQL dump for each databases
+    ## example with SQL dump (schema only, no data) for each databases
+    # mkdir -p -m 700 /home/mysqldump/
+    # for i in $(mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 -e 'show databases' -s --skip-column-names \
+    # | egrep -v "^(Database|information_schema|performance_schema|sys)"); do
+    #     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --no-data --databases $i > /home/mysqldump/${i}.schema.sql
+    # done
+
+    ## example with compressed SQL dump (with data) for each databases
     # mkdir -p -m 700 /home/mysqldump/
     # for i in $(mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 -e 'show databases' -s --skip-column-names \
     # | egrep -v "^(Database|information_schema|performance_schema|sys)"); do
@@ -181,7 +188,7 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
     #     fi
     # done
 
-    ### PostgreSQL
+    ## PostgreSQL
 
     ## example with pg_dumpall (warning: you need space in ~postgres)
     # su - postgres -c "pg_dumpall > ~/pg.dump.bak"
@@ -197,7 +204,8 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
     ## example with only TABLE1 and TABLE2 from MYBASE
     # pg_dump -p 5432 -h 127.0.0.1 -U USER --clean -F t --inserts -f ${LOCAL_BACKUP_DIR}/pg-backup.tar -T 'TABLE1' -T 'TABLE2' MYBASE
 
-    ## MongoDB : example with mongodump
+    ## MongoDB
+
     ## don't forget to create use with read-only access
     ## > use admin
     ## > db.createUser( { user: "mongobackup", pwd: "PASS", roles: [ "backup", ] } )
@@ -208,10 +216,14 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
     #   echo "Error with mongodump!"
     # fi
 
-    ## Redis : example with copy .rdb file
+    ## Redis
+
+    ## example with copy .rdb file
     # cp /var/lib/redis/dump.rdb ${LOCAL_BACKUP_DIR}/
 
-    ## ElasticSearch, take a snapshot as a backup.
+    ## ElasticSearch
+
+    ## Take a snapshot as a backup.
     ## Warning: You need to have a path.repo configured.
     ## See: https://wiki.evolix.org/HowtoElasticsearch#snapshots-et-sauvegardes
     # curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/snapshot.daily" -o /tmp/es_delete_snapshot.daily.log
@@ -232,10 +244,13 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
     # date=$(date +%F)
     # curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot_${date}?wait_for_completion=true" -o /tmp/es_snapshot_${date}.log
 
-    ## RabbitMQ : export config
+    ## RabbitMQ
+
+    ## export config
     #rabbitmqadmin export ${LOCAL_BACKUP_DIR}/rabbitmq.config >> $LOGFILE
 
-    # backup MegaCli config
+    ## MegaCli config
+
     #megacli -CfgSave -f ${LOCAL_BACKUP_DIR}/megacli_conf.dump -a0 >/dev/null
 
     ## Dump system and kernel versions
@@ -260,10 +275,10 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
         apt-cache dumpavail > ${LOCAL_BACKUP_DIR}/packages.available
 
         ## Dump MBR / table partitions
-        disks=$(lsblk -l | grep disk | grep -v drbd | awk '{print $1}')
+        disks=$(lsblk -l | grep disk | grep -v -E '(drbd|fd[0-9]+)' | awk '{print $1}')
         for disk in ${disks}; do
             dd if="/dev/${disk}" of="${LOCAL_BACKUP_DIR}/MBR-${disk}" bs=512 count=1 2>&1 | grep -Ev "(records in|records out|512 bytes)"
-            fdisk -l "/dev/${disk}" > "${LOCAL_BACKUP_DIR}/partitions-${disk}"
+            fdisk -l "/dev/${disk}" > "${LOCAL_BACKUP_DIR}/partitions-${disk}" 2>&1
         done
         cat ${LOCAL_BACKUP_DIR}/partitions-* > ${LOCAL_BACKUP_DIR}/partitions
 
@@ -288,7 +303,7 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
         ##disklabel sd0 > ${LOCAL_BACKUP_DIR}/partitions
 
         ## Dump pf infos
-        pfctl -sa |> ${LOCAL_BACKUP_DIR}/pfctl-sa.txt
+        pfctl -sa > ${LOCAL_BACKUP_DIR}/pfctl-sa.txt
 
     fi
 
