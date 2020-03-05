@@ -1,3 +1,9 @@
+bkctld (2.1.0-1) unstable; urgency=medium
+
+  * Add lock for bkctld inc / rm when not using btrfs
+
+ -- vlaborie <vlaborie@11f94786-8b77-4497-a189-2647fd99d564>  Thu, 05 Mar 2020 14:51:19 +0100
+
 bkctld (2.0.1-1) unstable; urgency=medium
 
   * Do not unnecessary use is-on and reload in ip/port/key
