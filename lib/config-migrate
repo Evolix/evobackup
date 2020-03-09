@@ -1,0 +1,33 @@
+#!/bin/sh
+
+CONFDIR=${CONFDIR:-/etc/bkctld}
+TPLDIR=${TPLDIR:-/usr/share/bkctld}
+LOCALTPLDIR=${LOCALTPLDIR:-/usr/local/share/bkctld}
+
+install --directory --mode 0750 "${CONFDIR}"
+
+find /backup/jails -mindepth 1 -maxdepth 1 -type d|xargs --no-run-if-empty --max-args=1 basename|while read jail; do
+    install --directory --mode 0750 "${CONFDIR}/${jail}"
+    install --directory --mode 0750 "${CONFDIR}/${jail}/ssh"
+    passwd="${TPLDIR}/passwd"
+    shadow="${TPLDIR}/shadow"
+    group="${TPLDIR}/group"
+    sshrc="${TPLDIR}/sshrc"
+    sshd_config="${TPLDIR}/sshd_config"
+    [ -f "${LOCALTPLDIR}/passwd" ] && passwd="${LOCALTPLDIR}/passwd"
+    [ -f "${LOCALTPLDIR}/shadow" ] && shadow="${LOCALTPLDIR}/shadow"
+    [ -f "${LOCALTPLDIR}/group" ] && group="${LOCALTPLDIR}/group"
+    [ -f "${LOCALTPLDIR}/sshrc" ] && group="${LOCALTPLDIR}/sshrc"
+    [ -f "${LOCALTPLDIR}/sshd_config" ] && sshd_config="${LOCALTPLDIR}/sshd_config"
+    install -m 0640 "${passwd}" "${CONFDIR}/${jail}/passwd"
+    install -m 0640 "${shadow}" "${CONFDIR}/${jail}/shadow"
+    install -m 0640 "${group}" "${CONFDIR}/${jail}/group"
+    install -m 0750 "${sshrc}" "${CONFDIR}/${jail}/ssh/sshrc"
+    install -m 0640 "${sshd_config}" "${CONFDIR}/${jail}/ssh/sshd_config"
+    install -m 0640 "/etc/evobackup/${jail}" "${CONFDIR}/${jail}/inc.tpl"
+    [ -f "/backup/jails/${jail}/etc/ssh/ssh_host_rsa_key" ] && cp "/backup/jails/${jail}/etc/ssh/ssh_host_rsa_key" "${CONFDIR}/${jail}/ssh/ssh_host_rsa_key"
+    [ -f "/backup/jails/${jail}/etc/ssh/ssh_host_ed25519_key" ] && cp "/backup/jails/${jail}/etc/ssh/ssh_host_ed25519_key" "${CONFDIR}/${jail}/ssh/ssh_host_ed25519_key"
+    [ -f "/backup/jails/${jail}/etc/ssh/ssh_host_ecdsa_key" ] && cp "/backup/jails/${jail}/etc/ssh/ssh_host_ecdsa_key" "${CONFDIR}/${jail}/ssh/ssh_host_ecdsa_key"
+    allow=$(grep -E "^AllowUsers" "/backup/jails//$jail/etc/ssh/sshd_config")
+    sed -i "s~^AllowUsers .*~${allow}~" "${CONFDIR}/$jail/ssh/sshd_config"
+done
