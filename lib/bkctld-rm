@@ -32,10 +32,10 @@ for jail in $("${LIBDIR}/bkctld-list"); do
                         mkdir -p /run/lock/bkctld && touch "${lock}" && mkdir -p "${empty}"
                         trap "rm -f ${lock} && rmdir ${empty}" 0
                         rsync -a --delete "${empty}/" "${INCDIR}/${jail}/${j}/"
-                        rmdir "${j}"
+                        rmdir "${INCDIR}/${jail}/${j}/"
                         end=$(date +"%H:%M:%S")
                         notice "${jail} : deleted ${j} inc [${start}/${end}]"
-                    ) &
+                    )
                 fi
             fi
         done

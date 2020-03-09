@@ -28,7 +28,7 @@ for jail in $("${LIBDIR}/bkctld-list"); do
                     cp -alx "${JAILDIR}/${jail}/" "${inc}"
                     end=$(date +"%H:%M:%S")
                     notice "${jail} : made ${date} inc [${start}/${end}]"
-                ) &
+                )
             fi
         fi
     else
