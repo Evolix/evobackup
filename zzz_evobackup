@@ -15,6 +15,9 @@
 #
 # /!\ DON'T FORGET TO SET "MAIL" and "SERVERS" VARIABLES
 
+# Fail on unassigned variables
+set -u
+
 ##### Configuration ###################################################
 
 # email adress for notifications
