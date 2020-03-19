@@ -98,7 +98,10 @@ pick_server() {
         new_error="No more server available"
         SERVERS_SSH_ERRORS=$(printf "%s\n%s" "${SERVERS_SSH_ERRORS}" "${new_error}" | sed -e '/^$/d')
 
+        # Log errors to stderr
         printf "%s\n" "${SERVERS_SSH_ERRORS}" >&2
+        # Log errors to logfile
+        printf "%s\n" "${SERVERS_SSH_ERRORS}" >> $LOGFILE
         return 1
     fi
 
