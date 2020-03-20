@@ -306,7 +306,7 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
         pkg_info -m > ${LOCAL_BACKUP_DIR}/packages
 
         ## Dump MBR / table partitions
-        ##disklabel sd0 > ${LOCAL_BACKUP_DIR}/partitions
+        disklabel sd0 > ${LOCAL_BACKUP_DIR}/partitions
 
         ## Dump pf infos
         pfctl -sa > ${LOCAL_BACKUP_DIR}/pfctl-sa.txt
