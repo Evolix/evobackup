@@ -349,7 +349,7 @@ SSH_PORT=$(echo "${server}" | cut -d':' -f2)
 HOSTNAME=$(hostname)
 
 if [ "${SYSTEM}" = "linux" ]; then
-    rep="/bin /boot /lib /opt /sbin /usr"
+    rep="/bin /boot /lib /opt /sbin /usr /srv"
 else
     rep="/bsd /bin /sbin /usr"
 fi
@@ -397,7 +397,6 @@ if [ "${SYNC_TASKS}" = "1" ]; then
             /root                                          \
             /var                                           \
             /home                                          \
-            /srv                                           \
         -e "${RSH_COMMAND}"                                \
         "root@${SSH_SERVER}:/var/backup/"                  \
         | tail -30 >> $LOGFILE
