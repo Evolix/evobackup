@@ -4,6 +4,7 @@
 # Usage: port <jailname> [<port>|auto]
 #
 
+# shellcheck source=config
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
 
 jail="${1:-}"

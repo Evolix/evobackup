@@ -4,6 +4,7 @@
 # Usage: stats
 #
 
+# shellcheck source=config
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
 
 mkdir -p "${INDEX_DIR}"

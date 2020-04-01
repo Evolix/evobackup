@@ -4,6 +4,7 @@
 # Usage: rm
 #
 
+# shellcheck source=config
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
 
 for jail in $("${LIBDIR}/bkctld-list"); do

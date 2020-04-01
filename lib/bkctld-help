@@ -4,6 +4,7 @@
 # Usage: help
 #
 
+# shellcheck source=config
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
 
 cat <<EOF
