@@ -7,31 +7,36 @@
 # shellcheck source=./config
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
 
-jail="${1:-}"
-if [ ! -n "${jail}" ]; then
+jail_name="${1:-}"
+if [ -z "${jail_name}" ]; then
     "${LIBDIR}/bkctld-help" && exit 1
 fi
-[ -d "${JAILDIR}/${jail}" ] || error "${jail} : trying to remove inexistant jail"
-"${LIBDIR}/bkctld-is-on" "${jail}" && "${LIBDIR}/bkctld-stop" "${jail}"
+jail_path=$(jail_path "${jail_name}")
+incs_path=$(incs_path "${jail_name}")
 
-rm -f "${CONFDIR}/${jail}"
-jail_inode=$(stat --format=%i "${JAILDIR}/${jail}")
+test -d "${jail_path}" || error "${jail_name}: jail is missing."
+
+"${LIBDIR}/bkctld-is-on" "${jail_name}" && "${LIBDIR}/bkctld-stop" "${jail_name}"
+
+rm -f "${CONFDIR}/${jail_name}"
+jail_inode=$(stat --format=%i "${jail_path}")
 if [ "${jail_inode}" -eq 256 ]; then
-    /bin/btrfs subvolume delete "${JAILDIR}/${jail}" | debug
+    /bin/btrfs subvolume delete "${jail_path}" | debug
 else
-    rm -rf "${JAILDIR}/${jail}" | debug
+    rm -rf "${jail_path}" | debug
 fi
-if [ -d  "${INCDIR}/${jail}" ]; then
-    incs=$(ls "${INCDIR}/${jail}")
+# TODO: use functions here
+if [ -d  "${incs_path}" ]; then
+    incs=$(ls "${incs_path}")
     for inc in ${incs}; do
-        inc_inode=$(stat --format=%i "${INCDIR}/${jail}/${inc}")
+        inc_inode=$(stat --format=%i "${incs_path}/${inc}")
         if [ "${inc_inode}" -eq 256 ]; then
-            /bin/btrfs subvolume delete "${INCDIR}/${jail}/${inc}" | debug
+            /bin/btrfs subvolume delete "${incs_path}/${inc}" | debug
         else
-            warning "You need to purge ${INCDIR}/${jail}/${inc} manually !"
+            warning "You need to purge ${incs_path}/${inc} manually !"
         fi
     done
-    rmdir --ignore-fail-on-non-empty "${INCDIR}/${jail}" | debug
+    rmdir --ignore-fail-on-non-empty "${incs_path}" | debug
 fi
-"${LIBDIR}/bkctld-firewall" "${jail}"
-notice "${jail} : deleted jail"
+"${LIBDIR}/bkctld-firewall" "${jail_name}"
+notice "${jail_name}: jail has been deleted."

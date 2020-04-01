@@ -154,7 +154,7 @@ setup_jail_chroot() {
     [ -f "${LOCALTPLDIR}/group" ] && group="${LOCALTPLDIR}/group"
     [ -f "${LOCALTPLDIR}/sshrc" ] && group="${LOCALTPLDIR}/sshrc"
 
-    cd "${jail_path}" || error "Failed to change directory to ${jail_path}."
+    cd "${jail_path}" || error "${jail_name}: failed to change directory to ${jail_path}."
     umask 077
 
     info "1 - Creating the chroot"

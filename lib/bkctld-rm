@@ -32,7 +32,7 @@ delete_inc_btrfs() {
     fi
 
     end=$(current_time)
-    notice "${jail_name} : ${inc_name} inc deleted [${start}/${end}]"
+    notice "${jail_name}: ${inc_name} inc deleted [${start}/${end}]"
 }
 delete_inc_ext() {
     jail_name=$1
@@ -42,7 +42,7 @@ delete_inc_ext() {
 
     lock_file="${LOCKDIR}/rm-${jail_name}.lock"
     if [ -f "${lock_file}" ]; then
-        warning "${jail_name} : skipping ${inc_name}, it is already being deleted."
+        warning "${jail_name}: skipping ${inc_name}, it is already being deleted."
     else
         (
             mkdir --parents "${LOCKDIR}" && touch "${lock_file}" || error "Failed to acquire lock file '${lock_file}'"
@@ -58,7 +58,7 @@ delete_inc_ext() {
             rmdir "${inc_path}/"
 
             end=$(current_time)
-            notice "${jail_name} : ${inc_name} inc deleted [${start}/${end}]"
+            notice "${jail_name}: ${inc_name} inc deleted [${start}/${end}]"
         )
     fi
 }

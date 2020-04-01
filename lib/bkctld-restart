@@ -9,10 +9,13 @@ set -eu
 # shellcheck source=./config
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
 
-jail="${1:-}"
-if [ ! -n "${jail}" ]; then
+jail_name="${1:-}"
+if [ -z "${jail_name}" ]; then
     "${LIBDIR}/bkctld-help" && exit 1
 fi
-[ -d "${JAILDIR}/${jail}" ] || error "${jail} : trying to restart inexistant jail"
-"${LIBDIR}/bkctld-is-on" "${jail}" && "${LIBDIR}/bkctld-stop" "${jail}"
-"${LIBDIR}/bkctld-start" "${jail}"
+jail_path=$(jail_path "${jail_name}")
+
+test -d "${jail_path}" || error "${jail_name}: jail is missing."
+
+"${LIBDIR}/bkctld-is-on" "${jail_name}" && "${LIBDIR}/bkctld-stop" "${jail_name}"
+"${LIBDIR}/bkctld-start" "${jail_name}"

@@ -7,16 +7,20 @@
 # shellcheck source=./config
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
 
-jail="${1:-}"
-if [ ! -n "${jail}" ]; then
+jail_name="${1:-}"
+if [ -z "${jail_name}" ]; then
     "${LIBDIR}/bkctld-help" && exit 1
 fi
-[ -d "${JAILDIR}/${jail}" ] || error "${jail} : trying to start inexistant jail"
-"${LIBDIR}/bkctld-is-on" "${jail}" && exit 0
+jail_path=$(jail_path "${jail_name}")
 
-cd "${JAILDIR}/${jail}"
-grep -q "${JAILDIR}/${jail}/proc" /proc/mounts || mount -t proc "proc-${jail}" proc
-grep -q "${JAILDIR}/${jail}/dev" /proc/mounts || mount -nt tmpfs "dev-${jail}" dev
+test -d "${jail_path}" || error "${jail_name}: jail is missing."
+
+"${LIBDIR}/bkctld-is-on" "${jail_name}" && exit 0
+
+cd "${jail_path}" || error "${jail_name}: failed to change directory to ${jail_path}."
+
+grep -q "${jail_path}/proc" /proc/mounts || mount -t proc "proc-${jail_name}" proc
+grep -q "${jail_path}/dev" /proc/mounts || mount -nt tmpfs "dev-${jail_name}" dev
 [ -e "dev/console" ] || mknod -m 622 dev/console c 5 1
 [ -e "dev/null" ] || mknod -m 666 dev/null c 1 3
 [ -e "dev/zero" ] || mknod -m 666 dev/zero c 1 5
@@ -32,12 +36,15 @@ ln -fs proc/self/fd/2 dev/stderr
 ln -fs proc/kcore dev/core
 mkdir -p dev/pts
 mkdir -p dev/shm
-grep -q "${JAILDIR}/${jail}/dev/pts" /proc/mounts || mount -t devpts -o gid=4,mode=620 none dev/pts
-grep -q "${JAILDIR}/${jail}/dev/shm" /proc/mounts || mount -t tmpfs none dev/shm
-chroot "${JAILDIR}/${jail}" /usr/sbin/sshd -E /var/log/authlog || error "${jail} : error on starting sshd"
-pidfile="${JAILDIR}/${jail}/${SSHD_PID}"
-for try in {1..10}; do
-    [ -f "${pidfile}" ] || sleep 0.3
+grep -q "${jail_path}/dev/pts" /proc/mounts || mount -t devpts -o gid=4,mode=620 none dev/pts
+grep -q "${jail_path}/dev/shm" /proc/mounts || mount -t tmpfs none dev/shm
+
+chroot "${jail_path}" /usr/sbin/sshd -E /var/log/authlog || error "${jail_name}: failed to start sshd"
+pidfile="${jail_path}/${SSHD_PID}"
+
+for try in $(seq 1 10); do
+    test -f "${pidfile}" || sleep 0.3
 done
 pid=$(cat "${pidfile}")
-notice "${jail} was started [${pid}]"
+
+notice "${jail_name}: jail has been started [${pid}]"
