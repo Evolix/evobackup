@@ -7,12 +7,16 @@
 # shellcheck source=./config
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
 
-jail="${1:-}"
-if [ ! -n "${jail}" ]; then
+jail_name="${1:-}"
+if [ ! -n "${jail_name}" ]; then
     "${LIBDIR}/bkctld-help" && exit 1
 fi
-[ -d "${JAILDIR}/${jail}" ] || error "${jail} : trying to update inexistant jail"
-"${LIBDIR}/bkctld-is-on" "${jail}" && "${LIBDIR}/bkctld-stop" "${jail}"
+jail_path=$(jail_path "${jail_name}")
 
-. "${LIBDIR}/mkjail"
-notice "${jail} : updated jail"
+[ -d "${jail_path}" ] || error "${jail_name} : trying to update inexistant jail"
+
+"${LIBDIR}/bkctld-is-on" "${jail_name}" && "${LIBDIR}/bkctld-stop" "${jail_name}"
+
+setup_jail_chroot "${jail_name}"
+
+notice "${jail_name} : jail has been updated."
