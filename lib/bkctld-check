@@ -14,9 +14,6 @@ nb_ok=0
 nb_unkn=0
 output=""
 
-DEFAULT_CRITICAL="${CRITICAL}"
-DEFAULT_WARNING="${WARNING}"
-
 if [ -b "${BACKUP_DISK}" ]; then
     cryptsetup isLuks "${BACKUP_DISK}"
     if [ "$?" -eq 0 ]; then
@@ -35,6 +32,14 @@ if [ -b "${BACKUP_DISK}" ]; then
     fi
 fi
 
+read_variable() {
+    var_name=$1
+    file=$2
+    pattern="^\s*${var_name}=-?[0-9]+"
+
+    grep --extended-regexp --only-matching "${pattern}" "${file}" | cut -d= -f2
+}
+
 check_jail() {
     jail=$1
 
@@ -42,35 +47,38 @@ check_jail() {
     last_conn=$(stat --format=%Y "${JAILDIR}/${jail}/var/log/lastlog")
     date_diff=$(( (cur_time - last_conn) / (60*60) ))
 
-    check_file="${JAILDIR}/${jail}/etc/bkctld-check"
-    if [ -f "${check_file}" ]; then
-        critical_pattern="^\s*CRITICAL=[0-9]+"
-        if grep -E "${critical_pattern}" "${check_file}"; then
-            # shellcheck disable=SC2091
-            CRITICAL=$(grep -E "${critical_pattern}" "${check_file}" | cut -d= -f2)
-        else
-            CRITICAL="${DEFAULT_CRITICAL}"
-        fi
-        warning_pattern="^\s*WARNING=[0-9]+"
-        if grep -E "${warning_pattern}" "${check_file}"; then
-            # shellcheck disable=SC2091
-            WARNING=$(grep -E "${warning_pattern}" "${check_file}" | cut -d= -f2)
-        else
-            WARNING="${DEFAULT_WARNING}"
-        fi
+    if [ -f "${CONFDIR}/${jail}.d/check_policy" ]; then
+        # canonical configuration file
+        check_policy_file="${CONFDIR}/${jail}.d/check_policy"
+    elif [ -f "${JAILDIR}/${jail}/etc/bkctld-check" ]; then
+        # backward compatible configuration file
+        check_policy_file="${CONFDIR}/${jail}/etc/bkctld-check"
+    else
+        check_policy_file=""
     fi
 
-    if [ "${CRITICAL}" -gt "0" ] && [ "${date_diff}" -gt "${CRITICAL}" ]; then
+    if [ -f "${check_policy_file}" ]; then
+        local_critical=$(read_variable "CRITICAL" "${check_policy_file}")
+        local_warning=$(read_variable "WARNING" "${check_policy_file}")
+    else
+        unset local_critical
+        unset local_warning
+    fi
+    # reset to default values if missing local value
+    ${local_critical:=${CRITICAL}}
+    ${local_warning:=${WARNING}}
+
+    if [ "${local_critical}" -gt "0" ] && [ "${date_diff}" -gt "${local_critical}" ]; then
         nb_crit=$((nb_crit + 1))
-        output="${output}CRITICAL - ${jail} - ${date_diff} hours (critical: ${CRITICAL})\n"
+        output="${output}CRITICAL - ${jail} - ${date_diff} hours (critical: ${local_critical})\n"
         [ "${return}" -le 2 ] && return=2
-    elif [ "${WARNING}" -gt "0" ] && [ "${date_diff}" -gt "${WARNING}" ]; then
+    elif [ "${local_warning}" -gt "0" ] && [ "${date_diff}" -gt "${local_warning}" ]; then
         nb_warn=$((nb_warn + 1))
-        output="${output}WARNING - ${jail} - ${date_diff} hours (warning: ${WARNING})\n"
+        output="${output}WARNING - ${jail} - ${date_diff} hours (warning: ${local_warning})\n"
         [ "${return}" -le 1 ] && return=1
     else
         nb_ok=$((nb_ok + 1))
-        output="${output}OK - ${jail} - ${date_diff} hours (critical: ${CRITICAL}, warning: ${WARNING})\n"
+        output="${output}OK - ${jail} - ${date_diff} hours (critical: ${local_critical}, warning: ${local_warning})\n"
     fi
 }
 
