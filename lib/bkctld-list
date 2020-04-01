@@ -9,4 +9,6 @@ set -eu
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
 
 [ -d "${JAILDIR}" ] || exit 0
+#TODO: try if this command works the same :
+# find "${JAILDIR}" -mindepth 1 -maxdepth 1 -type d -printf '%f\n'
 find "${JAILDIR}" -mindepth 1 -maxdepth 1 -type d|sed 's!.*/!!'
