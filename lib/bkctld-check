@@ -14,6 +14,9 @@ nb_ok=0
 nb_unkn=0
 output=""
 
+DEFAULT_CRITICAL="${CRITICAL}"
+DEFAULT_WARNING="${WARNING}"
+
 if [ -b "${BACKUP_DISK}" ]; then
     cryptsetup isLuks "${BACKUP_DISK}"
     if [ "$?" -eq 0 ]; then
@@ -39,17 +42,35 @@ check_jail() {
     last_conn=$(stat --format=%Y "${JAILDIR}/${jail}/var/log/lastlog")
     date_diff=$(( (cur_time - last_conn) / (60*60) ))
 
-    if [ "${date_diff}" -gt "${CRITICAL}" ]; then
+    check_file="${JAILDIR}/${jail}/etc/bkctld-check"
+    if [ -f "${check_file}" ]; then
+        critical_pattern="^\s*CRITICAL=[0-9]+"
+        if grep -E "${critical_pattern}" "${check_file}"; then
+            # shellcheck disable=SC2091
+            CRITICAL=$(grep -E "${critical_pattern}" "${check_file}" | cut -d= -f2)
+        else
+            CRITICAL="${DEFAULT_CRITICAL}"
+        fi
+        warning_pattern="^\s*WARNING=[0-9]+"
+        if grep -E "${warning_pattern}" "${check_file}"; then
+            # shellcheck disable=SC2091
+            WARNING=$(grep -E "${warning_pattern}" "${check_file}" | cut -d= -f2)
+        else
+            WARNING="${DEFAULT_WARNING}"
+        fi
+    fi
+
+    if [ "${CRITICAL}" -gt "0" ] && [ "${date_diff}" -gt "${CRITICAL}" ]; then
         nb_crit=$((nb_crit + 1))
-        output="${output}CRITICAL - ${jail} - ${date_diff} hours\n"
+        output="${output}CRITICAL - ${jail} - ${date_diff} hours (critical: ${CRITICAL})\n"
         [ "${return}" -le 2 ] && return=2
-    elif [ "${date_diff}" -gt "${WARNING}" ]; then
+    elif [ "${WARNING}" -gt "0" ] && [ "${date_diff}" -gt "${WARNING}" ]; then
         nb_warn=$((nb_warn + 1))
-        output="${output}WARNING - ${jail} - ${date_diff} hours\n"
+        output="${output}WARNING - ${jail} - ${date_diff} hours (warning: ${WARNING})\n"
         [ "${return}" -le 1 ] && return=1
     else
         nb_ok=$((nb_ok + 1))
-        output="${output}OK - ${jail} - ${date_diff} hours\n"
+        output="${output}OK - ${jail} - ${date_diff} hours (critical: ${CRITICAL}, warning: ${WARNING})\n"
     fi
 }
 
