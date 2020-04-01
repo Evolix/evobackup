@@ -65,11 +65,11 @@ done
 [ "${return}" -ge 0 ] && header="OK"
 [ "${return}" -ge 1 ] && header="WARNING"
 [ "${return}" -ge 2 ] && header="CRITICAL"
-[ "${return}" -ge 3 ] && header="UNKNOW"
+[ "${return}" -ge 3 ] && header="UNKNOWN"
 
 printf "%s - %s UNK / %s CRIT / %s WARN / %s OK\n\n" "${header}" "${nb_unkn}" "${nb_crit}" "${nb_warn}" "${nb_ok}"
 
-printf "${output}" | grep -E "^UNKNOW"
+printf "${output}" | grep -E "^UNKNOWN"
 printf "${output}" | grep -E "^CRITICAL"
 printf "${output}" | grep -E "^WARNING"
 printf "${output}" | grep -E "^OK"
