@@ -6,7 +6,6 @@
 
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
 
-cur_time=$(date "+%s")
 return=0
 nb_crit=0
 nb_warn=0
@@ -32,22 +31,30 @@ if [ -b "${BACKUP_DISK}" ]; then
     fi
 fi
 
+check_jail() {
+    jail=$1
+
+    cur_time=$(date "+%s")
+    last_conn=$(stat --format=%Y "${JAILDIR}/${jail}/var/log/lastlog")
+    date_diff=$(( (cur_time - last_conn) / (60*60) ))
+
+    if [ "${date_diff}" -gt "${CRITICAL}" ]; then
+        nb_crit=$((nb_crit + 1))
+        output="${output}CRITICAL - ${jail} - ${date_diff} hours\n"
+        [ "${return}" -le 2 ] && return=2
+    elif [ "${date_diff}" -gt "${WARNING}" ]; then
+        nb_warn=$((nb_warn + 1))
+        output="${output}WARNING - ${jail} - ${date_diff} hours\n"
+        [ "${return}" -le 1 ] && return=1
+    else
+        nb_ok=$((nb_ok + 1))
+        output="${output}OK - ${jail} - ${date_diff} hours\n"
+    fi
+}
+
 for jail in $("${LIBDIR}/bkctld-list"); do
     if [ -f "${JAILDIR}/${jail}/var/log/lastlog" ]; then
-        last_conn=$(stat --format=%Y "${JAILDIR}/${jail}/var/log/lastlog")
-        date_diff=$(( (cur_time - last_conn) / (60*60) ))
-        if [ "${date_diff}" -gt "${CRITICAL}" ]; then
-            nb_crit=$((nb_crit + 1))
-            output="${output}CRITICAL - ${jail} - ${date_diff} hours\n"
-            [ "${return}" -le 2 ] && return=2
-        elif [ "${date_diff}" -gt "${WARNING}" ]; then
-            nb_warn=$((nb_warn + 1))
-            output="${output}WARNING - ${jail} - ${date_diff} hours\n"
-            [ "${return}" -le 1 ] && return=1
-        else
-            nb_ok=$((nb_ok + 1))
-            output="${output}OK - ${jail} - ${date_diff} hours\n"
-        fi
+        check_jail "${jail}"
     else
         nb_unkn=$((nb_unkn + 1))
         output="${output}UNKNOWN - ${jail} doesn't have lastlog !\n"
