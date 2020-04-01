@@ -48,7 +48,7 @@ SYNC_TASKS=${SYNC_TASKS:-1}
 
 ##### SETUP AND FUNCTIONS #############################################
 
-BEGINNING=$(/bin/date +"%d-%m-%Y ; %H:%M")
+BEGINNING=$(now)
 
 # shellcheck disable=SC2174
 mkdir -p -m 700 ${LOCAL_BACKUP_DIR}
@@ -64,6 +64,18 @@ umask 077
 
 ## Initialize variable to store SSH connection errors
 SERVERS_SSH_ERRORS=""
+
+now() {
+    date +"%Y-%m-%dT%H:%M:%S%:z"
+}
+log_error() {
+    >&2 echo "$@"
+    printf "[%s] ERROR: %s\n" "$(now)" "$@" >> $LOGFILE
+}
+log_info() {
+    echo "$@"
+    printf "[%s] INFO: %s\n" "$(now)" "$@" >> $LOGFILE
+}
 
 # Call test_server with "HOST:PORT" string
 # It will return with 0 if the server is reachable.
@@ -98,10 +110,7 @@ pick_server() {
         new_error="No more server available"
         SERVERS_SSH_ERRORS=$(printf "%s\n%s" "${SERVERS_SSH_ERRORS}" "${new_error}" | sed -e '/^$/d')
 
-        # Log errors to stderr
-        printf "%s\n" "${SERVERS_SSH_ERRORS}" >&2
-        # Log errors to logfile
-        printf "%s\n" "${SERVERS_SSH_ERRORS}" >> $LOGFILE
+        log_error "${SERVERS_SSH_ERRORS}"
         return 1
     fi
 
@@ -130,7 +139,7 @@ if [ -e "${PIDFILE}" ]; then
         done
         # Then kill the main PID.
         kill -9 "${pid}"
-        printf "%s is still running (PID %s). Process has been killed" "$0" "${pid}\n" >&2
+        log_error $(printf "%s is still running (PID %s). Process has been killed" "$0" "${pid}")
     else
         rm -f ${PIDFILE}
     fi
@@ -142,6 +151,7 @@ trap "rm -f ${PIDFILE}" EXIT
 ##### LOCAL BACKUP ####################################################
 
 if [ "${LOCAL_TASKS}" = "1" ]; then
+    log_info "Local tasks: start"
     # You can comment or uncomment sections below to customize the backup
 
     ## OpenLDAP : example with slapcat
@@ -319,6 +329,9 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
     #getfacl -R /usr > ${LOCAL_BACKUP_DIR}/rights-usr.txt
     #getfacl -R /home > ${LOCAL_BACKUP_DIR}/rights-home.txt
 
+    log_info "Local tasks: finish"
+else
+    log_info "Local tasks: skip"
 fi
 
 ##### REMOTE BACKUP ###################################################
@@ -356,6 +369,7 @@ fi
 
 
 if [ "${SYNC_TASKS}" = "1" ]; then
+    log_info "Sync tasks: start"
     # /!\ DO NOT USE COMMENTS in the rsync command /!\
     # It breaks the command and destroys data, simply remove (or add) lines.
 
@@ -400,18 +414,18 @@ if [ "${SYNC_TASKS}" = "1" ]; then
         -e "${RSH_COMMAND}"                                \
         "root@${SSH_SERVER}:/var/backup/"                  \
         | tail -30 >> $LOGFILE
+
+    log_info "Sync tasks: finish"
+else
+    log_info "Sync tasks: skip"
 fi
 
 ##### REPORTING #######################################################
 
-END=$(/bin/date +"%d-%m-%Y ; %H:%M")
+END=$(now)
 
-printf "EvoBackup - %s - START %s ON %s (LOCAL_TASKS=%s SYNC_TASKS=%s)\n" \
-       "${HOSTNAME}" "${BEGINNING}" "${SSH_SERVER}" "${LOCAL_TASKS}" "${SYNC_TASKS}" \
-       >> $LOGFILE
-
-printf "EvoBackup - %s - STOP %s ON %s (LOCAL_TASKS=%s SYNC_TASKS=%s)\n" \
-       "${HOSTNAME}" "${END}" "${SSH_SERVER}" "${LOCAL_TASKS}" "${SYNC_TASKS}" \
+log_info "EvoBackup - %s - START %s STOP %s ON %s (LOCAL_TASKS=%s SYNC_TASKS=%s)\n" \
+       "${HOSTNAME}" "${BEGINNING}" "${END}" "${SSH_SERVER}" "${LOCAL_TASKS}" "${SYNC_TASKS}" \
        >> $LOGFILE
 
 tail -10 $LOGFILE |                                    \
