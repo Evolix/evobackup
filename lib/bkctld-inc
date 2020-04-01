@@ -5,7 +5,7 @@
 #
 
 # shellcheck source=./config
-LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
 
 create_inc_btrfs() {
     jail_name=$1

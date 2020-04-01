@@ -5,7 +5,7 @@
 #
 
 # shellcheck source=./config
-LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
 
 relative_date() {
     format=$(echo $1 | cut -d'.' -f1)

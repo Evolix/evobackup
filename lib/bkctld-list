@@ -7,7 +7,7 @@
 set -eu
 
 # shellcheck source=./config
-LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
 
 [ -d "${JAILDIR}" ] || exit 0
 #TODO: try if this command works the same :

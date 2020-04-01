@@ -5,7 +5,7 @@
 #
 
 # shellcheck source=./config
-LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
 
 return=0
 nb_crit=0

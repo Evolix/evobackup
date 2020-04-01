@@ -5,7 +5,7 @@
 #
 
 # shellcheck source=./config
-LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
 
 jail="${1:-}"
 if [ ! -n "${jail}" ]; then
