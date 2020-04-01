@@ -17,58 +17,77 @@ relative_date() {
     echo ${past_date}
 }
 
-remove_inc() {
-    jail=$1
-    inc=$2
+delete_inc_btrfs() {
+    jail_name=$1
+    inc_name=$2
 
-    start=$(date +"%H:%M:%S")
-    inc_inode=$(stat --format=%i "${INCDIR}/${jail}/${inc}")
-    if [ "${inc_inode}" -eq 256 ]; then
-        /bin/btrfs subvolume delete "${INCDIR}/${jail}/${inc}" | debug
-        end=$(date +"%H:%M:%S")
-        notice "${jail} : deleted ${inc} inc [${start}/${end}]"
+    inc_path=$(inc_path "${jail_name}" "${inc_name}")
+
+    start=$(current_time)
+
+    if dry_run; then
+        echo "[dry-run] delete btrfs subvolume ${inc_path}"
     else
-        lock="/run/lock/bkctld/rm-${jail}.lock"
-        if [ -f "${lock}" ]; then
-            warning "${jail} : trying to run already running rm"
-        else
-            (
-                empty="/tmp/bkctld-${$}-$(date +%N)"
-                mkdir -p /run/lock/bkctld && touch "${lock}" && mkdir -p "${empty}"
-                trap "rm -f ${lock} && rmdir ${empty}" 0
-                rsync -a --delete "${empty}/" "${INCDIR}/${jail}/${inc}/"
-                rmdir "${INCDIR}/${jail}/${inc}/"
-                end=$(date +"%H:%M:%S")
-                notice "${jail} : deleted ${inc} inc [${start}/${end}]"
-            )
-        fi
+        /bin/btrfs subvolume delete "${inc_path}" | debug
+    fi
+
+    end=$(current_time)
+    notice "${jail_name} : ${inc_name} inc deleted [${start}/${end}]"
+}
+delete_inc_ext() {
+    jail_name=$1
+    inc_name=$2
+
+    inc_path=$(inc_path "${jail_name}" "${inc_name}")
+
+    lock_file="${LOCKDIR}/rm-${jail_name}.lock"
+    if [ -f "${lock_file}" ]; then
+        warning "${jail_name} : skipping ${inc_name}, it is already being deleted."
+    else
+        (
+            mkdir --parents "${LOCKDIR}" && touch "${lock_file}" || error "Failed to acquire lock file '${lock_file}'"
+            empty=$(mktemp -d --suffix ".${$}" bkctld.XXXXX)
+            # shellcheck disable=SC2064
+            trap "rm -f ${lock_file}; rmdir ${empty}" 0
+
+            if dry_run; then
+                echo "[dry-run] delete ${inc_path} with rsync from ${empty}"
+            else
+                rsync --archive --delete "${empty}/" "${inc_path}/"
+            fi
+            rmdir "${inc_path}/"
+
+            end=$(current_time)
+            notice "${jail_name} : ${inc_name} inc deleted [${start}/${end}]"
+        )
     fi
 }
 
-for jail in $("${LIBDIR}/bkctld-list"); do
-    incs=$(ls "${INCDIR}/${jail}")
+for jail_name in $(jails_list); do
+    incs_policy_file=$(jail_incs_policy_file ${jail_name})
 
-    if [ -f "${CONFDIR}/${jail}.d/incs_policy" ]; then
-        incs_policy_file="${CONFDIR}/${jail}.d/incs_policy"
-    elif [ -f "${CONFDIR}/${jail}" ]; then
-        incs_policy_file="${CONFDIR}/${jail}"
-    else
-        incs_policy_file=""
-    fi
-
+    # If not incs policy if found, we don't remove incs
     if [ -n "${incs_policy_file}" ]; then
         incs_policy_keep_file="$(mktemp)"
+        # shellcheck disable=SC2064
+        trap "rm ${incs_policy_keep_file}" 0
 
         # loop for each line in jail configuration
-        for incs_policy_line in $(cat ${incs_policy_file}); do
+        for incs_policy_line in $(cat ${incs_policy_file} | grep "^\+"); do
             # inc date in ISO format
             incs_policy_date=$(relative_date ${incs_policy_line})
             echo ${incs_policy_date} >> "${incs_policy_keep_file}"
         done
+        # shellcheck disable=SC2046
+        incs_to_delete=$(echo $(incs_list "${jail_name}") | grep -v -f "${incs_policy_keep_file}")
 
-        for inc in $(echo "${incs}" | grep -v -f "${incs_policy_keep_file}"); do
-            remove_inc "${jail}" "${inc}"
+        for inc_name in ${incs_to_delete}; do
+            inc_path=$(inc_path "${jail_name}" "${inc_name}")
+            if is_btrfs "${inc_path}"; then
+                delete_inc_btrfs "${jail_name}" "${inc_name}"
+            else
+                delete_inc_ext "${jail_name}" "${inc_name}"
+            fi
         done
-        rm "${incs_policy_keep_file}"
     fi
 done

@@ -10,6 +10,7 @@ BACKUP_DISK="${BACKUP_DISK:-}"
 JAILDIR="${JAILDIR:-/backup/jails}"
 INCDIR="${INCDIR:-/backup/incs}"
 TPLDIR="${TPLDIR:-/usr/share/bkctld}"
+LOCKDIR="${LOCKDIR:-/run/lock/bkctld}"
 INDEX_DIR="${INDEX_DIR:-/backup/index}"
 IDX_FILE="${IDX_FILE:-${INDEX_DIR}/bkctld-jails.idx}"
 LOCALTPLDIR="${LOCALTPLDIR:-/usr/local/share/bkctld}"
@@ -61,4 +62,80 @@ error() {
         logger -t bkctld -p daemon.error "${msg}"
     fi
     exit 1
+}
+
+dry_run() {
+    test "$DRY_RUN" = "1"
+}
+
+current_time() {
+    date +"%H:%M:%S"
+}
+
+# Returns true if the given path is on a btrfs filesystem
+is_btrfs() {
+    path=$1
+
+    inode=$(stat --format=%i "${path}")
+
+    test $inode -eq 256
+}
+
+# Returns the list of all jails
+jails_list() {
+    # shellcheck disable=SC2091
+    "${LIBDIR}/bkctld-list"
+}
+# Returns the list of all incs for a jail
+incs_list() {
+    jail_name=$1
+    # shellcheck disable=SC2091
+    ls "$(incs_path "${jail_name}")/"
+}
+# Returns the complete path of a jail
+jail_path() {
+    jail_name=$1
+
+    echo "${JAILDIR}/${jail_name}"
+}
+# Returns the path of incs for a jail
+incs_path() {
+    jail_name=$1
+
+    echo "${INCDIR}/${jail_name}"
+}
+# Returns the path of a specific inc for a jail
+inc_path() {
+    jail_name=$1
+    inc_name=$2
+
+    echo "${INCDIR}/${jail_name}/${inc_name}"
+}
+jail_incs_policy_file() {
+    jail_name=$1
+
+    new_file="${CONFDIR}/${jail_name}.d/incs_policy"
+    old_file="${CONFDIR}/${jail_name}"
+
+    if [ -f "${new_file}" ]; then
+        echo "${new_file}"
+    elif [ -f "${old_file}" ]; then
+        echo "${old_file}"
+    else
+        echo ""
+    fi
+}
+jail_check_policy_file() {
+    jail_name=$1
+
+    new_file="${CONFDIR}/${jail_name}.d/check_policy"
+    # old_file="${JAILDIR}/${jail_name}/etc/bkctld-check"
+
+    if [ -f "${new_file}" ]; then
+        echo "${new_file}"
+    # elif [ -f "${old_file}" ]; then
+    #     echo "${old_file}"
+    else
+        echo ""
+    fi
 }

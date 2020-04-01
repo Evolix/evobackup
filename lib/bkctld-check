@@ -38,27 +38,21 @@ fi
 read_variable() {
     var_name=$1
     file=$2
+
     pattern="^\s*${var_name}=-?[0-9]+"
 
     grep --extended-regexp --only-matching "${pattern}" "${file}" | cut -d= -f2
 }
 
 check_jail() {
-    jail=$1
+    jail_name=$1
 
+    jail_path=$(jail_path "${jail_name}")
     cur_time=$(date "+%s")
-    last_conn=$(stat --format=%Y "${JAILDIR}/${jail}/var/log/lastlog")
+    last_conn=$(stat --format=%Y "${jail_path}/var/log/lastlog")
     date_diff=$(( (cur_time - last_conn) / (60*60) ))
 
-    if [ -f "${CONFDIR}/${jail}.d/check_policy" ]; then
-        # canonical configuration file
-        check_policy_file="${CONFDIR}/${jail}.d/check_policy"
-    elif [ -f "${JAILDIR}/${jail}/etc/bkctld-check" ]; then
-        # backward compatible configuration file
-        check_policy_file="${CONFDIR}/${jail}/etc/bkctld-check"
-    else
-        check_policy_file=""
-    fi
+    check_policy_file=$(jail_check_policy_file "${jail_name}")
 
     if [ -f "${check_policy_file}" ]; then
         local_critical=$(read_variable "CRITICAL" "${check_policy_file}")
@@ -73,24 +67,26 @@ check_jail() {
 
     if [ "${local_critical}" -gt "0" ] && [ "${date_diff}" -gt "${local_critical}" ]; then
         nb_crit=$((nb_crit + 1))
-        output="${output}CRITICAL - ${jail} - ${date_diff} hours (critical: ${local_critical})\n"
+        output="${output}CRITICAL - ${jail_name} - ${date_diff} hours (critical: ${local_critical})\n"
         [ "${return}" -le 2 ] && return=2
     elif [ "${local_warning}" -gt "0" ] && [ "${date_diff}" -gt "${local_warning}" ]; then
         nb_warn=$((nb_warn + 1))
-        output="${output}WARNING - ${jail} - ${date_diff} hours (warning: ${local_warning})\n"
+        output="${output}WARNING - ${jail_name} - ${date_diff} hours (warning: ${local_warning})\n"
         [ "${return}" -le 1 ] && return=1
     else
         nb_ok=$((nb_ok + 1))
-        output="${output}OK - ${jail} - ${date_diff} hours (critical: ${local_critical}, warning: ${local_warning})\n"
+        output="${output}OK - ${jail_name} - ${date_diff} hours (critical: ${local_critical}, warning: ${local_warning})\n"
     fi
 }
 
-for jail in $("${LIBDIR}/bkctld-list"); do
-    if [ -f "${JAILDIR}/${jail}/var/log/lastlog" ]; then
-        check_jail "${jail}"
+for jail_name in $(jails_list); do
+    jail_path=$(jail_path "${jail_name}")
+
+    if [ -f "${jail_path}/var/log/lastlog" ]; then
+        check_jail "${jail_name}"
     else
         nb_unkn=$((nb_unkn + 1))
-        output="${output}UNKNOWN - ${jail} doesn't have lastlog !\n"
+        output="${output}UNKNOWN - ${jail_name} doesn't have lastlog !\n"
         [ "${return}" -le 3 ] && return=3
     fi
 done

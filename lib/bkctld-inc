@@ -7,32 +7,77 @@
 # shellcheck source=./config
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
 
-date=$(date +"%Y-%m-%d-%H")
-for jail in $("${LIBDIR}/bkctld-list"); do
-    inc="${INCDIR}/${jail}/${date}"
-    mkdir -p "${INCDIR}/${jail}"
-    if [ ! -d "${inc}" ]; then
-        start=$(date +"%H:%M:%S")
-        jail_inode=$(stat --format=%i "${JAILDIR}/${jail}")
-        if [ "$jail_inode" -eq 256 ]; then
-            /bin/btrfs subvolume snapshot -r "${JAILDIR}/${jail}" "${inc}" | debug
-            end=$(date +"%H:%M:%S")
-            notice "${jail} : made ${date} inc [${start}/${end}]"
-        else
-            lock="/run/lock/bkctld/inc-${jail}.lock"
-            if [ -f "${lock}" ]; then
-                warning "${jail} : trying to run already running inc"
+create_inc_btrfs() {
+    jail_name=$1
+    inc_name=$2
+
+    jail_path=$(jail_path "${jail_name}")
+    inc_path=$(inc_path "${jail_name}" "${inc_name}")
+
+    start=$(current_time)
+
+    if dry_run; then
+        echo "[dry-run] btrfs subvolume snapshot of ${jail_path} to ${inc_path}"
+    else
+        mkdir --parents "$(dirname "${inc_path}")"
+        # create a btrfs readonly snapshot from the jail
+        /bin/btrfs subvolume snapshot -r "${jail_path}" "${inc_path}" | debug
+    fi
+
+    end=$(current_time)
+    notice "${jail_name} : ${inc_name} inc created [${start}/${end}]"
+}
+create_inc_ext() {
+    jail_name=$1
+    inc_name=$2
+
+    jail_path=$(jail_path "${jail_name}")
+    inc_path=$(inc_path "${jail_name}" "${inc_name}")
+
+    lock="${LOCKDIR}/inc-${jail_name}.lock"
+    if [ -f "${lock}" ]; then
+        warning "${jail_name} : skipping ${inc_name}, it is already being created."
+    else
+        (
+            start=$(current_time)
+            mkdir --parents "${LOCKDIR}" && touch "${lock}"
+            # shellcheck disable=SC2064
+            trap "rm -f ${lock}" 0
+
+            if dry_run; then
+                echo "[dry-run] copy of ${jail_path} to ${inc_path}"
             else
-                (
-                    mkdir -p /run/lock/bkctld && touch "${lock}"
-                    trap "rm -f ${lock}" 0
-                    cp -alx "${JAILDIR}/${jail}/" "${inc}"
-                    end=$(date +"%H:%M:%S")
-                    notice "${jail} : made ${date} inc [${start}/${end}]"
-                )
+                mkdir --parents "$(dirname "${inc_path}")"
+                # create a copy of the jail with hard links
+                cp --archive --link --one-file-system "${jail_path}/" "${inc_path}"
             fi
+
+            end=$(current_time)
+            notice "${jail_name} : ${inc_name} inc created [${start}/${end}]"
+        )
+    fi
+}
+
+inc_name=$(date +"%Y-%m-%d-%H")
+
+for jail_name in $(jails_list); do
+    jail_path=$(jail_path "${jail_name}")
+    inc_path=$(inc_path "${jail_name}" "${inc_name}")
+    incs_policy_file=$(jail_incs_policy_file ${jail_name})
+
+    # If not incs policy is found, we don't create incs
+    if [ -n "${incs_policy_file}" ]; then
+        # If not incs directory is found, we don't create incs
+        if [ ! -d "${inc_path}" ]; then
+            if is_btrfs "${jail_path}"; then
+                create_inc_btrfs "${jail_name}" "${inc_name}"
+            else
+                create_inc_ext "${jail_name}" "${inc_name}"
+            fi
+        else
+            warning "${jail_name} : skipping ${inc_name}, it already exists."
         fi
     else
-        warning "${jail} : trying to made already existant inc"
+        warning "${jail_name} : skipping ${inc_name}, incs policy not found."
     fi
 done
