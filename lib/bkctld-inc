@@ -4,7 +4,7 @@
 # Usage: inc
 #
 
-# shellcheck source=config
+# shellcheck source=./config
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
 
 date=$(date +"%Y-%m-%d-%H")

@@ -4,7 +4,7 @@
 # Usage: init <jailname>
 #
 
-# shellcheck source=config
+# shellcheck source=./config
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
 
 jail="${1:-}"
