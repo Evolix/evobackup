@@ -15,6 +15,7 @@ nb_unkn=0
 output=""
 
 if [ -b "${BACKUP_DISK}" ]; then
+    # If backup disk is encrypted, verify that it's open
     cryptsetup isLuks "${BACKUP_DISK}"
     if [ "$?" -eq 0 ]; then
         if [ ! -b '/dev/mapper/backup' ]; then
@@ -22,11 +23,13 @@ if [ -b "${BACKUP_DISK}" ]; then
             echo "cryptsetup luksOpen ${BACKUP_DISK} backup"
             exit 2
         fi
+        # Change value to real device
         BACKUP_DISK='/dev/mapper/backup'
     fi
-    grep -qE "^${BACKUP_DISK} " /etc/mtab
+    # Verify that it's mounted and writable
+    findmnt --source ${BACKUP_DISK} -O rw > /dev/null
     if [ "$?" -ne 0 ]; then
-         echo "Backup disk ${BACKUP_DISK} is not mounted !\n"
+         echo "Backup disk ${BACKUP_DISK} is not mounted (or read-only) !\n"
          echo "mount ${BACKUP_DISK} /backup"
          exit 2
     fi
