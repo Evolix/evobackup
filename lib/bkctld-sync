@@ -12,17 +12,28 @@ if [ -z "${jail_name}" ]; then
     "${LIBDIR}/bkctld-help" && exit 1
 fi
 jail_path=$(jail_path "${jail_name}")
+jail_config_dir=$(jail_config_dir "${jail_name}")
 
 test -d "${jail_path}" || error "${jail_name}: jail is missing."
 
 [ -n "${NODE}" ] || error "Sync need config of \$NODE in /etc/default/bkctld !"
 
-
+# Init jail on remote server
 ssh "${NODE}" "${LIBDIR}/bkctld-init" "${jail_name}" | debug
+
+# Sync Jail structure and configuration on remote server
 rsync -a "${jail_path}/" "${NODE}:${jail_path}/" --exclude proc/* --exclude sys/* --exclude dev/* --exclude run --exclude var/backup/*
+# New config directory
+rsync -a "${jail_config_dir}" "${NODE}:${jail_config_dir}"
+# Old incs policy config file
 rsync -a "${CONFDIR}/${jail_name}" "${NODE}:${CONFDIR}/${jail_name}"
 
-"${LIBDIR}/bkctld-is-on" "${jail_name}" && ssh "${NODE}" "${LIBDIR}/bkctld-start" "${jail_name}" | debug
+# Sync state on remote server
+if "${LIBDIR}/bkctld-is-on" "${jail_name}"; then
+    ssh "${NODE}" "${LIBDIR}/bkctld-start" "${jail_name}" | debug
+else
+    ssh "${NODE}" "${LIBDIR}/bkctld-stop" "${jail_name}" | debug
+fi
 
 if [ -n "${FIREWALL_RULES}" ]; then
     rsync -a "${FIREWALL_RULES}" "${NODE}:${FIREWALL_RULES}"
