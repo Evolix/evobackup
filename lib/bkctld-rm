@@ -40,27 +40,37 @@ delete_inc_ext() {
 
     inc_path=$(inc_path "${jail_name}" "${inc_name}")
 
-    lock_file="${LOCKDIR}/rm-${jail_name}.lock"
+    lock_file="${LOCKDIR}/rm-global.lock"
     if [ -f "${lock_file}" ]; then
-        warning "${jail_name}: skipping ${inc_name}, it is already being deleted."
-    else
-        (
-            mkdir --parents "${LOCKDIR}" && touch "${lock_file}" || error "Failed to acquire lock file '${lock_file}'"
-            empty=$(mktemp -d --suffix ".${$}" bkctld.XXXXX)
-            # shellcheck disable=SC2064
-            trap "rm -f ${lock_file}; rmdir ${empty}" 0
-
-            if dry_run; then
-                echo "[dry-run] delete ${inc_path} with rsync from ${empty}"
-            else
-                rsync --archive --delete "${empty}/" "${inc_path}/"
-            fi
-            rmdir "${inc_path}/"
-
-            end=$(current_time)
-            notice "${jail_name}: inc '${inc_name}' has been deleted [${start}/${end}]"
-        )
+        # Get Process ID from the lock file
+        pid=$(cat "${lock_file}")
+        if kill -0 ${pid} 2> /dev/null; then
+            # Kill the children
+            pkill -9 --parent "${pid}"
+            # Kill the parent
+            kill -9 "${pid}"
+            # Remove the lock file
+            rm -f ${lock_file}
+            warning "Process ${pid} has been killed. Only one ${0} can run in parallel, the latest wins."
+        else
+            error "Empty lockfile '${lock_file}'. It should contain a PID."
+        fi
     fi
+
+    mkdir --parents "${LOCKDIR}" && echo $$ > ${lock_file} || error "Failed to acquire lock file '${lock_file}'"
+    empty=$(mktemp -d --suffix ".${$}" bkctld.XXXXX)
+    # shellcheck disable=SC2064
+    trap "rm -f ${lock_file}; rmdir ${empty}" 0
+
+    if dry_run; then
+        echo "[dry-run] delete ${inc_path} with rsync from ${empty}"
+    else
+        rsync --archive --delete "${empty}/" "${inc_path}/"
+        rmdir "${inc_path}/"
+    fi
+
+    end=$(current_time)
+    notice "${jail_name}: inc '${inc_name}' has been deleted [${start}/${end}]"
 }
 
 for jail_name in $(jails_list); do
