@@ -18,7 +18,7 @@ set -u
 . "${LIBDIR}/includes"
 
 subcommand="${1:-}"
-jail="${2:-}"
+jail_name="${2:-}"
 option="${3:-}"
 
 if [ ! -x "${LIBDIR}/bkctld-${subcommand}" ]; then
@@ -29,24 +29,24 @@ case "${subcommand}" in
     "inc" | "rm" | "check" | "stats" | "help" | "list")
         "${LIBDIR}/bkctld-${subcommand}"
     ;;
-        "init" | "is-on")
-        "${LIBDIR}/bkctld-${subcommand}" "${jail}"
+    "init" | "is-on")
+        "${LIBDIR}/bkctld-${subcommand}" "${jail_name}"
     ;;
     "key" | "port" | "ip")
-        "${LIBDIR}/bkctld-${subcommand}" "${jail}" "${option}"
+        "${LIBDIR}/bkctld-${subcommand}" "${jail_name}" "${option}"
     ;;
     "start" | "stop" | "reload" | "restart" | "sync" | "update" | "remove" | "firewall")
-        if [ "${jail}" = "all" ]; then
-            "${LIBDIR}/bkctld-list"|xargs --no-run-if-empty --max-args=1 --max-procs=0 "${LIBDIR}/bkctld-${subcommand}"
+        if [ "${jail_name}" = "all" ]; then
+            "${LIBDIR}/bkctld-list" | xargs --no-run-if-empty --max-args=1 --max-procs=0 "${LIBDIR}/bkctld-${subcommand}"
         else
-            "${LIBDIR}/bkctld-${subcommand}" "${jail}"
+            "${LIBDIR}/bkctld-${subcommand}" "${jail_name}"
         fi
     ;;
     "status")
-        if [ -z "${jail}" ]; then
-            "${LIBDIR}/bkctld-list"|xargs --no-run-if-empty --max-args=1 "${LIBDIR}/bkctld-${subcommand}"
+        if [ "${jail_name}" = "all" ] || [ -z "${jail_name}" ]; then
+            "${LIBDIR}/bkctld-list" | xargs --no-run-if-empty --max-args=1 "${LIBDIR}/bkctld-${subcommand}"
         else
-            "${LIBDIR}/bkctld-${subcommand}" "${jail}"
+            "${LIBDIR}/bkctld-${subcommand}" "${jail_name}"
         fi
     ;;
 esac
