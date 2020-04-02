@@ -83,7 +83,7 @@ for jail_name in $(jails_list); do
         trap "rm ${incs_policy_keep_file}" 0
 
         # loop for each line in jail configuration
-        for incs_policy_line in $(cat ${incs_policy_file} | grep "^\+"); do
+        for incs_policy_line in $(grep "^\+" ${incs_policy_file}); do
             # inc date in ISO format
             incs_policy_date=$(relative_date ${incs_policy_line})
             echo ${incs_policy_date} >> "${incs_policy_keep_file}"

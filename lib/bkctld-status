@@ -13,10 +13,11 @@ if [ ! -n "${jail_name}" ]; then
 fi
 [ -d "${JAILDIR}/${jail_name}" ] || error "${jail_name} : jail is missing.\nUse '$0 status [all]' to get the status of all jails."
 
+incs_policy_file=$(current_jail_incs_policy_file ${jail_name})
 incs_policy="0"
-if [ -f "${CONFDIR}/${jail_name}" ]; then
-    days=$(grep -c "day" "${CONFDIR}/${jail_name}")
-    months=$(grep -c "month" "${CONFDIR}/${jail_name}")
+if [ -r "${incs_policy_file}" ]; then
+    days=$(grep "^\+" "${incs_policy_file}" | grep --count "day")
+    months=$(grep "^\+" "${incs_policy_file}" | grep --count "month")
     incs_policy="${days}/${months}"
 fi
 
