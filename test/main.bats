@@ -29,6 +29,9 @@ teardown() {
         run test -d "${JAILPATH}"
         [ "${status}" -eq 0 ]
     fi
+
+    run test -e "${CONFDIR}/${JAILNAME}.d/incs_policy"
+    [ "${status}" -eq 0 ]
 }
 
 @test "start" {
