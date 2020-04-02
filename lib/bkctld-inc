@@ -34,15 +34,16 @@ create_inc_ext() {
     jail_path=$(jail_path "${jail_name}")
     inc_path=$(inc_path "${jail_name}" "${inc_name}")
 
-    lock="${LOCKDIR}/inc-${jail_name}.lock"
-    if [ -f "${lock}" ]; then
+    # The lock file prevents from starting a new copy when one is already being done
+    lock_file="${LOCKDIR}/inc-${jail_name}-${inc_name}.lock"
+    if [ -f "${lock_file}" ]; then
         warning "${jail_name}: skipping '${inc_name}', it is already being created."
     else
         (
             start=$(current_time)
-            mkdir --parents "${LOCKDIR}" && touch "${lock}"
+            mkdir --parents "${LOCKDIR}" && touch "${lock_file}"
             # shellcheck disable=SC2064
-            trap "rm -f ${lock}" 0
+            trap "rm -f ${lock_file}" 0
 
             if dry_run; then
                 echo "[dry-run] copy of ${jail_path} to ${inc_path}"
