@@ -14,8 +14,6 @@ if [ -z "${jail_name}" ]; then
 fi
 jail_path=$(jail_path "${jail_name}")
 
-test -d "${jail_path}" || error "${jail_name}: jail is missing."
-
 iptables_input_accept() {
     jail_name="${1}"
     port="${2}"
