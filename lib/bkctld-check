@@ -52,7 +52,7 @@ check_jail() {
     last_conn=$(stat --format=%Y "${jail_path}/var/log/lastlog")
     date_diff=$(( (cur_time - last_conn) / (60*60) ))
 
-    check_policy_file=$(jail_check_policy_file "${jail_name}")
+    check_policy_file=$(current_jail_check_policy_file "${jail_name}")
 
     if [ -f "${check_policy_file}" ]; then
         local_critical=$(read_variable "CRITICAL" "${check_policy_file}")

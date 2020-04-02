@@ -114,7 +114,12 @@ inc_path() {
 jail_incs_policy_file() {
     jail_name=$1
 
-    new_file="${CONFDIR}/${jail_name}.d/incs_policy"
+    echo "${CONFDIR}/${jail_name}.d/incs_policy"
+}
+current_jail_incs_policy_file() {
+    jail_name=${1:?}
+
+    new_file="$(jail_incs_policy_file "${jail_name}")"
     old_file="${CONFDIR}/${jail_name}"
 
     if [ -f "${new_file}" ]; then
@@ -127,6 +132,11 @@ jail_incs_policy_file() {
 }
 jail_check_policy_file() {
     jail_name=$1
+
+    echo "${CONFDIR}/${jail_name}.d/check_policy"
+}
+current_jail_check_policy_file() {
+    jail_name=${1:?}
 
     new_file="${CONFDIR}/${jail_name}.d/check_policy"
     # old_file="${JAILDIR}/${jail_name}/etc/bkctld-check"

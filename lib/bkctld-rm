@@ -64,7 +64,7 @@ delete_inc_ext() {
 }
 
 for jail_name in $(jails_list); do
-    incs_policy_file=$(jail_incs_policy_file ${jail_name})
+    incs_policy_file=$(current_jail_incs_policy_file ${jail_name})
 
     # If not incs policy if found, we don't remove incs
     if [ -n "${incs_policy_file}" ]; then
