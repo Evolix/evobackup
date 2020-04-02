@@ -18,11 +18,8 @@ test -d "${jail_path}" || error "${jail_name}: jail is missing."
 "${LIBDIR}/bkctld-is-on" "${jail_name}" || exit 0
 
 pid=$(cat "${jail_path}/${SSHD_PID}")
-for conn in $(ps --ppid "${pid}" -o pid=); do
-    kill "${conn}"
-done
 
-if kill "${pid}"; then 
+if pkill --parent "${pid}" && kill "${pid}"; then 
     notice "${jail_name}: jail has been stopped [${pid}]"
 
     umount --lazy --recursive "${jail_path}/dev"
