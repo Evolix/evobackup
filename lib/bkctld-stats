@@ -4,7 +4,7 @@
 # Usage: stats
 #
 
-# shellcheck source=./config
+# shellcheck source=./includes
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
 
 mkdir -p "${INDEX_DIR}"

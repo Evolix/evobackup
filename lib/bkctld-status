@@ -4,10 +4,10 @@
 # Usage: status [<jailname>]
 #
 
-# shellcheck source=./config
+# shellcheck source=./includes
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
 
-jail="${1:-}"
+jail="${1:?}"
 if [ ! -n "${jail}" ]; then
     "${LIBDIR}/bkctld-help" && exit 1
 fi

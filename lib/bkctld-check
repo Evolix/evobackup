@@ -4,7 +4,7 @@
 # Usage: check
 #
 
-# shellcheck source=./config
+# shellcheck source=./includes
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
 
 return=0

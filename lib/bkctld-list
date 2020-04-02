@@ -6,7 +6,7 @@
 
 set -eu
 
-# shellcheck source=./config
+# shellcheck source=./includes
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
 
 [ -d "${JAILDIR}" ] || exit 0

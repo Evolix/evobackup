@@ -4,7 +4,7 @@
 # Usage: inc
 #
 
-# shellcheck source=./config
+# shellcheck source=./includes
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
 
 create_inc_btrfs() {
