@@ -14,7 +14,7 @@ set -u
 
 [ -d './lib' ] && LIBDIR='lib'
 [ -d '/usr/lib/bkctld' ] && LIBDIR='/usr/lib/bkctld'
-# shellcheck source=lib/config
+# shellcheck source=lib/includes
 . "${LIBDIR}/includes"
 
 subcommand="${1:-}"
