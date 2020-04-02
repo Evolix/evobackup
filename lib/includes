@@ -225,6 +225,8 @@ setup_jail_config() {
     test -f "${LOCALTPLDIR}/inc.tpl" && inctpl="${LOCALTPLDIR}/inc.tpl"
 
     info "5 - Copie default inc configuration"
-    install -m 0640 "${inctpl}" "${jail_path}"
+    jail_incs_policy_file=$(jail_incs_policy_file "${jail_name}")
+    mkdir --parents "$(dirname "${jail_incs_policy_file}")"
+    install -m 0640 "${inctpl}" "${jail_incs_policy_file}"
     "${LIBDIR}/bkctld-port" "${jail_name}" auto
 }
