@@ -88,31 +88,31 @@ jails_list() {
 }
 # Returns the list of all incs for a jail
 incs_list() {
-    jail_name=$1
+    jail_name=${1:?}
     # shellcheck disable=SC2091
     ls "$(incs_path "${jail_name}")/"
 }
 # Returns the complete path of a jail
 jail_path() {
-    jail_name=$1
+    jail_name=${1:?}
 
     echo "${JAILDIR}/${jail_name}"
 }
 # Returns the path of incs for a jail
 incs_path() {
-    jail_name=$1
+    jail_name=${1:?}
 
     echo "${INCDIR}/${jail_name}"
 }
 # Returns the path of a specific inc for a jail
 inc_path() {
-    jail_name=$1
-    inc_name=$2
+    jail_name=${1:?}
+    inc_name=${2:?}
 
     echo "${INCDIR}/${jail_name}/${inc_name}"
 }
 jail_incs_policy_file() {
-    jail_name=$1
+    jail_name=${1:?}
 
     echo "${CONFDIR}/${jail_name}.d/incs_policy"
 }
@@ -131,7 +131,7 @@ current_jail_incs_policy_file() {
     fi
 }
 jail_check_policy_file() {
-    jail_name=$1
+    jail_name=${1:?}
 
     echo "${CONFDIR}/${jail_name}.d/check_policy"
 }
@@ -151,7 +151,7 @@ current_jail_check_policy_file() {
 }
 
 setup_jail_chroot() {
-    jail_name=$1
+    jail_name=${1:?}
 
     jail_path=$(jail_path "${jail_name}")
 
@@ -211,7 +211,7 @@ setup_jail_chroot() {
 }
 
 setup_jail_config() {
-    jail_name=$1
+    jail_name=${1:?}
 
     jail_path=$(jail_path "${jail_name}")
 
