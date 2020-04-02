@@ -17,31 +17,36 @@ test -d "${jail_path}" || error "${jail_name}: jail is missing."
 
 "${LIBDIR}/bkctld-is-on" "${jail_name}" && exit 0
 
-cd "${jail_path}" || error "${jail_name}: failed to change directory to ${jail_path}."
+# Prepare the chroot
+(
+    cd "${jail_path}" || error "${jail_name}: failed to change directory to ${jail_path}."
 
-grep -q "${jail_path}/proc" /proc/mounts || mount -t proc "proc-${jail_name}" proc
-grep -q "${jail_path}/dev" /proc/mounts || mount -nt tmpfs "dev-${jail_name}" dev
-[ -e "dev/console" ] || mknod -m 622 dev/console c 5 1
-[ -e "dev/null" ] || mknod -m 666 dev/null c 1 3
-[ -e "dev/zero" ] || mknod -m 666 dev/zero c 1 5
-[ -e "dev/ptmx" ] || mknod -m 666 dev/ptmx c 5 2
-[ -e "dev/tty" ] || mknod -m 666 dev/tty c 5 0
-[ -e "dev/random" ] || mknod -m 444 dev/random c 1 8
-[ -e "dev/urandom" ] || mknod -m 444 dev/urandom c 1 9
-chown root:tty dev/console dev/ptmx dev/tty
-ln -fs proc/self/fd dev/fd
-ln -fs proc/self/fd/0 dev/stdin
-ln -fs proc/self/fd/1 dev/stdout
-ln -fs proc/self/fd/2 dev/stderr
-ln -fs proc/kcore dev/core
-mkdir -p dev/pts
-mkdir -p dev/shm
-grep -q "${jail_path}/dev/pts" /proc/mounts || mount -t devpts -o gid=4,mode=620 none dev/pts
-grep -q "${jail_path}/dev/shm" /proc/mounts || mount -t tmpfs none dev/shm
+    grep -q "${jail_path}/proc" /proc/mounts || mount -t proc "proc-${jail_name}" proc
+    grep -q "${jail_path}/dev" /proc/mounts || mount -nt tmpfs "dev-${jail_name}" dev
+    [ -e "dev/console" ] || mknod -m 622 dev/console c 5 1
+    [ -e "dev/null" ] || mknod -m 666 dev/null c 1 3
+    [ -e "dev/zero" ] || mknod -m 666 dev/zero c 1 5
+    [ -e "dev/ptmx" ] || mknod -m 666 dev/ptmx c 5 2
+    [ -e "dev/tty" ] || mknod -m 666 dev/tty c 5 0
+    [ -e "dev/random" ] || mknod -m 444 dev/random c 1 8
+    [ -e "dev/urandom" ] || mknod -m 444 dev/urandom c 1 9
+    chown root:tty dev/console dev/ptmx dev/tty
+    ln -fs proc/self/fd dev/fd
+    ln -fs proc/self/fd/0 dev/stdin
+    ln -fs proc/self/fd/1 dev/stdout
+    ln -fs proc/self/fd/2 dev/stderr
+    ln -fs proc/kcore dev/core
+    mkdir -p dev/pts
+    mkdir -p dev/shm
+    grep -q "${jail_path}/dev/pts" /proc/mounts || mount -t devpts -o gid=4,mode=620 none dev/pts
+    grep -q "${jail_path}/dev/shm" /proc/mounts || mount -t tmpfs none dev/shm
+)
 
+# Start SSH in the chroot
 chroot "${jail_path}" /usr/sbin/sshd -E /var/log/authlog || error "${jail_name}: failed to start sshd"
 pidfile="${jail_path}/${SSHD_PID}"
 
+# Wait for SSH to be up
 for try in $(seq 1 10); do
     test -f "${pidfile}" || sleep 0.3
 done

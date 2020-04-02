@@ -7,20 +7,23 @@
 # shellcheck source=./includes
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
 
-jail="${1:?}"
-if [ ! -n "${jail}" ]; then
+jail_name="${1:?}"
+if [ ! -n "${jail_name}" ]; then
     "${LIBDIR}/bkctld-help" && exit 1
 fi
-[ -d "${JAILDIR}/${jail}" ] || error "${jail} : inexistant jail ! Use '$0 status' for list all"
+[ -d "${JAILDIR}/${jail_name}" ] || error "${jail_name} : jail is missing.\nUse '$0 status [all]' to get the status of all jails."
 
-inc="0"
-if [ -f "${CONFDIR}/${jail}" ]; then
-    day=$(grep -c "day" "${CONFDIR}/${jail}")
-    month=$(grep -c "month" "${CONFDIR}/${jail}")
-    inc="${day}/${month}"
+incs_policy="0"
+if [ -f "${CONFDIR}/${jail_name}" ]; then
+    days=$(grep -c "day" "${CONFDIR}/${jail_name}")
+    months=$(grep -c "month" "${CONFDIR}/${jail_name}")
+    incs_policy="${days}/${months}"
 fi
+
 status="OFF"
-"${LIBDIR}/bkctld-is-on" "${jail}" && status="ON "
-port=$("${LIBDIR}/bkctld-port" "${jail}")
-ip=$("${LIBDIR}/bkctld-ip" "${jail}"|xargs|tr -s ' ' ',')
-echo "${jail} ${status} ${port} ${inc} ${ip}" | awk '{ printf("%- 30s %- 10s %- 10s %- 10s %- 40s\n", $1, $2, $3, $4, $5); }'
+"${LIBDIR}/bkctld-is-on" "${jail_name}" && status="ON "
+
+port=$("${LIBDIR}/bkctld-port" "${jail_name}")
+ip=$("${LIBDIR}/bkctld-ip" "${jail_name}" | xargs | tr -s ' ' ',')
+
+echo "${jail_name} ${status} ${port} ${incs_policy} ${ip}" | awk '{ printf("%- 30s %- 10s %- 10s %- 10s %- 40s\n", $1, $2, $3, $4, $5); }'

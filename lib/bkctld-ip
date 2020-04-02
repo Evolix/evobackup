@@ -18,22 +18,23 @@ jail_path=$(jail_path "${jail_name}")
 test -d "${jail_path}" || error "${jail_name}: jail is missing."
 
 if [ -z "${ip}" ]; then
+    # parse IP addresses from AllowUsers directives in sshd config
     grep -E "^AllowUsers" "${jail_path}/${SSHD_CONFIG}" | grep -Eo "root@[^ ]+" | while read allow; do
         echo "${allow}" | cut -d'@' -f2
     done
 else
     if [ "${ip}" = "all" ] || [ "${ip}" = "0.0.0.0/0" ]; then
-        ips="0.0.0.0/0"
+        new_ips="0.0.0.0/0"
     else
-        ips=$("${LIBDIR}/bkctld-ip" "${jail_name}")
-        ips=$(echo "${ips}" "${ip}" | xargs -n1 | grep -v "0.0.0.0/0" | sort | uniq)
+        existing_ips=$("${LIBDIR}/bkctld-ip" "${jail_name}")
+        new_ips=$(echo "${existing_ips}" "${ip}" | xargs -n1 | grep -v "0.0.0.0/0" | sort | uniq)
     fi
-    allow="AllowUsers"
-    for ip in $ips; do
-        allow="${allow} root@${ip}"
+    allow_users="AllowUsers"
+    for ip in ${new_ips}; do
+        allow_users="${allow_users} root@${ip}"
     done
-    sed -i "s~^AllowUsers .*~${allow}~" "${jail_path}/${SSHD_CONFIG}"
-    notice "${jail_name}: update ip => ${ip}"
+    sed -i "s~^AllowUsers .*~${allow_users}~" "${jail_path}/${SSHD_CONFIG}"
+    notice "${jail_name}: IP whitelist updated to ${ip}"
     "${LIBDIR}/bkctld-reload" "${jail_name}"
     "${LIBDIR}/bkctld-firewall" "${jail_name}"
 fi
