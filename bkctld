@@ -36,17 +36,17 @@ case "${subcommand}" in
         "${LIBDIR}/bkctld-${subcommand}" "${jail}" "${option}"
     ;;
     "start" | "stop" | "reload" | "restart" | "sync" | "update" | "remove" | "firewall")
-    if [ "${jail}" = "all" ]; then
-        "${LIBDIR}/bkctld-list"|xargs --no-run-if-empty --max-args=1 --max-procs=0 "${LIBDIR}/bkctld-${subcommand}"
-    else
-        "${LIBDIR}/bkctld-${subcommand}" "${jail}"
-    fi
+        if [ "${jail}" = "all" ]; then
+            "${LIBDIR}/bkctld-list"|xargs --no-run-if-empty --max-args=1 --max-procs=0 "${LIBDIR}/bkctld-${subcommand}"
+        else
+            "${LIBDIR}/bkctld-${subcommand}" "${jail}"
+        fi
     ;;
     "status")
-    if [ -z "${jail}" ]; then
-        "${LIBDIR}/bkctld-list"|xargs --no-run-if-empty --max-args=1 "${LIBDIR}/bkctld-${subcommand}"
-    else
-        "${LIBDIR}/bkctld-${subcommand}" "${jail}"
-    fi
+        if [ -z "${jail}" ]; then
+            "${LIBDIR}/bkctld-list"|xargs --no-run-if-empty --max-args=1 "${LIBDIR}/bkctld-${subcommand}"
+        else
+            "${LIBDIR}/bkctld-${subcommand}" "${jail}"
+        fi
     ;;
 esac
