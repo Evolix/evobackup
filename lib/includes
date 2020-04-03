@@ -177,12 +177,15 @@ setup_jail_chroot() {
     umask 077
 
     info "1 - Creating the chroot"
-    rm -rf bin lib lib64 run usr var/run etc/ssh/*key
+    rm -rf ./bin ./lib ./lib64 ./run ./usr ./var/run ./etc/ssh/*key
     mkdir -p ./dev
     mkdir -p ./proc
     mkdir -p ./usr/bin
     mkdir -p ./usr/sbin
-    mkdir -p ./usr/lib ./usr/lib/x86_64-linux-gnu ./usr/lib/openssh ./usr/lib64
+    mkdir -p ./usr/lib
+    mkdir -p ./usr/lib/x86_64-linux-gnu
+    mkdir -p ./usr/lib/openssh
+    mkdir -p ./usr/lib64
     mkdir -p ./etc/ssh
     mkdir -p ./var/log
     mkdir -p ./run/sshd
