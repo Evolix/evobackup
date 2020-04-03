@@ -41,13 +41,23 @@ grep -q "${jail_path}/dev/pts" /proc/mounts || mount -t devpts -o gid=4,mode=620
 grep -q "${jail_path}/dev/shm" /proc/mounts || mount -t tmpfs none dev/shm
 
 # Start SSH in the chroot
-chroot "${jail_path}" /usr/sbin/sshd -E /var/log/authlog || error "${jail_name}: failed to start sshd"
+chroot "${jail_path}" /usr/sbin/sshd -E /var/log/authlog || error "${jail_name}: failed to start SSH."
 pidfile="${jail_path}/${SSHD_PID}"
 
 # Wait for SSH to be up
+# shellcheck disable=SC2034
 for try in $(seq 1 10); do
-    test -f "${pidfile}" || sleep 0.3
+    if [ -f "${pidfile}" ]; then
+        pid=$(cat "${pidfile}")
+        break
+    else
+        pid=""
+        sleep 0.3
+    fi
 done
-pid=$(cat "${pidfile}")
 
-notice "${jail_name}: jail has been started [${pid}]"
+if [ -n "${pid}" ]; then
+    notice "${jail_name}: jail has been started [${pid}]"
+else
+    error "${jail_name}: failed to fetch SSH pid within 3 sec."
+fi
