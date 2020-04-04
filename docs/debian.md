@@ -8,7 +8,7 @@ this git repository with git-buildpackage and sbuild.
 Install Debian dependencies :
 
 ~~~
-apt install git-buildpackage sbuild
+apt install git-buildpackage sbuild dh-exec
 ~~~
 
 Add your user to sbuild :
