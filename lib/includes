@@ -21,7 +21,7 @@ FIREWALL_RULES="${FIREWALL_RULES:-}"
 LOGLEVEL="${LOGLEVEL:-6}"
 CRITICAL="${CRITICAL:-48}"
 WARNING="${WARNING:-24}"
-DUC=$(command -v duc-nox||command -v duc)
+DUC=$(command -v duc-nox || command -v duc)
 
 debug() {
     msg="${1:-$(cat /dev/stdin)}"
