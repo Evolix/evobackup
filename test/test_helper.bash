@@ -1,3 +1,35 @@
+
+setup() {
+    . /usr/lib/bkctld/includes
+
+    rm -f /root/bkctld.key*
+    ssh-keygen -t rsa -N "" -f /root/bkctld.key -q
+
+    grep -qE "^BACKUP_DISK=" /etc/default/bkctld || echo "BACKUP_DISK=/dev/vdb" >> /etc/default/bkctld
+
+    JAILNAME=$(tr -cd '[:alnum:]' < /dev/urandom | fold -w15 | head -n1)
+    JAILPATH="/backup/jails/${JAILNAME}"
+    INCSPATH="/backup/incs/${JAILNAME}"
+    PORT=$(awk -v min=2222 -v max=2999 'BEGIN{srand(); print int(min+rand()*(max-min+1))}')
+    INC_NAME=$(date +"%Y-%m-%d-%H")
+
+    inode=$(stat --format=%i /backup)
+
+    /usr/lib/bkctld/bkctld-init "${JAILNAME}"
+}
+
+teardown() {
+    /usr/lib/bkctld/bkctld-remove "${JAILNAME}" && rm -rf "${INCSPATH}"
+}
+
+is_btrfs() {
+    path=$1
+
+    inode=$(stat --format=%i "${path}")
+
+    test $inode -eq 256
+}
+
 flunk() {
   { if [ "$#" -eq 0 ]; then cat -
     else echo "$@"
