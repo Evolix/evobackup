@@ -13,8 +13,6 @@ setup() {
     PORT=$(awk -v min=2222 -v max=2999 'BEGIN{srand(); print int(min+rand()*(max-min+1))}')
     INC_NAME=$(date +"%Y-%m-%d-%H")
 
-    inode=$(stat --format=%i /backup)
-
     /usr/lib/bkctld/bkctld-init "${JAILNAME}"
 }
 
@@ -27,7 +25,7 @@ is_btrfs() {
 
     inode=$(stat --format=%i "${path}")
 
-    test $inode -eq 256
+    test ${inode} -eq 256
 }
 
 flunk() {
