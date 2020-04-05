@@ -38,7 +38,7 @@ create_inc_btrfs() {
         )
     fi
 }
-create_inc_ext() {
+create_inc_ext4() {
     jail_name=$1
     inc_name=$2
 
@@ -84,7 +84,7 @@ for jail_name in $(jails_list); do
             if is_btrfs "${jail_path}"; then
                 create_inc_btrfs "${jail_name}" "${inc_name}"
             else
-                create_inc_ext "${jail_name}" "${inc_name}"
+                create_inc_ext4 "${jail_name}" "${inc_name}"
             fi
         else
             warning "${jail_name}: skipping ${inc_name}, it already exists."

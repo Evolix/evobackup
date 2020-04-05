@@ -34,7 +34,7 @@ delete_inc_btrfs() {
     end=$(current_time)
     notice "${jail_name}: inc '${inc_name}' has been deleted [${start}/${end}]"
 }
-delete_inc_ext() {
+delete_inc_ext4() {
     jail_name=$1
     inc_name=$2
 
@@ -96,7 +96,7 @@ for jail_name in $(jails_list); do
             if is_btrfs "${inc_path}"; then
                 delete_inc_btrfs "${jail_name}" "${inc_name}"
             else
-                delete_inc_ext "${jail_name}" "${inc_name}"
+                delete_inc_ext4 "${jail_name}" "${inc_name}"
             fi
         done
     fi
