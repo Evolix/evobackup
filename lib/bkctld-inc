@@ -14,18 +14,29 @@ create_inc_btrfs() {
     jail_path=$(jail_path "${jail_name}")
     inc_path=$(inc_path "${jail_name}" "${inc_name}")
 
-    start=$(current_time)
-
-    if dry_run; then
-        echo "[dry-run] btrfs subvolume snapshot of ${jail_path} to ${inc_path}"
+    # The lock file prevents from starting a new copy when one is already being done
+    lock_file="${LOCKDIR}/inc-${jail_name}-${inc_name}.lock"
+    if [ -f "${lock_file}" ]; then
+        warning "${jail_name}: skipping '${inc_name}', it is already being created."
     else
-        mkdir --parents "$(dirname "${inc_path}")"
-        # create a btrfs readonly snapshot from the jail
-        /bin/btrfs subvolume snapshot -r "${jail_path}" "${inc_path}" | debug
-    fi
+        (
+            start=$(current_time)
+            mkdir --parents "${LOCKDIR}" && touch "${lock_file}"
+            # shellcheck disable=SC2064
+            trap "rm -f ${lock_file}" 0
 
-    end=$(current_time)
-    notice "${jail_name}: inc '${inc_name}' has been created [${start}/${end}]"
+            if dry_run; then
+                echo "[dry-run] btrfs subvolume snapshot of ${jail_path} to ${inc_path}"
+            else
+                mkdir --parents "$(dirname "${inc_path}")"
+                # create a btrfs readonly snapshot from the jail
+                /bin/btrfs subvolume snapshot -r "${jail_path}" "${inc_path}" | debug
+            fi
+
+            end=$(current_time)
+            notice "${jail_name}: inc '${inc_name}' has been created [${start}/${end}]"
+        )
+    fi
 }
 create_inc_ext() {
     jail_name=$1
