@@ -17,9 +17,13 @@ jail_path=$(jail_path "${jail_name}")
 
 test -d "${jail_path}" || error "${jail_name}: jail is missing."
 
+jail_sshd_config="${jail_path}/${SSHD_CONFIG}"
+
 if [ -z "${ip}" ]; then
     # parse IP addresses from AllowUsers directives in sshd config
-    grep -E "^AllowUsers" "${jail_path}/${SSHD_CONFIG}" | grep -Eo "root@[^ ]+" | while read allow; do
+    grep -E "^AllowUsers" "${jail_sshd_config}" \
+    | grep -E -o "root@[^ ]+" \
+    | while read allow; do
         echo "${allow}" | cut -d'@' -f2
     done
 else
@@ -33,7 +37,11 @@ else
     for ip in ${new_ips}; do
         allow_users="${allow_users} root@${ip}"
     done
-    sed -i "s~^AllowUsers .*~${allow_users}~" "${jail_path}/${SSHD_CONFIG}"
+    if grep -q -E "^AllowUsers" "${jail_sshd_config}"; then
+        sed -i "s~^AllowUsers .*~${allow_users}~" "${jail_sshd_config}"
+    else
+        error "${jail_name}: No 'AllowUsers' directive found in '${jail_sshd_config}'"
+    fi
     notice "${jail_name}: IP whitelist updated to ${ip}"
     "${LIBDIR}/bkctld-reload" "${jail_name}"
     "${LIBDIR}/bkctld-firewall" "${jail_name}"

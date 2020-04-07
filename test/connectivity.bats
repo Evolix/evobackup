@@ -58,6 +58,14 @@ load test_helper
     assert_success
 }
 
+@test "Missing AllowUsers" {
+    # Remove AllowUsers directive in SSH config
+    sed -i '/^AllowUsers/d' "${JAILPATH}/etc/ssh/sshd_config"
+    # An error should be raised when trying to add an IP restriction
+    run /usr/lib/bkctld/bkctld-ip "${JAILNAME}" "10.0.0.1"
+    assert_failure
+}
+
 @test "SSH connectivity" {
     /usr/lib/bkctld/bkctld-start "${JAILNAME}"
     /usr/lib/bkctld/bkctld-port "${JAILNAME}" "${PORT}"
