@@ -17,15 +17,17 @@ jail_path=$(jail_path "${jail_name}")
 
 test -d "${jail_path}" || error "${jail_name}: jail is missing."
 
+jail_sshd_config="${jail_path}/${SSHD_CONFIG}"
+
 if [ -z "${port}" ]; then
-    grep -E "Port [0-9]+" "${jail_path}/${SSHD_CONFIG}"|grep -oE "[0-9]+"
+    grep -E "Port [0-9]+" "${jail_sshd_config}"|grep -oE "[0-9]+"
 else
     if [ "${port}" = "auto" ]; then
         port=$(grep -h Port "${JAILDIR}"/*/"${SSHD_CONFIG}" 2>/dev/null | grep -Eo "[0-9]+" | sort -n | tail -1)
         port=$((port+1))
         [ "${port}" -le 1 ] && port=2222
     fi
-    sed -i "s/^Port .*/Port ${port}/" "${jail_path}/${SSHD_CONFIG}"
+    sed -i "s/^Port .*/Port ${port}/" "${jail_sshd_config}"
 
     notice "${jail_name}: port has been updated to ${port}"
 

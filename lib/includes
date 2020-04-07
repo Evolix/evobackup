@@ -226,12 +226,13 @@ setup_jail_config() {
     jail_name=${1:?}
 
     jail_path=$(jail_path "${jail_name}")
+    jail_sshd_config="${jail_path}/${SSHD_CONFIG}"
 
-    sshd_config="${TPLDIR}/sshd_config"
-    test -f "${LOCALTPLDIR}/sshd_config" && sshd_config="${LOCALTPLDIR}/sshd_config"
+    sshd_config_tpl="${TPLDIR}/sshd_config"
+    test -f "${LOCALTPLDIR}/sshd_config" && sshd_config_tpl="${LOCALTPLDIR}/sshd_config"
 
     info "4 - Copie default sshd_config"
-    install -m 0640 "${sshd_config}" "${jail_path}/${SSHD_CONFIG}"
+    install -m 0640 "${sshd_config_tpl}" "${jail_sshd_config}"
 
     inctpl="${TPLDIR}/inc.tpl"
     test -f "${LOCALTPLDIR}/inc.tpl" && inctpl="${LOCALTPLDIR}/inc.tpl"
