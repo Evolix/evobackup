@@ -45,8 +45,9 @@ if [ -n "${FIREWALL_RULES}" ] \
 && [ -r "${FIREWALL_RULES}" ] \
 && [ -f "${minifirewall_config}" ]; then
     if ! grep -qE "^(\.|source) ${FIREWALL_RULES}" "${minifirewall_config}"; then
-        echo "Firewall file '${FIREWALL_RULES}' doesn't seem to be sourced by '${minifirewall_config}'."
-        exit 2
+        nb_warn=$((nb_warn + 1))
+        output="${output}WARNING - Firewall file '${FIREWALL_RULES}' doesn't seem to be sourced by '${minifirewall_config}'\n"
+        [ "${return}" -le 1 ] && return=1
     fi
 fi
 
