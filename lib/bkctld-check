@@ -75,15 +75,15 @@ check_jail() {
 
     if [ "${local_critical}" -gt "0" ] && [ "${date_diff}" -gt "${local_critical}" ]; then
         nb_crit=$((nb_crit + 1))
-        output="${output}CRITICAL - ${jail_name} - ${date_diff} hours (critical: ${local_critical})\n"
+        output="${output}CRITICAL - ${jail_name} - ${date_diff} hours (${local_warning}/${local_critical})\n"
         [ "${return}" -le 2 ] && return=2
     elif [ "${local_warning}" -gt "0" ] && [ "${date_diff}" -gt "${local_warning}" ]; then
         nb_warn=$((nb_warn + 1))
-        output="${output}WARNING - ${jail_name} - ${date_diff} hours (warning: ${local_warning})\n"
+        output="${output}WARNING - ${jail_name} - ${date_diff} hours (${local_warning}/${local_critical})\n"
         [ "${return}" -le 1 ] && return=1
     else
         nb_ok=$((nb_ok + 1))
-        output="${output}OK - ${jail_name} - ${date_diff} hours (critical: ${local_critical}, warning: ${local_warning})\n"
+        output="${output}OK - ${jail_name} - ${date_diff} hours (${local_warning}/${local_critical})\n"
     fi
 }
 
