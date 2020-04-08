@@ -63,6 +63,16 @@ the *test* provision :
 vagrant provision --provision-with test
 ~~~
 
+You can also run the tests from inside the VM
+
+~~~
+localhost $ vagrant ssh test
+vagrant@test $ sudo -i
+root@test # bats /vagrant/test/*.bats
+~~~
+
+You should shellcheck your bats files, but with shellcheck > 0.4.6, because the 0.4.0 version doesn't support bats syntax.
+
 ## Usage
 
 See [docs/usage.md](docs/usage.md).

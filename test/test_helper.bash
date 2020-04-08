@@ -1,4 +1,6 @@
+# shellcheck disable=SC2154 shell=bash
 
+# shellcheck disable=SC2034
 setup() {
     . /usr/lib/bkctld/includes
 
@@ -121,6 +123,7 @@ refute_line() {
   fi
 }
 
+# shellcheck disable=SC2145
 assert() {
   if ! "$@"; then
     flunk "failed: $@"
