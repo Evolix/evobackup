@@ -134,3 +134,33 @@ OUT
     run /usr/lib/bkctld/bkctld-check
     assert_equal "2" "$status"
 }
+
+@test "Check CRITICAL if firewall rules are not sourced" {
+    firewall_rules_file="/etc/firewall.rc.jails"
+    set_variable "/etc/default/bkctld" "FIREWALL_RULES" "${firewall_rules_file}"
+    echo "" > "${firewall_rules_file}"
+
+    # Without sourcing
+    echo "" > "/etc/default/minifirewall"
+    # … the check should be "critical"
+    run /usr/lib/bkctld/bkctld-check
+    assert_equal "2" "$status"
+}
+
+@test "Check OK if firewall rules are sourced" {
+    firewall_rules_file="/etc/firewall.rc.jails"
+    set_variable "/etc/default/bkctld" "FIREWALL_RULES" "${firewall_rules_file}"
+    echo "" > "${firewall_rules_file}"
+
+    # Sourcing file with '.'
+    echo ". ${firewall_rules_file}" > "/etc/default/minifirewall"
+    # … the check should be "critical"
+    run /usr/lib/bkctld/bkctld-check
+    assert_equal "0" "$status"
+
+    # Sourcing file with 'source'
+    echo "source ${firewall_rules_file}" > "/etc/default/minifirewall"
+    # … the check should be "critical"
+    run /usr/lib/bkctld/bkctld-check
+    assert_equal "0" "$status"
+}

@@ -284,3 +284,12 @@ mount_jail_fs() {
     ln -fs "${jail_path}/proc/self/fd/2" "${jail_path}/dev/stderr"
     ln -fs "${jail_path}/proc/kcore" "${jail_path}/dev/core"
 }
+
+read_variable() {
+    file=${1:?}
+    var_name=${2:?}
+
+    pattern="^\s*${var_name}=-?[0-9]+"
+
+    grep --extended-regexp --only-matching "${pattern}" "${file}" | cut -d= -f2
+}

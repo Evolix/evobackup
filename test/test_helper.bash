@@ -5,7 +5,7 @@ setup() {
     rm -f /root/bkctld.key*
     ssh-keygen -t rsa -N "" -f /root/bkctld.key -q
 
-    grep -qE "^BACKUP_DISK=" /etc/default/bkctld || echo "BACKUP_DISK=/dev/vdb" >> /etc/default/bkctld
+    set_variable "/etc/default/bkctld" "BACKUP_DISK" "/dev/vdb"
 
     JAILNAME=$(tr -cd '[:alnum:]' < /dev/urandom | fold -w15 | head -n1)
     JAILPATH="/backup/jails/${JAILNAME}"
@@ -17,7 +17,26 @@ setup() {
 }
 
 teardown() {
+    remove_variable "/etc/default/bkctld" "BACKUP_DISK"
     /usr/lib/bkctld/bkctld-remove "${JAILNAME}" && rm -rf "${INCSPATH}"
+}
+
+set_variable() {
+    file=${1:?}
+    var_name=${2:?}
+    var_value=${3:-}
+
+    if grep -qE "^\s*${var_name}=" "${file}"; then
+        sed -i "s|^\s*${var_name}=.*|${var_name}=${var_value}|" "${file}"
+    else
+        echo "${var_name}=${var_value}" >> "${file}"
+    fi
+}
+remove_variable() {
+    file=${1:?}
+    var_name=${2:?}
+
+    sed -i "s|^\s*${var_name}=.*|d" "${file}"
 }
 
 is_btrfs() {
