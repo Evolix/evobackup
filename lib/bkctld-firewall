@@ -23,13 +23,18 @@ iptables_input_accept() {
 }
 
 if [ -n "${FIREWALL_RULES}" ]; then
+    # remove existing rules for this jail
     [ -f "${FIREWALL_RULES}" ] && sed -i "/#${jail_name}$/d" "${FIREWALL_RULES}"
     if [ -d "${jail_path}" ]; then
         port=$("${LIBDIR}/bkctld-port" "${jail_name}")
+        # Add a rule for each IP
         for ip in $("${LIBDIR}/bkctld-ip" "${jail_name}"); do
             iptables_input_accept "${jail_name}" "${port}" "${ip}" >> "${FIREWALL_RULES}"
         done
+        # Restart the firewall
         [ -f /etc/init.d/minifirewall ] && /etc/init.d/minifirewall restart >/dev/null
     fi
     notice "${jail_name}: firewall rules have been updated."
+else
+    warning "${jail_name}: skipping firewall update, FIREWALL_RULES variable is empty."
 fi
