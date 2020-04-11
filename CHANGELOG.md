@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Create a blank SSH "authorized_keys" file on jail init
 * Many new tests with BATS
 * Check for firewall configuration in bkcld-check
+* Run the test suite on Buster (ext4/btrfs) in addition of Stretch (ext4/btrfs)
 
 ### Changed
 
