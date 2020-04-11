@@ -5,24 +5,24 @@
 
 function _bkctld()
 {
-	local cur prev commands jails keys
+    local cur prev commands jails keys
 
-	cur=${COMP_WORDS[COMP_CWORD]};
-	prev=${COMP_WORDS[COMP_CWORD-1]};
-	commands=$(find /usr/lib/bkctld/ -name "bkctld-*" -exec basename {} \;|sed 's/^bkctld-//')
+    cur=${COMP_WORDS[COMP_CWORD]};
+    prev=${COMP_WORDS[COMP_CWORD-1]};
+    commands=$(find /usr/lib/bkctld/ -name "bkctld-*" -exec basename {} \; | sed 's/^bkctld-//')
 
-	if [ $COMP_CWORD -eq 1 ]; then
-		COMPREPLY=($(compgen -W '${commands}' -- ${cur}))
-	elif [ $COMP_CWORD -eq 2 ]; then
-		[ -f /etc/default/bkctld ] && source /etc/default/bkctld
-		[ -z "${JAILDIR}" ] && JAILDIR='/backup/jails'
-		jails=$(ls "${JAILDIR}")
-  		COMPREPLY=($(compgen -W "${jails}" -- ${cur}))
-	elif [ $COMP_CWORD -eq 3 ]; then
-		keys=$(ls *.pub)
-		COMPREPLY=($(compgen -W "${keys}" -- ${cur}))
-	fi
+    if [ $COMP_CWORD -eq 1 ]; then
+        COMPREPLY=($(compgen -W '${commands}' -- ${cur}))
+    elif [ $COMP_CWORD -eq 2 ]; then
+        [ -f /etc/default/bkctld ] && source /etc/default/bkctld
+        [ -z "${JAILDIR}" ] && JAILDIR='/backup/jails'
+        jails=$(ls "${JAILDIR}")
+          COMPREPLY=($(compgen -W "${jails}" -- ${cur}))
+    elif [ $COMP_CWORD -eq 3 ]; then
+        keys=$(ls *.pub)
+        COMPREPLY=($(compgen -W "${keys}" -- ${cur}))
+    fi
 
-	return 0
+    return 0
 } &&
 complete -F _bkctld bkctld
