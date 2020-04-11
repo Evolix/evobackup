@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Configure locales in Vagrant VM
 * Split BATS tests file and use helper functions
 * Improve "lib" detection
+* Revamp the README
 
 ### Deprecated
 
