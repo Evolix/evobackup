@@ -2,6 +2,7 @@
 #
 # Copyright (c) 2017 Victor Laborie <vlaborie@evolix.fr>
 #
+# shellcheck shell=bash
 
 function _bkctld()
 {
