@@ -19,7 +19,6 @@ Warning: `cp`-ing the files without `-n` or `-i` will replace existing files !
 ~~~
 # git clone https://gitea.evolix.org/evolix/evobackup.git
 # cd evobackup
-# git checkout jlecour-refactoring
 # cp bkctld /usr/local/sbin/
 # mkdir -p /usr/local/lib/bkctld
 # cp lib/* /usr/local/lib/bkctld/
