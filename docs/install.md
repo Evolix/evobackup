@@ -52,7 +52,7 @@ apt install \
 
 ## Client dependencies
 
-The clients only require OpenSSH and rsync.
+The clients only require OpenSSH and Rsync.
 
 ### Cron job for incremental backups
 
@@ -66,6 +66,6 @@ Edit the root crontab
 ~~~
 
 ## Notes
-If you want mutiples backups in a day (1 by hour maximum) you can
+If you want mutiples backups in a day (1 per hour maximum) you can
 run `bkctld inc` multiples times, if you want to keep incremental
 backups **for ever**, just don't run `bkctld rm`.
