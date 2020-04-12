@@ -79,8 +79,9 @@ for jail_name in $(jails_list); do
     # If not incs policy if found, we don't remove incs
     if [ -n "${incs_policy_file}" ]; then
         incs_policy_keep_file="$(mktemp)"
+        incs_list_file="$(mktemp)"
         # shellcheck disable=SC2064
-        trap "rm ${incs_policy_keep_file}" 0
+        trap "rm -f ${incs_policy_keep_file} ${incs_list_file}" 0
 
         # loop for each line in jail configuration
         for incs_policy_line in $(grep "^\+" ${incs_policy_file}); do
@@ -88,11 +89,14 @@ for jail_name in $(jails_list); do
             incs_policy_date=$(relative_date ${incs_policy_line})
             echo ${incs_policy_date} >> "${incs_policy_keep_file}"
         done
+        for inc_name in $(incs_list "${jail_name}"); do
+            echo "${inc_name}" >> ${incs_list_file}
+        done
         # shellcheck disable=SC2046
-        incs_to_delete=$(echo $(incs_list "${jail_name}") | grep -v -f "${incs_policy_keep_file}")
+        incs_to_delete=$(grep -v -f "${incs_policy_keep_file}" "${incs_list_file}")
 
         if [ -n "${incs_to_delete}" ]; then
-            notice "${jail_name}: incs to be deleted : $(echo "${incs_to_delete}" | tr '\n', ',')."
+            debug "${jail_name}: incs to be deleted : $(echo "${incs_to_delete}" | tr '\n', ',' | sed 's/,$//')."
             for inc_name in ${incs_to_delete}; do
                 inc_path=$(inc_path "${jail_name}" "${inc_name}")
                 if is_btrfs "${inc_path}"; then
