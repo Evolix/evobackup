@@ -77,7 +77,7 @@ for jail_name in $(jails_list); do
     inc_path=$(inc_path "${jail_name}" "${inc_name}")
     incs_policy_file=$(current_jail_incs_policy_file ${jail_name})
 
-    # If not incs policy is found, we don't create incs
+    # If no incs policy is found, we don't create incs
     if [ -n "${incs_policy_file}" ]; then
         # If not incs directory is found, we don't create incs
         if [ ! -d "${inc_path}" ]; then
