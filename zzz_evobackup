@@ -160,6 +160,10 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
     # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 -Q --opt --events --hex-blob --skip-comments \
     #  --fields-enclosed-by='\"' --fields-terminated-by=',' -T /home/mysqldump/$i $i; done
 
+    ## Dump all grants (requires 'percona-toolkit' package)
+    # mkdir -p -m 700 /home/mysqldump/
+    # pt-show-grants --flush --no-header > /home/mysqldump/all_grants.sql
+
     ## example with SQL dump (schema only, no data) for each databases
     # mkdir -p -m 700 /home/mysqldump/
     # for i in $(mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 -e 'show databases' -s --skip-column-names \
