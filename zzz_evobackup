@@ -15,6 +15,9 @@
 #
 # /!\ DON'T FORGET TO SET "MAIL" and "SERVERS" VARIABLES
 
+# Fail on unassigned variables
+set -u
+
 ##### Configuration ###################################################
 
 # email adress for notifications
@@ -95,7 +98,10 @@ pick_server() {
         new_error="No more server available"
         SERVERS_SSH_ERRORS=$(printf "%s\n%s" "${SERVERS_SSH_ERRORS}" "${new_error}" | sed -e '/^$/d')
 
+        # Log errors to stderr
         printf "%s\n" "${SERVERS_SSH_ERRORS}" >&2
+        # Log errors to logfile
+        printf "%s\n" "${SERVERS_SSH_ERRORS}" >> $LOGFILE
         return 1
     fi
 
@@ -153,6 +159,10 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
     # do mkdir -p -m 700 /home/mysqldump/$i ; chown -RL mysql /home/mysqldump ; \
     # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 -Q --opt --events --hex-blob --skip-comments \
     #  --fields-enclosed-by='\"' --fields-terminated-by=',' -T /home/mysqldump/$i $i; done
+
+    ## Dump all grants (requires 'percona-toolkit' package)
+    # mkdir -p -m 700 /home/mysqldump/
+    # pt-show-grants --flush --no-header > /home/mysqldump/all_grants.sql
 
     ## example with SQL dump (schema only, no data) for each databases
     # mkdir -p -m 700 /home/mysqldump/
@@ -300,7 +310,7 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
         pkg_info -m > ${LOCAL_BACKUP_DIR}/packages
 
         ## Dump MBR / table partitions
-        ##disklabel sd0 > ${LOCAL_BACKUP_DIR}/partitions
+        disklabel sd0 > ${LOCAL_BACKUP_DIR}/partitions
 
         ## Dump pf infos
         pfctl -sa > ${LOCAL_BACKUP_DIR}/pfctl-sa.txt
@@ -343,7 +353,7 @@ SSH_PORT=$(echo "${server}" | cut -d':' -f2)
 HOSTNAME=$(hostname)
 
 if [ "${SYSTEM}" = "linux" ]; then
-    rep="/bin /boot /lib /opt /sbin /usr"
+    rep="/bin /boot /lib /opt /sbin /usr /srv"
 else
     rep="/bsd /bin /sbin /usr"
 fi
@@ -391,7 +401,6 @@ if [ "${SYNC_TASKS}" = "1" ]; then
             /root                                          \
             /var                                           \
             /home                                          \
-            /srv                                           \
         -e "${RSH_COMMAND}"                                \
         "root@${SSH_SERVER}:/var/backup/"                  \
         | tail -30 >> $LOGFILE

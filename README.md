@@ -1,37 +1,43 @@
-Bkctld (aka evobackup)
+Bkctld (aka server-side evobackup)
 =========
 
-Bkctld is a shell script that creates and manages a backup server
-which can handle the backups of many other servers (clients). It
-is licensed under the AGPLv3.
+bkctld helps you manage the receiving side of a backup infrastructure.
+It is licensed under the AGPLv3.
 
-It uses SSH chroots (called "jails" in the FreeBSD world) to sandbox
-every clients backups. Each client will upload it's data every day
-using rsync in it's chroot (using the root account).  Prior backups
-are stored incrementally outside of the chroot using hard links or
-BTRFS snapshots.  (So they can not be affected by the client). 
+With bkctld you create and manage "jails". They contain a chrooted and dedicated SSH server, with it's own TCP port and optionnaly it's own set of iptables rules.
 
-Using this method, we can keep a large quantity of backups of each
-client securely and efficiently.
+With bkctld you can have hundreds of jails, one for each client to push its data (using Rsync/SFTP). Each client can only see its own data.
+
+In addition to the traditional "ext4" filesystem, bkctld also supports the btrfs filesystem and manages subvolumes automatically.
+
+With bkctld you can create "timestamped" copies of the data, to keep different versions of the same data at different points in time. If the filesystem is btrfs, it creates subvolumes snapshots, otherwise it creates copies with hard-links (for file-level deduplication).
+
+With btrfs you can have a data retention policy to automatically destroy timestamped copies of your data. For example, keep a copy for the last 5 days and the first day of the last 3 months.
 
 ~~~
                                     Backup server
                                     ************
-Server 1 ------ SSH/rsync ------->  * tcp/2222 *
-                                    *          *
-Server 2 ------ SSH/rsync ------->  * tcp/2223 *
+Client 1 ------ SSH/Rsync ------->  * tcp/2222 *
+                                    ************
+Client 2 ------ SSH/Rsync ------->  * tcp/2223 *
                                     ************
 ~~~
 
-This method uses standard tools (ssh, rsync, cp -al, btrfs subvolume)
-and has been used for many years by Evolix to backup hundreds of
-servers, totaling many terabytes of data, each day.  bkctld has
-been tested on Debian Jessie and should be compatible with other
-Debian versions or derived distributions like Ubuntu.
+This method uses standard tools (ssh, rsync, cp -al, btrfs subvolume) and has been used for many years by Evolix to backup hundreds of servers, totaling many terabytes of data, each day. bkctld has been tested on Debian Jessie (8), Stretch (9) and Buster (10) and should be compatible with other Debian versions or derived distributions like Ubuntu.
 
-A large enough volume must be mounted on `/backup`, we recommend
-the usage of **BTRFS** so you can use sub-volumes and snapshots.
+A large enough volume must be mounted on `/backup`, we recommend the usage of **BTRFS** so you can use sub-volumes and snapshots.
 This volume can also be encrypted with **LUKS**.
+
+## Security considerations
+
+The client obviously has access to its uploaded data (in the chroot), but the timestamped copies are outside the chroot, to reduce the risk or complete backup erasure from a compromised client.
+
+Since the client connects to the backup server with root, it can mess with the jail and destroy the data. But the timestamped copies are out of reach because outside of the chroot.
+
+It means that **if the client server is compromised**, an attacker can destroy the latest copy of the backed up data, but not the timestamped copies.
+And **if the backup server is compromised** an attacker has complete access to all the backup data (inside and outside the jails), but they don't have any access to the client.
+
+This architecture is as secure as SSH, Rsync, chroot and iptables are.
 
 ## Install
 
@@ -47,7 +53,7 @@ vagrant up
 
 ### Deployment
 
-Launch rsync-auto in a terminal for automatic synchronization of
+Run `vagrant rsync-auto` in a terminal for automatic synchronization of
 your local code with Vagrant VM :
 
 ~~~
@@ -57,11 +63,21 @@ vagrant rsync-auto
 ### Bats
 
 You can run [bats](https://github.com/sstephenson/bats) tests with
-the *test* provision :
+the *test* provisioner :
 
 ~~~
 vagrant provision --provision-with test
 ~~~
+
+You can also run the tests from inside the VM
+
+~~~
+localhost $ vagrant ssh buster-btrfs
+vagrant@buster-btrfs $ sudo -i
+root@buster-btrfs # bats /vagrant/test/*.bats
+~~~
+
+You should shellcheck your bats files, but with shellcheck > 0.4.6, because the 0.4.0 version doesn't support bats syntax.
 
 ## Usage
 
@@ -82,8 +98,8 @@ pandoc -f markdown \
 
 #### Client configuration
 
-You can save various systems in the evobackup jails :  Linux, BSD,
-Windows, MacOSX. The only prerequisite is the rsync command.
+You can backup various systems in the evobackup jails : Linux, BSD,
+Windows, macOS. The only need Rsync or an SFTP client.
 
 ~~~
 rsync -av -e "ssh -p SSH_PORT" /home/ root@SERVER_NAME:/var/backup/home/
@@ -94,7 +110,7 @@ clone the evobackup repository and read the **CLIENT CONFIGURATION**
 section of the manual.
 
 ~~~
-git clone https://forge.evolix.org/evobackup.git
+git clone https://gitea.evolix.org/evolix/evobackup.git
 cd evobackup
 man ./docs/bkctld.8
 ~~~

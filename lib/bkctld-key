@@ -4,22 +4,26 @@
 # Usage: key <jailname> [<keyfile>]
 #
 
-LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+# shellcheck source=./includes
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
 
-jail="${1:-}"
+jail_name="${1:?}"
 keyfile="${2:-}"
-if [ ! -n "${jail}" ]; then
+
+if [ ! -n "${jail_name}" ]; then
     "${LIBDIR}/bkctld-help" && exit 1
 fi
-[ -d "${JAILDIR}/${jail}" ] || error "${jail} : inexistant jail'"
+jail_path=$(jail_path "${jail_name}")
+
+test -d "${jail_path}" || error "${jail_name}: jail is missing."
 
 if [ -z "${keyfile}" ]; then
-    if [ -f "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}" ]; then
-        cat "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}"
+    if [ -f "${jail_path}/${AUTHORIZED_KEYS}" ]; then
+        cat "${jail_path}/${AUTHORIZED_KEYS}"
     fi
 else
-    [ -e "${keyfile}" ] || error "Keyfile ${keyfile} dosen't exist !"
-    cat "${keyfile}" > "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}"
-    chmod 600 "${JAILDIR}/${jail}/${AUTHORIZED_KEYS}"
-    notice "${jail} : update key => ${keyfile}"
+    test -r "${keyfile}" || error "${jail_name}: SSH key '${keyfile}' is missing or is not readable."
+    cat "${keyfile}" > "${jail_path}/${AUTHORIZED_KEYS}"
+    chmod 600 "${jail_path}/${AUTHORIZED_KEYS}"
+    notice "${jail_name}: SSH key has been updated with ${keyfile}"
 fi

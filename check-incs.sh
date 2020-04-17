@@ -22,25 +22,34 @@ rc=0
 # loop for each configured jail
 for file in ${EVOBACKUP_CONFIGS}; do
     jail_name=$(basename ${file})
+
     # check if jail is present
     if jail_exists ${jail_name}; then
+        today=$(date +"%s")
         # get jail last configuration date
         jail_config_age=$(date --date "$(stat -c %y ${file})" +"%s")
+
         # loop for each line in jail configuration
         for line in $(cat ${file}); do
             # inc date in ISO format
             inc_date=$(relative_date ${line})
             # inc date in seconds from epoch
             inc_age=$(date --date "${inc_date}" +"%s")
-            # check if the configuration changed after the inc date
-            if [ "${jail_config_age}" -lt "${inc_age}" ]; then
-                # Error if inc is not found
-                if ! inc_exists ${jail_name}/${inc_date}*; then
-                    echo "ERROR: inc is missing \`${jail_name}/${inc_date}'" >&2
-                    rc=1
-                fi
-            else
+
+            # skip line if date is inthe future
+            if [ "${inc_age}" -gt "${today}" ]; then
                 echo "INFO: no inc expected for ${inc_date} \`${jail_name}'"
+            else
+                # check if the configuration changed after the inc date
+                if [ "${jail_config_age}" -lt "${inc_age}" ]; then
+                    # Error if inc is not found
+                    if ! inc_exists ${jail_name}/${inc_date}*; then
+                        echo "ERROR: inc is missing \`${jail_name}/${inc_date}'" >&2
+                        rc=1
+                    fi
+                else
+                    echo "INFO: no inc expected for ${inc_date} \`${jail_name}'"
+                fi
             fi
         done
     else

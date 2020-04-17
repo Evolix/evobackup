@@ -4,15 +4,19 @@
 # Usage: reload <jailname>|all
 #
 
-LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+# shellcheck source=./includes
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
 
-jail="${1:-}"
-if [ ! -n "${jail}" ]; then
+jail_name="${1:?}"
+if [ -z "${jail_name}" ]; then
     "${LIBDIR}/bkctld-help" && exit 1
 fi
-[ -d "${JAILDIR}/${jail}" ] || error "${jail} : trying to reload inexistant jail"
-"${LIBDIR}/bkctld-is-on" "${jail}" || exit 0
+jail_path=$(jail_path "${jail_name}")
 
-pid=$(cat "${JAILDIR}/${jail}/${SSHD_PID}")
+test -d "${jail_path}" || error "${jail_name}: jail is missing."
 
-kill -HUP "${pid}" && notice "${jail} was reloaded [${pid}]"
+"${LIBDIR}/bkctld-is-on" "${jail_name}" || exit 0
+
+pid=$(cat "${jail_path}/${SSHD_PID}")
+
+kill -HUP "${pid}" && notice "${jail_name}: jail has been reloaded [${pid}]"

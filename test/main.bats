@@ -1,133 +1,69 @@
 #!/usr/bin/env bats
+# shellcheck disable=SC1089,SC1083,SC2154
 
-setup() {
-    port=$(awk -v min=2222 -v max=2999 'BEGIN{srand(); print int(min+rand()*(max-min+1))}')
-    date=$(date +"%Y-%m-%d-%H")
-    inode=$(stat --format=%i /backup)
-    rm -f /root/bkctld.key* && ssh-keygen -t rsa -N "" -f /root/bkctld.key -q
-    . /usr/lib/bkctld/config
-    JAILNAME=$(tr -cd '[:alnum:]' < /dev/urandom | fold -w15 | head -n1)
-}
+load test_helper
 
-teardown() {
-    /usr/lib/bkctld/bkctld-remove "${JAILNAME}" && rm -rf "${INCDIR}/*"
-}
-
-@test "init" {
-    /usr/lib/bkctld/bkctld-init "${JAILNAME}"
-    inode=$(stat --format=%i /backup)
-    if [ "${inode}" -eq 256 ]; then
-        run stat --format=%i "${JAILDIR}/${JAILNAME}"
-        [ "${output}" -eq 256 ]
+@test "Filesystem type" {
+    if is_btrfs "/backup"; then
+        # On a btrfs filesystem, the jail should be a btrfs volume
+        run is_btrfs "${JAILPATH}"
+        assert_success
     else
-        run test -d "${JAILDIR}/${JAILNAME}"
-        [ "${status}" -eq 0 ]
+        # On an ext4 filesystem, the jail should be a regular directory
+        run test -d "${JAILPATH}"
+        assert_success
     fi
 }
 
-@test "start" {
-    /usr/lib/bkctld/bkctld-init "${JAILNAME}"
+@test "A jail should be able to be started" {
     /usr/lib/bkctld/bkctld-start "${JAILNAME}"
-    pid=$(cat "${JAILDIR}/${JAILNAME}/${SSHD_PID}")
+    pid=$(cat "${JAILPATH}/${SSHD_PID}")
+    # A started jail should have an SSH pid file
     run ps --pid "${pid}"
-    [ "${status}" -eq 0 ]
+    assert_success
 }
 
-@test "stop" {
-    /usr/lib/bkctld/bkctld-init "${JAILNAME}"
+@test "A jail should be able to be stopped" {
     /usr/lib/bkctld/bkctld-start "${JAILNAME}"
-    pid=$(cat "${JAILDIR}/${JAILNAME}/${SSHD_PID}")
+    pid=$(cat "${JAILPATH}/${SSHD_PID}")
     /usr/lib/bkctld/bkctld-stop "${JAILNAME}"
+    # A stopped jail should not have an SSH pid file
     run ps --pid "${pid}"
-    [ "${status}" -ne 0 ]
+    assert_failure
 }
 
-@test "reload" {
-    /usr/lib/bkctld/bkctld-init "${JAILNAME}"
+@test "A jail should be able to be reloaded" {
     /usr/lib/bkctld/bkctld-start "${JAILNAME}"
     /usr/lib/bkctld/bkctld-reload "${JAILNAME}"
-    run grep "Received SIGHUP; restarting." "${JAILDIR}/${JAILNAME}/var/log/authlog"
-    [ "${status}" -eq 0 ]
+    # A reloaded jail should mention the restart in the authlog
+    run grep "Received SIGHUP; restarting." "${JAILPATH}/var/log/authlog"
+    assert_success
 }
 
-@test "restart" {
-    /usr/lib/bkctld/bkctld-init "${JAILNAME}"
+@test "A jail should be able to be restarted" {
     /usr/lib/bkctld/bkctld-start "${JAILNAME}"
-    bpid=$(cat "${JAILDIR}/${JAILNAME}/${SSHD_PID}")
+    pid_before=$(cat "${JAILPATH}/${SSHD_PID}")
+
     /usr/lib/bkctld/bkctld-restart "${JAILNAME}"
-    apid=$(cat "${JAILDIR}/${JAILNAME}/${SSHD_PID}")
-    [ "${bpid}" -ne "${apid}" ]
+    pid_after=$(cat "${JAILPATH}/${SSHD_PID}")
+
+    # A restarted jail should have a different pid
+    refute_equal "${pid_before}" "${pid_after}"
 }
 
-@test "status" {
-    /usr/lib/bkctld/bkctld-init "${JAILNAME}"
+@test "Status should return information" {
     run /usr/lib/bkctld/bkctld-status "${JAILNAME}"
-    [ "${status}" -eq 0 ]
+    assert_success
 }
 
-@test "key" {
-    /usr/lib/bkctld/bkctld-init "${JAILNAME}"
+@test "ON/OFF status can be retrived with 'is-on'" {
     /usr/lib/bkctld/bkctld-start "${JAILNAME}"
-    /usr/lib/bkctld/bkctld-key "${JAILNAME}" /root/bkctld.key.pub
-    run cat "/backup/jails/${JAILNAME}/root/.ssh/authorized_keys"
-    [ "${status}" -eq 0 ]
-    [ "${output}" = $(cat /root/bkctld.key.pub) ]
-}
+    # A started jail should report to be ON
+    run /usr/lib/bkctld/bkctld-is-on "${JAILNAME}"
+    assert_success
 
-@test "port" {
-    /usr/lib/bkctld/bkctld-init "${JAILNAME}"
-    /usr/lib/bkctld/bkctld-start "${JAILNAME}"
-    /usr/lib/bkctld/bkctld-port "${JAILNAME}" "${port}"
-    run nc -vz 127.0.0.1 "${port}"
-    [ "${status}" -eq 0 ]
-}
-
-@test "inc" {
-    /usr/lib/bkctld/bkctld-init "${JAILNAME}"
-    /usr/lib/bkctld/bkctld-inc
-    if [ "${inode}" -eq 256 ]; then
-        run stat --format=%i "${INCDIR}/${JAILNAME}/${date}"
-        [ "${output}" -eq 256 ]
-    else
-        run test -d "${INCDIR}/${JAILNAME}/${date}"
-        [ "${status}" -eq 0 ]
-    fi
-}
-
-@test "ssh" {
-    /usr/lib/bkctld/bkctld-init "${JAILNAME}"
-    /usr/lib/bkctld/bkctld-start "${JAILNAME}"
-    /usr/lib/bkctld/bkctld-port "${JAILNAME}" "${port}"
-    /usr/lib/bkctld/bkctld-key "${JAILNAME}" /root/bkctld.key.pub
-    run ssh -p "${port}" -i /root/bkctld.key -oStrictHostKeyChecking=no root@127.0.0.1 ls
-    [ "$status" -eq 0 ]
-}
-
-@test "rsync" {
-    /usr/lib/bkctld/bkctld-init "${JAILNAME}"
-    /usr/lib/bkctld/bkctld-start "${JAILNAME}"
-    /usr/lib/bkctld/bkctld-port "${JAILNAME}" "${port}"
-    /usr/lib/bkctld/bkctld-key "${JAILNAME}" /root/bkctld.key.pub
-    run rsync -a -e "ssh -p ${port} -i /root/bkctld.key -oStrictHostKeyChecking=no" /tmp/ root@127.0.0.1:/var/backup/
-    [ "$status" -eq 0 ]
-}
-
-@test "check-ok" {
-    /usr/lib/bkctld/bkctld-init "${JAILNAME}"
-    run /usr/lib/bkctld/bkctld-check
-    [ "$status" -eq 0 ]
-}
-
-@test "check-warning" {
-    /usr/lib/bkctld/bkctld-init "${JAILNAME}"
-    touch --date="$(date -d -2days)" "/backup/jails/${JAILNAME}/var/log/lastlog"
-    run /usr/lib/bkctld/bkctld-check
-    [ "$status" -eq 1 ]
-}
-
-@test "check-critical" {
-    /usr/lib/bkctld/bkctld-init "${JAILNAME}"
-    touch --date="$(date -d -3days)" "/backup/jails/${JAILNAME}/var/log/lastlog"
-    run /usr/lib/bkctld/bkctld-check
-    [ "$status" -eq 2 ]
+    /usr/lib/bkctld/bkctld-stop "${JAILNAME}"
+    # A stopped jail should not report to be ON
+    run /usr/lib/bkctld/bkctld-is-on "${JAILNAME}"
+    assert_failure
 }

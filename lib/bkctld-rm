@@ -4,41 +4,109 @@
 # Usage: rm
 #
 
-LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+# shellcheck source=./includes
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
 
-for jail in $("${LIBDIR}/bkctld-list"); do
-    incs=$(ls "${INCDIR}/${jail}")
-    if [ -f "${CONFDIR}/${jail}" ]; then
-        keepfile="$(mktemp)"
-        while read j; do
-            date=$( echo "${j}" | cut -d. -f1 )
-            before=$( echo "${j}" | cut -d. -f2 )
-            date -d "$(date "${date}") ${before}" "+%Y-%m-%d"
-        done < "${CONFDIR}/${jail}" > "${keepfile}"
-        for j in $(echo "${incs}" | grep -v -f "${keepfile}"); do
-            start=$(date +"%H:%M:%S")
-            inc_inode=$(stat --format=%i "${INCDIR}/${jail}/${j}")
-            if [ "${inc_inode}" -eq 256 ]; then
-                /bin/btrfs subvolume delete "${INCDIR}/${jail}/${j}" | debug
-                end=$(date +"%H:%M:%S")
-                notice "${jail} : deleted ${j} inc [${start}/${end}]"
-            else
-                lock="/run/lock/bkctld/rm-${jail}.lock"
-                if [ -f "${lock}" ]; then
-                    warning "${jail} : trying to run already running rm"
-                else
-                    (
-                        empty="/tmp/bkctld-${$}-$(date +%N)"
-                        mkdir -p /run/lock/bkctld && touch "${lock}" && mkdir -p "${empty}"
-                        trap "rm -f ${lock} && rmdir ${empty}" 0
-                        rsync -a --delete "${empty}/" "${INCDIR}/${jail}/${j}/"
-                        rmdir "${INCDIR}/${jail}/${j}/"
-                        end=$(date +"%H:%M:%S")
-                        notice "${jail} : deleted ${j} inc [${start}/${end}]"
-                    )
-                fi
-            fi
+relative_date() {
+    format=$(echo $1 | cut -d'.' -f1)
+    time_jump=$(echo $1 | cut -d'.' -f2)
+
+    reference_date=$(date "${format}")
+    past_date=$(date --date "${reference_date} ${time_jump}" +"%Y-%m-%d")
+
+    echo ${past_date}
+}
+
+delete_inc_btrfs() {
+    jail_name=$1
+    inc_name=$2
+
+    inc_path=$(inc_path "${jail_name}" "${inc_name}")
+
+    start=$(current_time)
+
+    if dry_run; then
+        echo "[dry-run] delete btrfs subvolume ${inc_path}"
+    else
+        /bin/btrfs subvolume delete "${inc_path}" | debug
+    fi
+
+    end=$(current_time)
+    notice "${jail_name}: inc '${inc_name}' has been deleted [${start}/${end}]"
+}
+delete_inc_ext4() {
+    jail_name=$1
+    inc_name=$2
+
+    inc_path=$(inc_path "${jail_name}" "${inc_name}")
+
+    lock_file="${LOCKDIR}/rm-global.lock"
+    if [ -f "${lock_file}" ]; then
+        # Get Process ID from the lock file
+        pid=$(cat "${lock_file}")
+        if kill -0 ${pid} 2> /dev/null; then
+            # Kill the children
+            pkill -9 --parent "${pid}"
+            # Kill the parent
+            kill -9 "${pid}"
+            # Remove the lock file
+            rm -f ${lock_file}
+            warning "Process ${pid} has been killed. Only one ${0} can run in parallel, the latest wins."
+        else
+            error "Empty lockfile '${lock_file}'. It should contain a PID."
+        fi
+    fi
+
+    mkdir --parents "${LOCKDIR}" && echo $$ > ${lock_file} || error "Failed to acquire lock file '${lock_file}'"
+    empty=$(mktemp -d --suffix ".${$}" bkctld.XXXXX)
+    # shellcheck disable=SC2064
+    trap "rm -f ${lock_file}; rmdir ${empty}" 0
+
+    if dry_run; then
+        echo "[dry-run] delete ${inc_path} with rsync from ${empty}"
+    else
+        rsync --archive --delete "${empty}/" "${inc_path}/"
+        rmdir "${inc_path}/"
+    fi
+
+    end=$(current_time)
+    notice "${jail_name}: inc '${inc_name}' has been deleted [${start}/${end}]"
+}
+
+for jail_name in $(jails_list); do
+    incs_policy_file=$(current_jail_incs_policy_file ${jail_name})
+
+    # If not incs policy if found, we don't remove incs
+    if [ -n "${incs_policy_file}" ]; then
+        incs_policy_keep_file="$(mktemp)"
+        incs_list_file="$(mktemp)"
+        # shellcheck disable=SC2064
+        trap "rm -f ${incs_policy_keep_file} ${incs_list_file}" 0
+
+        # loop for each line in jail configuration
+        for incs_policy_line in $(grep "^\+" ${incs_policy_file}); do
+            # inc date in ISO format
+            incs_policy_date=$(relative_date ${incs_policy_line})
+            echo ${incs_policy_date} >> "${incs_policy_keep_file}"
         done
-        rm "${keepfile}"
+        for inc_name in $(incs_list "${jail_name}"); do
+            echo "${inc_name}" >> ${incs_list_file}
+        done
+        # shellcheck disable=SC2046
+        incs_to_delete=$(grep -v -f "${incs_policy_keep_file}" "${incs_list_file}")
+
+        if [ -n "${incs_to_delete}" ]; then
+            debug "${jail_name}: incs to be deleted : $(echo "${incs_to_delete}" | tr '\n', ',' | sed 's/,$//')."
+            for inc_name in ${incs_to_delete}; do
+                inc_path=$(inc_path "${jail_name}" "${inc_name}")
+                if is_btrfs "${inc_path}"; then
+                    delete_inc_btrfs "${jail_name}" "${inc_name}"
+                else
+                    delete_inc_ext4 "${jail_name}" "${inc_name}"
+                fi
+            done
+        else
+            notice "${jail_name}: no inc to be deleted."
+        fi
     fi
 done
