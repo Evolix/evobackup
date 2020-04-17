@@ -1,7 +1,7 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: bkctld
 Upstream-Contact: Evolix <equipe@evolix.fr>
-Source: https://forge.evolix.org/projects/evobackup/repository
+Source: https://gitea.evolix.org/evolix/evobackup/
 
 Files: *
 Copyright: 2016-2020 Evolix <equipe@evolix.fr>
