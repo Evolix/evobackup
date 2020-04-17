@@ -3,8 +3,12 @@
 # bkctld is a shell script to create and manage a backup server which will
 # handle the backup of many servers (clients).
 #
-# Author: Victor Laborie <vlaborie@evolix.fr>
-# Contributor: Benoît Série <bserie@evolix.fr>, Gregory Colpart <reg@evolix.fr>, Romain Dessort <rdessort@evolix.fr>, Tristan Pilat <tpilat@evolix.fr>
+# Authors: Victor Laborie <vlaborie@evolix.fr>
+#          Jérémy Lecour <jlecour@evolix.fr>
+#          Benoît Série <bserie@evolix.fr>
+#          Gregory Colpart <reg@evolix.fr>
+#          Romain Dessort <rdessort@evolix.fr>
+#          Tristan Pilat <tpilat@evolix.fr>
 # Licence: AGPLv3
 #
 
@@ -12,12 +16,22 @@ set -u
 
 [ "$(id -u)" -ne 0 ] && error "You need to be root to run ${0} !"
 
-[ -d './lib' ] && LIBDIR='lib'
-[ -d '/usr/lib/bkctld' ] && LIBDIR='/usr/lib/bkctld'
-. "${LIBDIR}/config"
+basedir=$(dirname "$0")
+if [ "${basedir}" = "/usr/local/sbin" ] && [ -d "/usr/local/lib/bkctld" ]; then
+    LIBDIR='/usr/local/lib/bkctld'
+elif [ "${basedir}" = "/usr/sbin" ] && [ -d "/usr/lib/bkctld" ]; then
+    LIBDIR='/usr/lib/bkctld'
+elif [ -d './lib' ]; then
+    LIBDIR='lib'
+else
+    error "Failed to find a suitable lib directory for bkctld."
+fi
+
+# shellcheck source=lib/includes
+. "${LIBDIR}/includes"
 
 subcommand="${1:-}"
-jail="${2:-}"
+jail_name="${2:-}"
 option="${3:-}"
 
 if [ ! -x "${LIBDIR}/bkctld-${subcommand}" ]; then
@@ -28,24 +42,24 @@ case "${subcommand}" in
     "inc" | "rm" | "check" | "stats" | "help" | "list")
         "${LIBDIR}/bkctld-${subcommand}"
     ;;
-        "init" | "is-on")
-        "${LIBDIR}/bkctld-${subcommand}" "${jail}"
+    "init" | "is-on")
+        "${LIBDIR}/bkctld-${subcommand}" "${jail_name}"
     ;;
     "key" | "port" | "ip")
-        "${LIBDIR}/bkctld-${subcommand}" "${jail}" "${option}"
+        "${LIBDIR}/bkctld-${subcommand}" "${jail_name}" "${option}"
     ;;
     "start" | "stop" | "reload" | "restart" | "sync" | "update" | "remove" | "firewall")
-    if [ "${jail}" = "all" ]; then
-        "${LIBDIR}/bkctld-list"|xargs --no-run-if-empty --max-args=1 --max-procs=0 "${LIBDIR}/bkctld-${subcommand}"
-    else
-        "${LIBDIR}/bkctld-${subcommand}" "${jail}"
-    fi
+        if [ "${jail_name}" = "all" ]; then
+            "${LIBDIR}/bkctld-list" | xargs --no-run-if-empty --max-args=1 --max-procs=0 "${LIBDIR}/bkctld-${subcommand}"
+        else
+            "${LIBDIR}/bkctld-${subcommand}" "${jail_name}"
+        fi
     ;;
     "status")
-    if [ -z "${jail}" ]; then
-        "${LIBDIR}/bkctld-list"|xargs --no-run-if-empty --max-args=1 "${LIBDIR}/bkctld-${subcommand}"
-    else
-        "${LIBDIR}/bkctld-${subcommand}" "${jail}"
-    fi
+        if [ "${jail_name}" = "all" ] || [ -z "${jail_name}" ]; then
+            "${LIBDIR}/bkctld-list" | xargs --no-run-if-empty --max-args=1 "${LIBDIR}/bkctld-${subcommand}"
+        else
+            "${LIBDIR}/bkctld-${subcommand}" "${jail_name}"
+        fi
     ;;
 esac

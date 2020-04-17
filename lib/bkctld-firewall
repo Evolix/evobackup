@@ -4,21 +4,37 @@
 # Usage: firewall <jailname>|all
 #
 
-LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+# shellcheck source=./includes
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
 
-jail="${1:-}"
-if [ ! -n "${jail}" ]; then
+jail_name="${1:?}"
+
+if [ -z "${jail_name}" ]; then
     "${LIBDIR}/bkctld-help" && exit 1
 fi
+jail_path=$(jail_path "${jail_name}")
+
+iptables_input_accept() {
+    jail_name="${1}"
+    port="${2}"
+    ip="${3}"
+
+    echo "/sbin/iptables -A INPUT -p tcp --sport 1024: --dport ${port} -s ${ip} -j ACCEPT #${jail_name}"
+}
 
 if [ -n "${FIREWALL_RULES}" ]; then
-    [ -f "${FIREWALL_RULES}" ] && sed -i "/#${jail}$/d" "${FIREWALL_RULES}"
-    if [ -d "${JAILDIR}/${jail}" ]; then
-        port=$("${LIBDIR}/bkctld-port" "${jail}")
-        for ip in $("${LIBDIR}/bkctld-ip" "${jail}"); do
-            echo "/sbin/iptables -A INPUT -p tcp --sport 1024: --dport ${port} -s ${ip} -j ACCEPT #${jail}" >> "${FIREWALL_RULES}"
+    # remove existing rules for this jail
+    [ -f "${FIREWALL_RULES}" ] && sed -i "/#${jail_name}$/d" "${FIREWALL_RULES}"
+    if [ -d "${jail_path}" ]; then
+        port=$("${LIBDIR}/bkctld-port" "${jail_name}")
+        # Add a rule for each IP
+        for ip in $("${LIBDIR}/bkctld-ip" "${jail_name}"); do
+            iptables_input_accept "${jail_name}" "${port}" "${ip}" >> "${FIREWALL_RULES}"
         done
+        # Restart the firewall
         [ -f /etc/init.d/minifirewall ] && /etc/init.d/minifirewall restart >/dev/null
     fi
-    notice "${jail} : firewall rules updated"
+    notice "${jail_name}: firewall rules have been updated."
+else
+    warning "${jail_name}: skipping firewall update, FIREWALL_RULES variable is empty."
 fi

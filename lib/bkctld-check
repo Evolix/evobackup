@@ -4,9 +4,9 @@
 # Usage: check
 #
 
-LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+# shellcheck source=./includes
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
 
-cur_time=$(date "+%s")
 return=0
 nb_crit=0
 nb_warn=0
@@ -14,7 +14,10 @@ nb_ok=0
 nb_unkn=0
 output=""
 
+# Check if the backup disk is properly mounted
+
 if [ -b "${BACKUP_DISK}" ]; then
+    # If backup disk is encrypted, verify that it's open
     cryptsetup isLuks "${BACKUP_DISK}"
     if [ "$?" -eq 0 ]; then
         if [ ! -b '/dev/mapper/backup' ]; then
@@ -22,35 +25,77 @@ if [ -b "${BACKUP_DISK}" ]; then
             echo "cryptsetup luksOpen ${BACKUP_DISK} backup"
             exit 2
         fi
+        # Change value to real device
         BACKUP_DISK='/dev/mapper/backup'
     fi
-    grep -qE "^${BACKUP_DISK} " /etc/mtab
+    # Verify that it's mounted and writable
+    findmnt --source ${BACKUP_DISK} -O rw > /dev/null
     if [ "$?" -ne 0 ]; then
-         echo "Backup disk ${BACKUP_DISK} is not mounted !\n"
+         echo "Backup disk ${BACKUP_DISK} is not mounted (or read-only) !\n"
          echo "mount ${BACKUP_DISK} /backup"
          exit 2
     fi
 fi
 
-for jail in $("${LIBDIR}/bkctld-list"); do
-    if [ -f "${JAILDIR}/${jail}/var/log/lastlog" ]; then
-        last_conn=$(stat --format=%Y "${JAILDIR}/${jail}/var/log/lastlog")
-        date_diff=$(( (cur_time - last_conn) / (60*60) ))
-        if [ "${date_diff}" -gt "${CRITICAL}" ]; then
-            nb_crit=$((nb_crit + 1))
-            output="${output}CRITICAL - ${jail} - ${date_diff} hours\n"
-            [ "${return}" -le 2 ] && return=2
-        elif [ "${date_diff}" -gt "${WARNING}" ]; then
-            nb_warn=$((nb_warn + 1))
-            output="${output}WARNING - ${jail} - ${date_diff} hours\n"
-            [ "${return}" -le 1 ] && return=1
-        else
-            nb_ok=$((nb_ok + 1))
-            output="${output}OK - ${jail} - ${date_diff} hours\n"
-        fi
+# Check if the firewall file is sourced
+
+minifirewall_config=/etc/default/minifirewall
+
+if [ -n "${FIREWALL_RULES}" ] \
+&& [ -r "${FIREWALL_RULES}" ] \
+&& [ -f "${minifirewall_config}" ]; then
+    if ! grep -qE "^(\.|source) ${FIREWALL_RULES}" "${minifirewall_config}"; then
+        nb_warn=$((nb_warn + 1))
+        output="${output}WARNING - Firewall file '${FIREWALL_RULES}' doesn't seem to be sourced by '${minifirewall_config}'\n"
+        [ "${return}" -le 1 ] && return=1
+    fi
+fi
+
+# Check each jail status
+
+check_jail() {
+    jail_name=$1
+
+    jail_path=$(jail_path "${jail_name}")
+    cur_time=$(date "+%s")
+    last_conn=$(stat --format=%Y "${jail_path}/var/log/lastlog")
+    date_diff=$(( (cur_time - last_conn) / (60*60) ))
+
+    check_policy_file=$(current_jail_check_policy_file "${jail_name}")
+
+    if [ -f "${check_policy_file}" ]; then
+        local_critical=$(read_variable "${check_policy_file}" "CRITICAL")
+        local_warning=$(read_variable "${check_policy_file}" "WARNING")
+    else
+        unset local_critical
+        unset local_warning
+    fi
+    # reset to default values if missing local value
+    : ${local_critical:=${CRITICAL}}
+    : ${local_warning:=${WARNING}}
+
+    if [ "${local_critical}" -gt "0" ] && [ "${date_diff}" -gt "${local_critical}" ]; then
+        nb_crit=$((nb_crit + 1))
+        output="${output}CRITICAL - ${jail_name} - ${date_diff} hours (${local_warning}/${local_critical})\n"
+        [ "${return}" -le 2 ] && return=2
+    elif [ "${local_warning}" -gt "0" ] && [ "${date_diff}" -gt "${local_warning}" ]; then
+        nb_warn=$((nb_warn + 1))
+        output="${output}WARNING - ${jail_name} - ${date_diff} hours (${local_warning}/${local_critical})\n"
+        [ "${return}" -le 1 ] && return=1
+    else
+        nb_ok=$((nb_ok + 1))
+        output="${output}OK - ${jail_name} - ${date_diff} hours (${local_warning}/${local_critical})\n"
+    fi
+}
+
+for jail_name in $(jails_list); do
+    jail_path=$(jail_path "${jail_name}")
+
+    if [ -f "${jail_path}/var/log/lastlog" ]; then
+        check_jail "${jail_name}"
     else
         nb_unkn=$((nb_unkn + 1))
-        output="${output}UNKNOWN - ${jail} doesn't have lastlog !\n"
+        output="${output}UNKNOWN - ${jail_name} doesn't have lastlog !\n"
         [ "${return}" -le 3 ] && return=3
     fi
 done
@@ -58,11 +103,11 @@ done
 [ "${return}" -ge 0 ] && header="OK"
 [ "${return}" -ge 1 ] && header="WARNING"
 [ "${return}" -ge 2 ] && header="CRITICAL"
-[ "${return}" -ge 3 ] && header="UNKNOW"
+[ "${return}" -ge 3 ] && header="UNKNOWN"
 
 printf "%s - %s UNK / %s CRIT / %s WARN / %s OK\n\n" "${header}" "${nb_unkn}" "${nb_crit}" "${nb_warn}" "${nb_ok}"
 
-printf "${output}" | grep -E "^UNKNOW"
+printf "${output}" | grep -E "^UNKNOWN"
 printf "${output}" | grep -E "^CRITICAL"
 printf "${output}" | grep -E "^WARNING"
 printf "${output}" | grep -E "^OK"

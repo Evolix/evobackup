@@ -4,32 +4,28 @@
 # Usage: init <jailname>
 #
 
-LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+# shellcheck source=./includes
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
 
-jail="${1:-}"
-if [ ! -n "${jail}" ]; then
+jail_name="${1:?}"
+if [ -z "${jail_name}" ]; then
     "${LIBDIR}/bkctld-help" && exit 1
 fi
-[ -d "${JAILDIR}/${jail}" ] && error "${jail} : trying to create existant jail"
+jail_path=$(jail_path "${jail_name}")
 
-mkdir -p "${CONFDIR}" "${JAILDIR}"
-sshd_config="${TPLDIR}/sshd_config"
-inctpl="${TPLDIR}/inc.tpl"
-[ -f "${LOCALTPLDIR}/sshd_config" ] && sshd_config="${LOCALTPLDIR}/sshd_config"
-[ -f "${LOCALTPLDIR}/inc.tpl" ] && inctpl="${LOCALTPLDIR}/inc.tpl"
+test -d "${jail_path}" && error "${jail_name}: jail already exists."
 
-rootdir=$(dirname "${JAILDIR}")
-rootdir_inode=$(stat --format=%i "${rootdir}")
-jaildir_inode=$(stat --format=%i "${JAILDIR}")
-if [ "${rootdir_inode}" -eq 256 ] || [ "${jaildir_inode}" -eq 256 ]; then
-    /bin/btrfs subvolume create "${JAILDIR}/${jail}"
+# Create config and jails directory
+mkdir --parents "${CONFDIR}" "${JAILDIR}"
+
+
+if is_btrfs "$(dirname "${JAILDIR}")" || is_btrfs "${JAILDIR}"; then
+    /bin/btrfs subvolume create "${jail_path}"
 else
-    mkdir -p "${JAILDIR}/${jail}"
+    mkdir --parents "${jail_path}"
 fi
-. "${LIBDIR}/mkjail"
-info "4 - Copie default sshd_config"
-install -m 0640 "${sshd_config}" "${JAILDIR}/${jail}/${SSHD_CONFIG}"
-info "5 - Copie default inc configuration"
-install -m 0640 "${inctpl}" "${CONFDIR}/${jail}"
-"${LIBDIR}/bkctld-port" "${jail}" auto
-notice "${jail} : created jail"
+
+setup_jail_chroot "${jail_name}"
+setup_jail_config "${jail_name}"
+
+notice "${jail_name}: jail has been created"

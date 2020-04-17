@@ -155,31 +155,31 @@ the backup server administrator will need:
 
 He can then create the jail:
 
-	# bkctld init CLIENT_HOST_NAME
-	# bkctld key CLIENT_HOST_NAME /root/CLIENT_HOST_NAME.pub
-	# bkctld ip CLIENT_HOST_NAME CLIENT_IP_ADDRESS
-	# bkctld start CLIENT_HOST_NAME
-	# bkctld status CLIENT_HOST_NAME
+	# bkctld init <JAIL_NAME>
+	# bkctld key <JAIL_NAME> /root/<JAIL_NAME>.pub
+	# bkctld ip <JAIL_NAME> <IP_OR_CIDR>
+	# bkctld start <JAIL_NAME>
+	# bkctld status <JAIL_NAME>
 
 And override the default
 evobackup-incl(5)
 rules
 
-	# $EDITOR /etc/evobackup/CLIENT_HOST_NAME
+	# $EDITOR /etc/evobackup/<JAIL_NAME>.d/incs_policy
 
 To sync itself,
 the client server will need to install
 rsync(1).
 It can then be run manually:
 
-	# rsync -av -e "ssh -p JAIL_PORT" /home/ root@BACKUP_SERVER:/var/backup/home/
+	# rsync -av -e "ssh -p <JAIL_PORT>" /home/ root@<BACKUP_SERVER>:/var/backup/home/
 
 If a more automated setup is required,
 a script can be written in any programming language.
 In this case,
 it may be useful to validate the backup server's identity before hand.
 
-	# ssh -p JAIL_PORT BACKUP_SERVER
+	# ssh -p <JAIL_PORT> root@<BACKUP_SERVER> -t exit
 
 A
 bash(1)

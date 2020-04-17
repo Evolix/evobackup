@@ -4,7 +4,8 @@
 # Usage: help
 #
 
-LIBDIR="$(dirname $0)" && . "${LIBDIR}/config"
+# shellcheck source=./includes
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
 
 cat <<EOF
 Usage: bkctld <subcommand> [options]
