@@ -8,7 +8,7 @@ LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
 # default return value is 0 (succes)
 rc=0
 # loop for each configured jail
-for jail_name in $(bkctld list); do
+for jail_name in $("${LIBDIR}/bkctld-list"); do
     incs_policy_file=$(current_jail_incs_policy_file "${jail_name}")
 
     # Today in seconds from epoch
