@@ -7,16 +7,6 @@
 # shellcheck source=./includes
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
 
-relative_date() {
-    format=$(echo $1 | cut -d'.' -f1)
-    time_jump=$(echo $1 | cut -d'.' -f2)
-
-    reference_date=$(date "${format}")
-    past_date=$(date --date "${reference_date} ${time_jump}" +"%Y-%m-%d")
-
-    echo ${past_date}
-}
-
 delete_inc_btrfs() {
     jail_name=$1
     inc_name=$2

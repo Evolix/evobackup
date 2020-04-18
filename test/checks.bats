@@ -165,3 +165,24 @@ OUT
     run /usr/lib/bkctld/bkctld-check
     assert_equal "0" "$status"
 }
+
+@test "Check-last-incs OK if jail is present" {
+    /usr/lib/bkctld/bkctld-inc
+
+    run /usr/lib/bkctld/bkctld-check-last-incs
+    assert_equal "0" "$status"
+}
+
+@test "Check-last-incs Error if jail is missing" {
+
+    run /usr/lib/bkctld/bkctld-check-last-incs
+    assert_equal "1" "$status"
+}
+
+@test "Check-incs OK" {
+    /usr/lib/bkctld/bkctld-inc
+
+    run /usr/lib/bkctld/bkctld-check-incs
+    assert_equal "0" "$status"
+}
+# TODO: write many more tests for bkctld-check-incs
