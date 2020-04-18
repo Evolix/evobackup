@@ -48,7 +48,7 @@ delete_inc_ext4() {
     fi
 
     mkdir --parents "${LOCKDIR}" && echo $$ > ${lock_file} || error "Failed to acquire lock file '${lock_file}'"
-    empty=$(mktemp -d --suffix ".${$}" bkctld.XXXXX)
+    empty=$(mktemp -d --suffix ".${$}" --tmpdir bkctld.XXXXX)
     # shellcheck disable=SC2064
     trap "rm -f ${lock_file}; rmdir ${empty}" 0
 
