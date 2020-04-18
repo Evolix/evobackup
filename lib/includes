@@ -158,6 +158,16 @@ current_jail_check_policy_file() {
         echo ""
     fi
 }
+# relative_date "+%Y-%m-%d.-2day"
+relative_date() {
+    format=$(echo $1 | cut -d'.' -f1)
+    time_jump=$(echo $1 | cut -d'.' -f2)
+
+    reference_date=$(date "${format}")
+    past_date=$(date --date "${reference_date} ${time_jump}" +"%Y-%m-%d")
+
+    echo ${past_date}
+}
 
 setup_jail_chroot() {
     jail_name=${1:?}
