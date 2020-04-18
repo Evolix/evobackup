@@ -10,8 +10,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* check-incs.sh and check-last-incs.sh are embedded in bkctld
-
 ### Deprecated
 
 ### Removed
@@ -19,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [2.2.1] - 2020-04-18
+
+### Changed
+
+* check-incs.sh and check-last-incs.sh are embedded in bkctld
 
 ## [2.2.0] - 2020-04-17
 
