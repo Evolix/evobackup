@@ -36,17 +36,21 @@ delete_inc_ext4() {
     if [ -f "${lock_file}" ]; then
         # Get Process ID from the lock file
         pid=$(cat "${lock_file}")
-        if kill -0 ${pid} 2> /dev/null; then
-            # Kill the children
-            pkill -9 --parent "${pid}"
-            # Kill the parent
-            kill -9 "${pid}"
-            # Remove the lock file
-            rm -f ${lock_file}
-            warning "Process ${pid} has been killed. Only one ${0} can run in parallel, the latest wins."
+        if [ -n "${pid}" ]; then
+            if kill -0 ${pid} 2> /dev/null; then
+                # Kill the children
+                pkill -9 --parent "${pid}"
+                # Kill the parent
+                kill -9 "${pid}"
+                warning "Process ${pid} has been killed. Only one ${0} can run in parallel, the latest wins."
+            else
+                warning "Process not found at PID \`${pid}'. Ignoring lock file \`${lock_file}'."
+            fi
         else
-            error "Empty lockfile '${lock_file}'. It should contain a PID."
+            error "Empty lockfile \`${lock_file}'. It should contain a PID."
         fi
+        # Remove the lock file
+        rm -f ${lock_file}
     fi
 
     mkdir --parents "${LOCKDIR}" && echo $$ > ${lock_file} || error "Failed to acquire lock file '${lock_file}'"
@@ -60,6 +64,8 @@ delete_inc_ext4() {
         rsync --archive --delete "${empty}/" "${inc_path}/"
         rmdir "${inc_path}/"
     fi
+    # Remove the lock file
+    rm -f ${lock_file}
 
     end=$(current_time)
     notice "${jail_name}: inc '${inc_name}' has been deleted [${start}/${end}]"
