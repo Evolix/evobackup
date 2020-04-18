@@ -30,6 +30,8 @@ delete_inc_ext4() {
 
     inc_path=$(inc_path "${jail_name}" "${inc_name}")
 
+    start=$(current_time)
+
     lock_file="${LOCKDIR}/rm-global.lock"
     if [ -f "${lock_file}" ]; then
         # Get Process ID from the lock file
