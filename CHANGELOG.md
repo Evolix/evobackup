@@ -8,6 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+* check-incs.sh and check-last-incs.sh are embedded in bkctld
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [2.2.0] - 2020-04-17
+
+### Added
+
 * Shellcheck directives to have 0 warnings and errors
 * Ability to override critical/warning thresholds per jail for bkctld-check
 * Support new location for jail configuration (/etc/evobackup/<jail_name>.d/)
@@ -28,11 +44,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Split BATS tests file and use helper functions
 * Improve "lib" detection
 * Revamp the README
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security

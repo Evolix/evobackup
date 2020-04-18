@@ -39,6 +39,17 @@ case "${subcommand}" in
     "inc" | "rm" | "check" | "stats" | "help" | "list")
         "${LIBDIR}/bkctld-${subcommand}"
     ;;
+    "check-incs")
+        option="${2:-}"
+        if [ "${option}" = "all" ] || [ -z "${option}" ]; then
+            "${LIBDIR}/bkctld-check-incs"
+        elif [ "${option}" = "last" ]; then
+            "${LIBDIR}/bkctld-check-last-incs"
+        else
+            "${LIBDIR}/bkctld-help"
+            exit 1
+        fi
+    ;;
     "init" | "is-on")
         jail_name="${2:-}"
         "${LIBDIR}/bkctld-${subcommand}" "${jail_name}"
