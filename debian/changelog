@@ -1,3 +1,9 @@
+bkctld (2.2.1-1) unstable; urgency=medium
+
+  * Upstream release 2.2.1
+
+ -- jlecour <jlecour@evolix.fr>  Sat, 18 Apr 2020 10:35:30 +0200
+
 bkctld (2.2.0-1) unstable; urgency=medium
 
   * Big refactoring of the source code
