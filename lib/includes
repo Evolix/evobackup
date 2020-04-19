@@ -47,18 +47,18 @@ notice() {
 
 warning() {
     msg="${1:-$(cat /dev/stdin)}"
-    tty -s && echo "WARNING : ${msg}" >&2
+    tty -s && echo "WARNING: ${msg}" >&2
     if [ "${LOGLEVEL}" -ge 4 ]; then
-        tty -s || echo "WARNING : ${msg}" >&2
+        tty -s || echo "WARNING: ${msg}" >&2
         logger -t bkctld -p daemon.warning "${msg}"
     fi
 }
 
 error() {
     msg="${1:-$(cat /dev/stdin)}"
-    tty -s && echo "ERROR : ${msg}" >&2
+    tty -s && echo "ERROR: ${msg}" >&2
     if [ "${LOGLEVEL}" -ge 5 ]; then
-        tty -s || echo "ERROR : ${msg}" >&2
+        tty -s || echo "ERROR: ${msg}" >&2
         logger -t bkctld -p daemon.error "${msg}"
     fi
     exit 1
