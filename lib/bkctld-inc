@@ -8,65 +8,33 @@
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
 
 create_inc_btrfs() {
-    jail_name=$1
-    inc_name=$2
+    jail_name=${1:?}
+    inc_name=${2:?}
 
     jail_path=$(jail_path "${jail_name}")
     inc_path=$(inc_path "${jail_name}" "${inc_name}")
 
-    # The lock file prevents from starting a new copy when one is already being done
-    lock_file="${LOCKDIR}/inc-${jail_name}-${inc_name}.lock"
-    if [ -f "${lock_file}" ]; then
-        warning "${jail_name}: skipping '${inc_name}', it is already being created."
+    if dry_run; then
+        echo "[dry-run] btrfs subvolume snapshot of ${jail_path} to ${inc_path}"
     else
-        (
-            start=$(current_time)
-            mkdir --parents "${LOCKDIR}" && touch "${lock_file}"
-            # shellcheck disable=SC2064
-            trap "rm -f ${lock_file}" 0
-
-            if dry_run; then
-                echo "[dry-run] btrfs subvolume snapshot of ${jail_path} to ${inc_path}"
-            else
-                mkdir --parents "$(dirname "${inc_path}")"
-                # create a btrfs readonly snapshot from the jail
-                /bin/btrfs subvolume snapshot -r "${jail_path}" "${inc_path}" | debug
-            fi
-
-            end=$(current_time)
-            notice "${jail_name}: inc '${inc_name}' has been created [${start}/${end}]"
-        )
+        mkdir --parents "$(dirname "${inc_path}")"
+        # create a btrfs readonly snapshot from the jail
+        /bin/btrfs subvolume snapshot -r "${jail_path}" "${inc_path}" | debug
     fi
 }
 create_inc_ext4() {
-    jail_name=$1
-    inc_name=$2
+    jail_name=${1:?}
+    inc_name=${2:?}
 
     jail_path=$(jail_path "${jail_name}")
     inc_path=$(inc_path "${jail_name}" "${inc_name}")
 
-    # The lock file prevents from starting a new copy when one is already being done
-    lock_file="${LOCKDIR}/inc-${jail_name}-${inc_name}.lock"
-    if [ -f "${lock_file}" ]; then
-        warning "${jail_name}: skipping '${inc_name}', it is already being created."
+    if dry_run; then
+        echo "[dry-run] copy of ${jail_path} to ${inc_path}"
     else
-        (
-            start=$(current_time)
-            mkdir --parents "${LOCKDIR}" && touch "${lock_file}"
-            # shellcheck disable=SC2064
-            trap "rm -f ${lock_file}" 0
-
-            if dry_run; then
-                echo "[dry-run] copy of ${jail_path} to ${inc_path}"
-            else
-                mkdir --parents "$(dirname "${inc_path}")"
-                # create a copy of the jail with hard links
-                cp --archive --link --one-file-system "${jail_path}/" "${inc_path}"
-            fi
-
-            end=$(current_time)
-            notice "${jail_name}: in '${inc_name}' has been created [${start}/${end}]"
-        )
+        mkdir --parents "$(dirname "${inc_path}")"
+        # create a copy of the jail with hard links
+        cp --archive --link --one-file-system "${jail_path}/" "${inc_path}"
     fi
 }
 
@@ -79,17 +47,22 @@ for jail_name in $(jails_list); do
 
     # If no incs policy is found, we don't create incs
     if [ -n "${incs_policy_file}" ]; then
-        # If not incs directory is found, we don't create incs
+        # If no incs directory is found, we don't create incs
         if [ ! -d "${inc_path}" ]; then
+            start=$(current_time)
+
             if is_btrfs "${jail_path}"; then
                 create_inc_btrfs "${jail_name}" "${inc_name}"
             else
                 create_inc_ext4 "${jail_name}" "${inc_name}"
             fi
+
+            end=$(current_time)
+            notice "${jail_name}: \`${inc_name}' has been created [${start}/${end}]"
         else
-            warning "${jail_name}: skipping ${inc_name}, it already exists."
+            warning "${jail_name}: skipping \`${inc_name}', it already exists."
         fi
     else
-        warning "${jail_name}: skipping ${inc_name}, incs policy not found."
+        notice "${jail_name}: skipping \`${inc_name}', incs policy not found."
     fi
 done

@@ -177,6 +177,25 @@ relative_date() {
 
     echo ${past_date}
 }
+new_tmp_file() {
+    name=${1:-}
+
+    mktemp --tmpdir=/tmp "bkctld.${$}.${name}.XXXXX"
+}
+new_tmp_dir() {
+    name=${1:-}
+
+    mktemp --directory --tmpdir=/tmp "bkctld.${$}.${name}.XXXXX"
+}
+cleanup_tmp() {
+    find /tmp -name "bkctld.${$}.*" -delete
+}
+new_lock_file() {
+    lock_file=${1:-}
+    lock_dir=$(dirname "${lock_file}")
+
+    mkdir --parents "${lock_dir}" && echo $$ > ${lock_file} || error "Failed to acquire lock file '${lock_file}'"
+}
 
 setup_jail_chroot() {
     jail_name=${1:?}
