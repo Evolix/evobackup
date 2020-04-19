@@ -52,18 +52,6 @@ load test_helper
     assert_failure
 }
 
-@test "No inc creation with LOCK" {
-    run rm -rf "${INCSPATH}"
-    assert_success
-
-    touch "/run/lock/bkctld/inc-${JAILNAME}-${INC_NAME}.lock"
-
-    /usr/lib/bkctld/bkctld-inc
-
-    run test -d "${INCSPATH}/${INC_NAME}"
-    assert_failure
-}
-
 @test "Recent inc is kept after 'rm'" {
     # Setup simple incs policy
     echo "+%Y-%m-%d.-0day" > "${CONFDIR}/${JAILNAME}.d/incs_policy"
