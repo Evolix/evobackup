@@ -1,3 +1,9 @@
+bkctld (2.2.2-1) unstable; urgency=medium
+
+  * Upstream release 2.2.2 
+
+ -- Jeremy Lecour <jlecour@evolix.fr>  Sun, 19 Apr 2020 10:09:29 +0200
+
 bkctld (2.2.1-1) unstable; urgency=medium
 
   * Upstream release 2.2.1
