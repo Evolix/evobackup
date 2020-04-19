@@ -7,22 +7,64 @@
 # shellcheck source=./includes
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
 
+kill_or_clean_lockfile() {
+    lock_file=${1:-}
+
+    if [ -f "${lock_file}" ]; then
+        # Get Process ID from the lock file
+        pid=$(cat "${lock_file}")
+        if [ -n "${pid}" ]; then
+            if kill -0 ${pid} 2> /dev/null; then
+                # Kill the children
+                pkill -9 --parent "${pid}"
+                # Kill the parent
+                kill -9 "${pid}"
+                warning "Process ${pid} has been killed. Only one ${0} can run in parallel, the latest wins."
+            else
+                warning "Process not found at PID \`${pid}'. Ignoring lock file \`${lock_file}'."
+            fi
+        else
+            error "Empty lockfile \`${lock_file}'. It should contain a PID."
+        fi
+        # Remove the lock file
+        rm -f ${lock_file}
+    fi
+}
+incs_to_delete() {
+    jail_name=${1:?}
+    incs_policy_file=${2:?}
+
+    incs_policy_keep_file=$(new_tmp_file "${jail_name}.incs_policy_keep")
+    incs_list_file=$(new_tmp_file "${jail_name}.incs_list")
+
+    # loop for each line in jail configuration
+    for incs_policy_line in $(grep "^\+" ${incs_policy_file}); do
+        # inc date in ISO format
+        incs_policy_date=$(relative_date ${incs_policy_line})
+        echo ${incs_policy_date} >> "${incs_policy_keep_file}"
+    done
+    for inc_name in $(incs_list "${jail_name}"); do
+        echo "${inc_name}" >> ${incs_list_file}
+    done
+
+    # shellcheck disable=SC2046
+    incs_to_delete=$(grep -v -f "${incs_policy_keep_file}" "${incs_list_file}")
+
+    rm -f "${incs_policy_keep_file}" "${incs_list_file}"
+
+    echo ${incs_to_delete}
+}
 delete_inc_btrfs() {
     jail_name=$1
     inc_name=$2
 
     inc_path=$(inc_path "${jail_name}" "${inc_name}")
 
-    start=$(current_time)
-
     if dry_run; then
         echo "[dry-run] delete btrfs subvolume ${inc_path}"
     else
         /bin/btrfs subvolume delete "${inc_path}" | debug
     fi
-
-    end=$(current_time)
-    notice "${jail_name}: inc '${inc_name}' has been deleted [${start}/${end}]"
 }
 delete_inc_ext4() {
     jail_name=$1
@@ -30,73 +72,54 @@ delete_inc_ext4() {
 
     inc_path=$(inc_path "${jail_name}" "${inc_name}")
 
-    lock_file="${LOCKDIR}/rm-global.lock"
-    if [ -f "${lock_file}" ]; then
-        # Get Process ID from the lock file
-        pid=$(cat "${lock_file}")
-        if kill -0 ${pid} 2> /dev/null; then
-            # Kill the children
-            pkill -9 --parent "${pid}"
-            # Kill the parent
-            kill -9 "${pid}"
-            # Remove the lock file
-            rm -f ${lock_file}
-            warning "Process ${pid} has been killed. Only one ${0} can run in parallel, the latest wins."
-        else
-            error "Empty lockfile '${lock_file}'. It should contain a PID."
-        fi
-    fi
-
-    mkdir --parents "${LOCKDIR}" && echo $$ > ${lock_file} || error "Failed to acquire lock file '${lock_file}'"
-    empty=$(mktemp -d --suffix ".${$}" bkctld.XXXXX)
-    # shellcheck disable=SC2064
-    trap "rm -f ${lock_file}; rmdir ${empty}" 0
-
     if dry_run; then
-        echo "[dry-run] delete ${inc_path} with rsync from ${empty}"
+        echo "[dry-run] delete ${inc_path} with rsync from empty directory"
     else
+        empty=$(new_tmp_dir "empty")
         rsync --archive --delete "${empty}/" "${inc_path}/"
         rmdir "${inc_path}/"
+        rmdir "${empty}"
     fi
 
-    end=$(current_time)
-    notice "${jail_name}: inc '${inc_name}' has been deleted [${start}/${end}]"
 }
+
+lock_file="${LOCKDIR}/rm-global.lock"
+# shellcheck disable=SC2064
+trap "rm -f ${lock_file}; cleanup_tmp;" 0
+
+kill_or_clean_lockfile "${lock_file}"
+new_lock_file "${lock_file}"
 
 for jail_name in $(jails_list); do
     incs_policy_file=$(current_jail_incs_policy_file ${jail_name})
-
-    # If not incs policy if found, we don't remove incs
+    # If no incs policy is found, we don't remove incs
     if [ -n "${incs_policy_file}" ]; then
-        incs_policy_keep_file="$(mktemp)"
-        incs_list_file="$(mktemp)"
-        # shellcheck disable=SC2064
-        trap "rm -f ${incs_policy_keep_file} ${incs_list_file}" 0
-
-        # loop for each line in jail configuration
-        for incs_policy_line in $(grep "^\+" ${incs_policy_file}); do
-            # inc date in ISO format
-            incs_policy_date=$(relative_date ${incs_policy_line})
-            echo ${incs_policy_date} >> "${incs_policy_keep_file}"
-        done
-        for inc_name in $(incs_list "${jail_name}"); do
-            echo "${inc_name}" >> ${incs_list_file}
-        done
         # shellcheck disable=SC2046
-        incs_to_delete=$(grep -v -f "${incs_policy_keep_file}" "${incs_list_file}")
+        incs_to_delete=$(incs_to_delete "${jail_name}" "${incs_policy_file}")
 
         if [ -n "${incs_to_delete}" ]; then
             debug "${jail_name}: incs to be deleted : $(echo "${incs_to_delete}" | tr '\n', ',' | sed 's/,$//')."
             for inc_name in ${incs_to_delete}; do
+                start=$(current_time)
+
                 inc_path=$(inc_path "${jail_name}" "${inc_name}")
                 if is_btrfs "${inc_path}"; then
                     delete_inc_btrfs "${jail_name}" "${inc_name}"
                 else
                     delete_inc_ext4 "${jail_name}" "${inc_name}"
                 fi
+
+                end=$(current_time)
+                notice "${jail_name}: inc \`${inc_name}' has been deleted [${start}/${end}]"
             done
         else
             notice "${jail_name}: no inc to be deleted."
         fi
+    else
+        notice "${jail_name}: skipping jail because incs policy is missing."
     fi
 done
+
+# Remove the lock file and cleanup tmp files
+rm -f "${lock_file}"
+cleanup_tmp

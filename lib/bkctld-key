@@ -22,8 +22,8 @@ if [ -z "${keyfile}" ]; then
         cat "${jail_path}/${AUTHORIZED_KEYS}"
     fi
 else
-    test -r "${keyfile}" || error "${jail_name}: SSH key '${keyfile}' is missing or is not readable."
+    test -r "${keyfile}" || error "${jail_name}: SSH key \`${keyfile}' is missing or is not readable."
     cat "${keyfile}" > "${jail_path}/${AUTHORIZED_KEYS}"
     chmod 600 "${jail_path}/${AUTHORIZED_KEYS}"
-    notice "${jail_name}: SSH key has been updated with ${keyfile}"
+    notice "${jail_name}: SSH key has been updated with \`${keyfile}'"
 fi

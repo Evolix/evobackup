@@ -31,18 +31,18 @@ else
         new_ips="0.0.0.0/0"
     else
         existing_ips=$("${LIBDIR}/bkctld-ip" "${jail_name}")
-        new_ips=$(echo "${existing_ips}" "${ip}" | xargs -n1 | grep -v "0.0.0.0/0" | sort | uniq)
+        new_ips=$(echo ${existing_ips} ${ip} | xargs -n1 | grep -v "0.0.0.0/0" | sort | uniq)
     fi
     allow_users="AllowUsers"
-    for ip in ${new_ips}; do
-        allow_users="${allow_users} root@${ip}"
+    for new_ip in ${new_ips}; do
+        allow_users="${allow_users} root@${new_ip}"
     done
     if grep -q -E "^AllowUsers" "${jail_sshd_config}"; then
         sed -i "s~^AllowUsers .*~${allow_users}~" "${jail_sshd_config}"
     else
-        error "${jail_name}: No 'AllowUsers' directive found in '${jail_sshd_config}'"
+        error "${jail_name}: No \`AllowUsers' directive found in \`${jail_sshd_config}'"
     fi
-    notice "${jail_name}: IP whitelist updated to ${ip}"
+    notice "${jail_name}: IP whitelist updated with \`${ip}'"
     "${LIBDIR}/bkctld-reload" "${jail_name}"
     "${LIBDIR}/bkctld-firewall" "${jail_name}"
 fi

@@ -47,18 +47,18 @@ notice() {
 
 warning() {
     msg="${1:-$(cat /dev/stdin)}"
-    tty -s && echo "WARNING : ${msg}" >&2
+    tty -s && echo "WARNING: ${msg}" >&2
     if [ "${LOGLEVEL}" -ge 4 ]; then
-        tty -s || echo "WARNING : ${msg}" >&2
+        tty -s || echo "WARNING: ${msg}" >&2
         logger -t bkctld -p daemon.warning "${msg}"
     fi
 }
 
 error() {
     msg="${1:-$(cat /dev/stdin)}"
-    tty -s && echo "ERROR : ${msg}" >&2
+    tty -s && echo "ERROR: ${msg}" >&2
     if [ "${LOGLEVEL}" -ge 5 ]; then
-        tty -s || echo "ERROR : ${msg}" >&2
+        tty -s || echo "ERROR: ${msg}" >&2
         logger -t bkctld -p daemon.error "${msg}"
     fi
     exit 1
@@ -176,6 +176,25 @@ relative_date() {
     past_date=$(date --date "${reference_date} ${time_jump}" +"%Y-%m-%d")
 
     echo ${past_date}
+}
+new_tmp_file() {
+    name=${1:-}
+
+    mktemp --tmpdir=/tmp "bkctld.${$}.${name}.XXXXX"
+}
+new_tmp_dir() {
+    name=${1:-}
+
+    mktemp --directory --tmpdir=/tmp "bkctld.${$}.${name}.XXXXX"
+}
+cleanup_tmp() {
+    find /tmp -name "bkctld.${$}.*" -delete
+}
+new_lock_file() {
+    lock_file=${1:-}
+    lock_dir=$(dirname "${lock_file}")
+
+    mkdir --parents "${lock_dir}" && echo $$ > ${lock_file} || error "Failed to acquire lock file '${lock_file}'"
 }
 
 setup_jail_chroot() {

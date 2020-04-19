@@ -18,6 +18,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [2.2.2] - 2020-04-19
+
+### Changed
+
+* Reorganize temp files and lock files
+
+### Fixed
+
+* Properly call subcommands in bkctld-check-incs and bkctld-check-last-incs
+* Log start time in bkctld-rm
+
 ## [2.2.1] - 2020-04-18
 
 ### Changed
