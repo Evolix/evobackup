@@ -21,7 +21,7 @@ if [ -b "${BACKUP_DISK}" ]; then
     cryptsetup isLuks "${BACKUP_DISK}"
     if [ "$?" -eq 0 ]; then
         if [ ! -b '/dev/mapper/backup' ]; then
-            echo "Luks disk ${BACKUP_DISK} is not mounted !\n"
+            echo "Luks disk \`${BACKUP_DISK}' is not mounted !\n"
             echo "cryptsetup luksOpen ${BACKUP_DISK} backup"
             exit 2
         fi
@@ -31,7 +31,7 @@ if [ -b "${BACKUP_DISK}" ]; then
     # Verify that it's mounted and writable
     findmnt --source ${BACKUP_DISK} -O rw > /dev/null
     if [ "$?" -ne 0 ]; then
-         echo "Backup disk ${BACKUP_DISK} is not mounted (or read-only) !\n"
+         echo "Backup disk \`${BACKUP_DISK}' is not mounted (or read-only) !\n"
          echo "mount ${BACKUP_DISK} /backup"
          exit 2
     fi
