@@ -40,7 +40,12 @@ create_inc_ext4() {
 
 inc_name=$(date +"%Y-%m-%d-%H")
 
-for jail_name in $(jails_list); do
+jails_list=$(jails_list)
+jails_total=$(echo $jails_list | wc -w)
+jails_count=0
+
+for jail_name in ${jails_list}; do
+    jails_count=$((jails_count+1))
     jail_path=$(jail_path "${jail_name}")
     inc_path=$(inc_path "${jail_name}" "${inc_name}")
     incs_policy_file=$(current_jail_incs_policy_file ${jail_name})
@@ -49,6 +54,7 @@ for jail_name in $(jails_list); do
     if [ -n "${incs_policy_file}" ]; then
         # If no incs directory is found, we don't create incs
         if [ ! -d "${inc_path}" ]; then
+            info "inc progress: jail ${jails_count} out of ${jails_total}"
             start=$(current_time)
 
             if is_btrfs "${jail_path}"; then
