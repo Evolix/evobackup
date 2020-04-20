@@ -24,7 +24,7 @@ WARNING="${WARNING:-24}"
 DUC=$(command -v duc-nox || command -v duc)
 
 log_date() {
-    echo "[$(date +%Y-%m-%d %H:%M:%S)]"
+    echo "[$(date +"%Y-%m-%d %H:%M:%S")]"
 }
 process_name() {
     basename $0
