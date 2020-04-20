@@ -10,8 +10,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* rewrite log messages and format
-
 ### Deprecated
 
 ### Removed
@@ -19,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [2.3.0] - 2020-04-20
+
+### Changed
+
+* Rewrite log messages and format
 
 ## [2.2.2] - 2020-04-19
 
