@@ -13,10 +13,10 @@ if [ ! -n "${jail_name}" ]; then
 fi
 jail_path=$(jail_path "${jail_name}")
 
-test -d "${jail_path}" || error "${jail_name}: jail is missing."
+test -d "${jail_path}" || error "${jail_name}: jail not found"
 
 "${LIBDIR}/bkctld-is-on" "${jail_name}" && "${LIBDIR}/bkctld-stop" "${jail_name}"
 
 setup_jail_chroot "${jail_name}"
 
-notice "${jail_name}: jail has been updated."
+notice "Update jail \`${jail_name}' : OK"

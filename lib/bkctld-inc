@@ -54,8 +54,8 @@ for jail_name in ${jails_list}; do
     if [ -n "${incs_policy_file}" ]; then
         # If no incs directory is found, we don't create incs
         if [ ! -d "${inc_path}" ]; then
-            info "inc progress: jail ${jails_count} out of ${jails_total}"
-            start=$(current_time)
+            info "Progress: jail ${jails_count} out of ${jails_total}"
+            notice "Create inc \`${inc_name}' for jail \`${jail_name}' : start"
 
             if is_btrfs "${jail_path}"; then
                 create_inc_btrfs "${jail_name}" "${inc_name}"
@@ -63,12 +63,11 @@ for jail_name in ${jails_list}; do
                 create_inc_ext4 "${jail_name}" "${inc_name}"
             fi
 
-            end=$(current_time)
-            notice "${jail_name}: \`${inc_name}' has been created [${start}/${end}]"
+            notice "Create inc \`${inc_name}' for jail \`${jail_name}' : finish"
         else
-            warning "${jail_name}: skipping \`${inc_name}', it already exists."
+            warning "Skip inc \`${inc_name}' for jail \`${jail_name}' : it already exists."
         fi
     else
-        notice "${jail_name}: skipping \`${inc_name}', incs policy not found."
+        notice "Skip jail \`${jail_name}' : incs policy is missing"
     fi
 done

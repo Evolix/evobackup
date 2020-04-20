@@ -8,9 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* bkctld-inc and bkctld-rm log their progress (log level "info")
-
 ### Changed
+
+* rewrite log messages and format
 
 ### Deprecated
 

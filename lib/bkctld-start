@@ -13,7 +13,7 @@ if [ -z "${jail_name}" ]; then
 fi
 jail_path=$(jail_path "${jail_name}")
 
-test -d "${jail_path}" || error "${jail_name}: jail is missing."
+test -d "${jail_path}" || error "${jail_name}: jail not found"
 
 "${LIBDIR}/bkctld-is-on" "${jail_name}" && exit 0
 
@@ -21,7 +21,7 @@ test -d "${jail_path}" || error "${jail_name}: jail is missing."
 mount_jail_fs "${jail_name}"
 
 # Start SSH in the chroot
-chroot "${jail_path}" /usr/sbin/sshd -E /var/log/authlog || error "${jail_name}: failed to start SSH."
+chroot "${jail_path}" /usr/sbin/sshd -E /var/log/authlog || error "Failed to start SSH for jail \`${jail_name}'"
 pidfile="${jail_path}/${SSHD_PID}"
 
 # Wait for SSH to be up
@@ -37,7 +37,7 @@ for try in $(seq 1 10); do
 done
 
 if [ -n "${pid}" ]; then
-    notice "${jail_name}: jail has been started [${pid}]"
+    notice "Start jail \`${jail_name}' : PID \`${pid}'"
 else
-    error "${jail_name}: failed to fetch SSH pid within 3 sec."
+    error "Failed to fetch SSH PID for jail \`${jail_name}' within 3 seconds"
 fi

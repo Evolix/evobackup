@@ -23,43 +23,49 @@ CRITICAL="${CRITICAL:-48}"
 WARNING="${WARNING:-24}"
 DUC=$(command -v duc-nox || command -v duc)
 
+log_date() {
+    echo "[$(date +%Y-%m-%d %H:%M:%s)]"
+}
+process_name() {
+    basename $0
+}
 debug() {
     msg="${1:-$(cat /dev/stdin)}"
     if [ "${LOGLEVEL}" -ge 7 ]; then
-        echo "${msg}"
-        logger -t bkctld -p daemon.debug "${msg}"
+        echo "$(log_date) DEBUG $(process_name) ${msg}"
+        logger -t bkctld -p daemon.debug "$(process_name) ${msg}"
     fi
 }
 
 info() {
     msg="${1:-$(cat /dev/stdin)}"
     if [ "${LOGLEVEL}" -ge 6 ]; then
-        tty -s && echo "${msg}"
-        logger -t bkctld -p daemon.info "${msg}"
+        tty -s && echo "$(log_date) INFO  $(process_name)${msg}"
+        logger -t bkctld -p daemon.info "$(process_name) ${msg}"
     fi
 }
 
 notice() {
     msg="${1:-$(cat /dev/stdin)}"
-    tty -s && echo "${msg}"
-    [ "${LOGLEVEL}" -ge 5 ] && logger -t bkctld -p daemon.notice "${msg}"
+    tty -s && echo "$(log_date) NOTICE $(process_name) ${msg}"
+    [ "${LOGLEVEL}" -ge 5 ] && logger -t bkctld -p daemon.notice "$(process_name) ${msg}"
 }
 
 warning() {
     msg="${1:-$(cat /dev/stdin)}"
-    tty -s && echo "WARNING: ${msg}" >&2
+    tty -s && echo "$(log_date) WARNING $(process_name) ${msg}" >&2
     if [ "${LOGLEVEL}" -ge 4 ]; then
-        tty -s || echo "WARNING: ${msg}" >&2
-        logger -t bkctld -p daemon.warning "${msg}"
+        tty -s || echo "$(log_date) WARNING $(process_name) ${msg}" >&2
+        logger -t bkctld -p daemon.warning "$(process_name) ${msg}"
     fi
 }
 
 error() {
     msg="${1:-$(cat /dev/stdin)}"
-    tty -s && echo "ERROR: ${msg}" >&2
+    tty -s && echo "$(log_date) ERROR $(process_name) ${msg}" >&2
     if [ "${LOGLEVEL}" -ge 5 ]; then
-        tty -s || echo "ERROR: ${msg}" >&2
-        logger -t bkctld -p daemon.error "${msg}"
+        tty -s || echo "$(log_date) ERROR $(process_name) ${msg}" >&2
+        logger -t bkctld -p daemon.error "$(process_name) ${msg}"
     fi
     exit 1
 }

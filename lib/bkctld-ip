@@ -15,7 +15,7 @@ if [ ! -n "${jail_name}" ]; then
 fi
 jail_path=$(jail_path "${jail_name}")
 
-test -d "${jail_path}" || error "${jail_name}: jail is missing."
+test -d "${jail_path}" || error "${jail_name}: jail not found"
 
 jail_sshd_config="${jail_path}/${SSHD_CONFIG}"
 
@@ -40,9 +40,9 @@ else
     if grep -q -E "^AllowUsers" "${jail_sshd_config}"; then
         sed -i "s~^AllowUsers .*~${allow_users}~" "${jail_sshd_config}"
     else
-        error "${jail_name}: No \`AllowUsers' directive found in \`${jail_sshd_config}'"
+        error "No \`AllowUsers' directive found in \`${jail_sshd_config}'"
     fi
-    notice "${jail_name}: IP whitelist updated with \`${ip}'"
+    notice "Update IP whitelist with \`${ip}' for jail \`${jail_name}' : OK"
     "${LIBDIR}/bkctld-reload" "${jail_name}"
     "${LIBDIR}/bkctld-firewall" "${jail_name}"
 fi

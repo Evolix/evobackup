@@ -106,11 +106,11 @@ for jail_name in ${jails_list}; do
         incs_count=0
 
         if [ -n "${incs_to_delete}" ]; then
-            debug "${jail_name}: incs to be deleted : $(echo "${incs_to_delete}" | tr '\n', ',' | sed 's/,$//')."
+            debug "Incs to be deleted for \`${jail_name}' : $(echo "${incs_to_delete}" | tr '\n', ',' | sed 's/,$//')."
             for inc_name in ${incs_to_delete}; do
                 incs_count=$((incs_count+1))
-                info "rm progress: jail ${jails_count} out of ${jails_total} - inc ${incs_count} out of ${incs_total}"
-                start=$(current_time)
+                info "Progress: jail ${jails_count} out of ${jails_total} - inc ${incs_count} out of ${incs_total}"
+                notice "Delete inc \`${inc_name}' for jail \`${jail_name}' : start"
 
                 inc_path=$(inc_path "${jail_name}" "${inc_name}")
 
@@ -120,14 +120,13 @@ for jail_name in ${jails_list}; do
                     delete_inc_ext4 "${jail_name}" "${inc_name}"
                 fi
 
-                end=$(current_time)
-                notice "${jail_name}: inc \`${inc_name}' has been deleted [${start}/${end}]"
+                notice "Delete inc \`${inc_name}' for jail \`${jail_name}' : finish"
             done
         else
-            notice "${jail_name}: no inc to be deleted."
+            notice "Skip jail \`${jail_name}' : no inc to delete"
         fi
     else
-        notice "${jail_name}: skipping jail because incs policy is missing."
+        notice "Skip jail \`${jail_name}' : incs policy is missing"
     fi
 done
 

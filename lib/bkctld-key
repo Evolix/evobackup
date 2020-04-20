@@ -15,15 +15,15 @@ if [ ! -n "${jail_name}" ]; then
 fi
 jail_path=$(jail_path "${jail_name}")
 
-test -d "${jail_path}" || error "${jail_name}: jail is missing."
+test -d "${jail_path}" || error "${jail_name}: jail not found"
 
 if [ -z "${keyfile}" ]; then
     if [ -f "${jail_path}/${AUTHORIZED_KEYS}" ]; then
         cat "${jail_path}/${AUTHORIZED_KEYS}"
     fi
 else
-    test -r "${keyfile}" || error "${jail_name}: SSH key \`${keyfile}' is missing or is not readable."
+    test -r "${keyfile}" || error "SSH key \`${keyfile}' for jail \`${jail_name}' is missing or is not readable."
     cat "${keyfile}" > "${jail_path}/${AUTHORIZED_KEYS}"
     chmod 600 "${jail_path}/${AUTHORIZED_KEYS}"
-    notice "${jail_name}: SSH key has been updated with \`${keyfile}'"
+    notice "Update SSH key \`${keyfile}' for jail \`${jail_name}' : OK"
 fi

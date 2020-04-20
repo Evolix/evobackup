@@ -13,7 +13,7 @@ if [ -z "${jail_name}" ]; then
 fi
 jail_path=$(jail_path "${jail_name}")
 
-test -d "${jail_path}" && error "${jail_name}: jail already exists."
+test -d "${jail_path}" && error "Skip jail \`${jail_name}' : it already exists"
 
 # Create config and jails directory
 mkdir --parents "${CONFDIR}" "${JAILDIR}"
@@ -28,4 +28,4 @@ fi
 setup_jail_chroot "${jail_name}"
 setup_jail_config "${jail_name}"
 
-notice "${jail_name}: jail has been created"
+notice "Create jail \`${jail_name}' : OK"

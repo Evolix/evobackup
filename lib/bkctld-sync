@@ -14,7 +14,7 @@ fi
 jail_path=$(jail_path "${jail_name}")
 jail_config_dir=$(jail_config_dir "${jail_name}")
 
-test -d "${jail_path}" || error "${jail_name}: jail is missing."
+test -d "${jail_path}" || error "${jail_name}: jail not found"
 
 [ -n "${NODE}" ] || error "Sync need config of \$NODE in /etc/default/bkctld !"
 
