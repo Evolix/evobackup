@@ -13,7 +13,7 @@ if [ -z "${jail_name}" ]; then
 fi
 jail_path=$(jail_path "${jail_name}")
 
-test -d "${jail_path}" || error "${jail_name}: jail is missing."
+test -d "${jail_path}" || error "${jail_name}: jail not found"
 
 "${LIBDIR}/bkctld-is-on" "${jail_name}" || exit 0
 
@@ -22,10 +22,10 @@ pid=$(cat "${jail_path}/${SSHD_PID}")
 pkill --parent "${pid}"
 
 if kill "${pid}"; then 
-    notice "${jail_name}: jail has been stopped [${pid}]"
+    notice "Stop jail \`${jail_name}' : OK [${pid}]"
 
     umount --lazy --recursive "${jail_path}/dev"
     umount --lazy "${jail_path}/proc/"
 else
-    error "${jail_name}: failed to stop jail [${pid}]"
+    error "Stop jail \`${jail_name}' : failed [${pid}]"
 fi

@@ -13,10 +13,14 @@ if [ -z "${jail_name}" ]; then
 fi
 jail_path=$(jail_path "${jail_name}")
 
-test -d "${jail_path}" || error "${jail_name}: jail is missing."
+test -d "${jail_path}" || error "${jail_name}: jail not found"
 
 "${LIBDIR}/bkctld-is-on" "${jail_name}" || exit 0
 
 pid=$(cat "${jail_path}/${SSHD_PID}")
 
-kill -HUP "${pid}" && notice "${jail_name}: jail has been reloaded [${pid}]"
+if kill -HUP "${pid}"; then
+    notice "Reload jail \`${jail_name}' : OK [${pid}]"
+else
+    error "Reload jail \`${jail_name}' : failed [${pid}]"
+fi

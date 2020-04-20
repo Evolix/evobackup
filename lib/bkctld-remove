@@ -14,7 +14,7 @@ fi
 jail_path=$(jail_path "${jail_name}")
 incs_path=$(incs_path "${jail_name}")
 
-test -d "${jail_path}" || error "${jail_name}: jail is missing."
+test -d "${jail_path}" || error "${jail_name}: jail not found"
 
 "${LIBDIR}/bkctld-is-on" "${jail_name}" && "${LIBDIR}/bkctld-stop" "${jail_name}"
 
@@ -33,10 +33,10 @@ if [ -d  "${incs_path}" ]; then
         if [ "${inc_inode}" -eq 256 ]; then
             /bin/btrfs subvolume delete "${incs_path}/${inc}" | debug
         else
-            warning "You need to purge ${incs_path}/${inc} manually !"
+            warning "You need to purge \`${incs_path}/${inc}' manually"
         fi
     done
     rmdir --ignore-fail-on-non-empty "${incs_path}" | debug
 fi
 "${LIBDIR}/bkctld-firewall" "${jail_name}"
-notice "${jail_name}: jail has been deleted."
+notice "Delete jail \`${jail_name}' : OK"

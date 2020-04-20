@@ -15,7 +15,7 @@ if [ -z "${jail_name}" ]; then
 fi
 jail_path=$(jail_path "${jail_name}")
 
-test -d "${jail_path}" || error "${jail_name}: jail is missing."
+test -d "${jail_path}" || error "${jail_name}: jail not found"
 
 "${LIBDIR}/bkctld-is-on" "${jail_name}" && "${LIBDIR}/bkctld-stop" "${jail_name}"
 "${LIBDIR}/bkctld-start" "${jail_name}"
