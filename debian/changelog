@@ -1,3 +1,9 @@
+bkctld (2.3.1-1) unstable; urgency=medium
+
+  * Upstream release 2.3.1
+
+ -- Jeremy Lecour <jlecour@evolix.fr>  Wed, 22 Apr 2020 01:18:22 +0200
+
 bkctld (2.3.0-2) unstable; urgency=low
 
   * Attempt to clean repository
