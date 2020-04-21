@@ -21,7 +21,7 @@ kill_or_clean_lockfile() {
                 kill -9 "${pid}"
                 #  Only one bkctld-rm can run in parallel, the latest wins
                 lockfile_date=$(date --date "@$(stat -c %Y ${lock_file})" +"%Y-%m-%d %H:%M:%S")
-                warning "Process \`${pid}' has been killed (was running since ${lockfile_date})"
+                warning "Process \`${pid}' (started at ${lockfile_date}) has been killed by \`$$'"
             else
                 warning "Process not found at PID \`${pid}'. Ignoring lock file \`${lock_file}'."
             fi
