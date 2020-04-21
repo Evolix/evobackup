@@ -24,7 +24,7 @@ WARNING="${WARNING:-24}"
 DUC=$(command -v duc-nox || command -v duc)
 
 log_date() {
-    echo "[$(date +%Y-%m-%d %H:%M:%s)]"
+    echo "[$(date +"%Y-%m-%d %H:%M:%S")]"
 }
 process_name() {
     basename $0
@@ -40,7 +40,7 @@ debug() {
 info() {
     msg="${1:-$(cat /dev/stdin)}"
     if [ "${LOGLEVEL}" -ge 6 ]; then
-        tty -s && echo "$(log_date) INFO  $(process_name)${msg}"
+        tty -s && echo "$(log_date) INFO $(process_name) ${msg}"
         logger -t bkctld -p daemon.info "$(process_name) ${msg}"
     fi
 }

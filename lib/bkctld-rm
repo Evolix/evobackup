@@ -14,12 +14,14 @@ kill_or_clean_lockfile() {
         # Get Process ID from the lock file
         pid=$(cat "${lock_file}")
         if [ -n "${pid}" ]; then
-            if kill -0 ${pid} 2> /dev/null; then
+            if kill -0 "${pid}" 2> /dev/null; then
                 # Kill the children
                 pkill -9 --parent "${pid}"
                 # Kill the parent
                 kill -9 "${pid}"
-                warning "Process ${pid} has been killed. Only one ${0} can run in parallel, the latest wins."
+                #  Only one bkctld-rm can run in parallel, the latest wins
+                lockfile_date=$(date --date "@$(stat -c %Y ${lock_file})" +"%Y-%m-%d %H:%M:%S")
+                warning "Process \`${pid}' (started at ${lockfile_date}) has been killed by \`$$'"
             else
                 warning "Process not found at PID \`${pid}'. Ignoring lock file \`${lock_file}'."
             fi

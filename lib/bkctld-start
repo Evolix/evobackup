@@ -37,7 +37,7 @@ for try in $(seq 1 10); do
 done
 
 if [ -n "${pid}" ]; then
-    notice "Start jail \`${jail_name}' : PID \`${pid}'"
+    notice "Start jail \`${jail_name}' : OK [${pid}]"
 else
     error "Failed to fetch SSH PID for jail \`${jail_name}' within 3 seconds"
 fi
