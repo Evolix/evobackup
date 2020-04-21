@@ -14,7 +14,7 @@ kill_or_clean_lockfile() {
         # Get Process ID from the lock file
         pid=$(cat "${lock_file}")
         if [ -n "${pid}" ]; then
-            if kill -0 ${pid} 2> /dev/null; then
+            if kill -0 "${pid}" 2> /dev/null; then
                 # Kill the children
                 pkill -9 --parent "${pid}"
                 # Kill the parent
