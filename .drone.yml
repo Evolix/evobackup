@@ -8,6 +8,7 @@ steps:
   - debian
   commands:
   - mk-build-deps --install --remove debian/control
+  - git clean --force
   - gbp buildpackage
   volumes:
   - name: tmp
