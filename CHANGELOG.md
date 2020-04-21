@@ -18,6 +18,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [2.3.1] - 2020-04-22
+
+### Added
+
+* State the age of the current "rm" process when killing it
+* Give the new PID after killing the previous "rm" process
+
+### Fixed
+
+* typos
+* forgotten quotes
+
 ## [2.3.0] - 2020-04-20
 
 ### Changed
