@@ -9,11 +9,11 @@ setup() {
 
     set_variable "/etc/default/bkctld" "BACKUP_DISK" "/dev/vdb"
 
-    JAILNAME=$(tr -cd '[:alnum:]' < /dev/urandom | fold -w15 | head -n1)
+    JAILNAME=$(random_jail_name)
     JAILPATH="/backup/jails/${JAILNAME}"
     INCSPATH="/backup/incs/${JAILNAME}"
-    PORT=$(awk -v min=2222 -v max=2999 'BEGIN{srand(); print int(min+rand()*(max-min+1))}')
-    INC_NAME=$(date +"%Y-%m-%d-%H")
+    PORT=$(random_port)
+    INC_NAME=$(inc_name_today)
 
     /usr/lib/bkctld/bkctld-init "${JAILNAME}"
 }
@@ -21,6 +21,16 @@ setup() {
 teardown() {
     remove_variable "/etc/default/bkctld" "BACKUP_DISK"
     /usr/lib/bkctld/bkctld-remove "${JAILNAME}" && rm -rf "${INCSPATH}"
+}
+
+random_jail_name() {
+    tr -cd '[:alnum:]' < /dev/urandom | fold -w15 | head -n1
+}
+random_port() {
+    awk -v min=2222 -v max=2999 'BEGIN{srand(); print int(min+rand()*(max-min+1))}'
+}
+inc_name_today() {
+    date +"%Y-%m-%d-%H"
 }
 
 set_variable() {
