@@ -40,6 +40,6 @@ else
 fi
 
 if [ -n "${FIREWALL_RULES}" ]; then
-    rsync -a "${FIREWALL_RULES}" "${NODE}:${FIREWALL_RULES}"
+    ssh "${NODE}" "${LIBDIR}/bkctld-firewall ${jail_name}" | debug
     ssh "${NODE}" /etc/init.d/minifirewall restart | debug
 fi
