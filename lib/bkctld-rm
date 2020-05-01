@@ -26,7 +26,7 @@ kill_or_clean_lockfile() {
                 warning "Process not found at PID \`${pid}'. Ignoring lock file \`${lock_file}'."
             fi
         else
-            error "Empty lockfile \`${lock_file}'. It should contain a PID."
+            warning "Empty lockfile \`${lock_file}'. It should contain a PID."
         fi
         # Remove the lock file
         rm -f ${lock_file}
