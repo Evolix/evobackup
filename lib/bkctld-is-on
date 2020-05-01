@@ -18,12 +18,13 @@ test -d "${jail_path}" || error "${jail_name}: jail not found" 2
 
 jail_pid_file="${jail_path}/${SSHD_PID}"
 
-return=1
+# Error codes are references in "includes" file
+return=100
 if [ -f "${jail_pid_file}" ]; then
     pid=$(cat "${jail_pid_file}")
     ps -p "${pid}" > /dev/null && return=0
 fi
-if [ "${return}" -eq 1 ]; then
+if [ "${return}" -gt 0 ]; then
     rm -f "${jail_pid_file}"
     grep -q "${jail_path}/proc" /proc/mounts && umount --lazy "${jail_path}/proc/"
     grep -q "${jail_path}/dev" /proc/mounts && umount --lazy --recursive "${jail_path}/dev"
