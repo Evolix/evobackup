@@ -18,8 +18,12 @@ test -d "${jail_path}" || error "${jail_name}: jail not found" 2
 
 [ -n "${NODE}" ] || error "Sync need config of \$NODE in /etc/default/bkctld !"
 
-# Init jail on remote server
-ssh "${NODE}" "${LIBDIR}/bkctld-init" "${jail_name}" | debug
+ssh "${NODE}" "${LIBDIR}/bkctld-is-on ${jail_name} 2>/dev/null"
+# return code 2 is for "missing jail" error
+if [ "$?" -eq 2 ]; then
+    # Init jail on remote server
+    ssh "${NODE}" "${LIBDIR}/bkctld-init ${jail_name}" | debug
+fi
 
 # Sync Jail structure and configuration on remote server
 rsync -a "${jail_path}/" "${NODE}:${jail_path}/" --exclude proc/* --exclude sys/* --exclude dev/* --exclude run --exclude var/backup/*
