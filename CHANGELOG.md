@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Display help message if mandatory arguments are missing.
 * Don't recreate jail on sync if it already exists
 * Don't sync the whole firewall file, just remake rules for the current jail
+* On sync, if local jail is running, reload remote jail if already running, start if not
 
 ### Deprecated
 
