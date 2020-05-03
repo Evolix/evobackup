@@ -14,28 +14,54 @@ fi
 jail_path=$(jail_path "${jail_name}")
 jail_config_dir=$(jail_config_dir "${jail_name}")
 
-test -d "${jail_path}" || error "${jail_name}: jail not found"
+test -d "${jail_path}" || error "${jail_name}: jail not found" 2
 
 [ -n "${NODE}" ] || error "Sync need config of \$NODE in /etc/default/bkctld !"
 
-# Init jail on remote server
-ssh "${NODE}" "${LIBDIR}/bkctld-init" "${jail_name}" | debug
+ssh "${NODE}" "${LIBDIR}/bkctld-is-on ${jail_name} 2>/dev/null"
+# return code 2 is for "missing jail" error
+if [ "$?" -eq 2 ]; then
+    # Init jail on remote server
+    ssh "${NODE}" "${LIBDIR}/bkctld-init ${jail_name}" | debug
+fi
 
-# Sync Jail structure and configuration on remote server
+# Sync jail structure and configuration on remote server
 rsync -a "${jail_path}/" "${NODE}:${jail_path}/" --exclude proc/* --exclude sys/* --exclude dev/* --exclude run --exclude var/backup/*
-# New config directory
-rsync -a "${jail_config_dir}" "${NODE}:${jail_config_dir}"
-# Old incs policy config file
-rsync -a "${CONFDIR}/${jail_name}" "${NODE}:${CONFDIR}/${jail_name}"
-
-# Sync state on remote server
-if "${LIBDIR}/bkctld-is-on" "${jail_name}"; then
-    ssh "${NODE}" "${LIBDIR}/bkctld-start" "${jail_name}" | debug
+# Sync config (new structure)
+if [ -d "${jail_config_dir}" ]; then
+    rsync -a --delete "${jail_config_dir}" "${NODE}:${jail_config_dir}"
 else
-    ssh "${NODE}" "${LIBDIR}/bkctld-stop" "${jail_name}" | debug
+    ssh "${NODE}" "rm -rf ${jail_config_dir}" | debug
+fi
+# Sync config (legacy structure)
+if [ -e "${CONFDIR}/${jail_name}" ]; then
+    rsync -a "${CONFDIR}/${jail_name}" "${NODE}:${CONFDIR}/${jail_name}"
+else
+    ssh "${NODE}" "rm -f ${CONFDIR}/${jail_name}" | debug
 fi
 
 if [ -n "${FIREWALL_RULES}" ]; then
-    rsync -a "${FIREWALL_RULES}" "${NODE}:${FIREWALL_RULES}"
-    ssh "${NODE}" /etc/init.d/minifirewall restart | debug
+    ssh "${NODE}" "${LIBDIR}/bkctld-firewall ${jail_name}" | debug
+    ssh "${NODE}" "test -x /etc/init.d/minifirewall && /etc/init.d/minifirewall restart" | debug
+fi
+
+# Sync state on remote server
+if "${LIBDIR}/bkctld-is-on" "${jail_name}"; then
+    # fetch state of remote jail
+    ssh "${NODE}" "${LIBDIR}/bkctld-is-on ${jail_name} 2>/dev/null"
+    case "$?" in
+        0)
+            # jail is already running : reload it
+            ssh "${NODE}" "${LIBDIR}/bkctld-reload ${jail_name}" | debug
+        ;;
+        100)
+            # jail is stopped : start it
+            ssh "${NODE}" "${LIBDIR}/bkctld-start ${jail_name}" | debug
+        ;;
+        *)
+            error "Error evaluating jail \`${jail_name}' state. bkctld-is-on exited with \`$?'"
+        ;;
+    esac
+else
+    ssh "${NODE}" "${LIBDIR}/bkctld-stop ${jail_name}" | debug
 fi

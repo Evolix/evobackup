@@ -15,7 +15,7 @@ if [ ! -n "${jail_name}" ]; then
 fi
 jail_path=$(jail_path "${jail_name}")
 
-test -d "${jail_path}" || error "${jail_name}: jail not found"
+test -d "${jail_path}" || error "${jail_name}: jail not found" 2
 
 jail_sshd_config="${jail_path}/${SSHD_CONFIG}"
 

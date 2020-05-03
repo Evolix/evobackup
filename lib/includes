@@ -59,15 +59,19 @@ warning() {
         logger -t bkctld -p daemon.warning "$(process_name) ${msg}"
     fi
 }
-
+# Return codes
+# 1 : generic error
+# 2 : jail not found
+# > 100 : subcommands specific errors
 error() {
     msg="${1:-$(cat /dev/stdin)}"
+    rc="${2:-1}"
     tty -s && echo "$(log_date) ERROR $(process_name) ${msg}" >&2
     if [ "${LOGLEVEL}" -ge 5 ]; then
         tty -s || echo "$(log_date) ERROR $(process_name) ${msg}" >&2
         logger -t bkctld -p daemon.error "$(process_name) ${msg}"
     fi
-    exit 1
+    exit ${rc}
 }
 
 dry_run() {

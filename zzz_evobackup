@@ -83,7 +83,7 @@ test_server() {
     else
         # SSH connection failed
         new_error=$(printf "Failed to connect to \`%s' within %s seconds" "${item}" "${SSH_CONNECT_TIMEOUT}")
-        SERVERS_SSH_ERRORS=$(printf "%s\n%s" "${SERVERS_SSH_ERRORS}" "${new_error}" | sed -e '/^$/d')
+        SERVERS_SSH_ERRORS=$(printf "%s\\n%s" "${SERVERS_SSH_ERRORS}" "${new_error}" | sed -e '/^$/d')
 
         return 1
     fi
@@ -96,16 +96,16 @@ pick_server() {
     if [ "${increment}" -ge "${list_length}" ]; then
         # We've reached the end of the list
         new_error="No more server available"
-        SERVERS_SSH_ERRORS=$(printf "%s\n%s" "${SERVERS_SSH_ERRORS}" "${new_error}" | sed -e '/^$/d')
+        SERVERS_SSH_ERRORS=$(printf "%s\\n%s" "${SERVERS_SSH_ERRORS}" "${new_error}" | sed -e '/^$/d')
 
         # Log errors to stderr
-        printf "%s\n" "${SERVERS_SSH_ERRORS}" >&2
+        printf "%s\\n" "${SERVERS_SSH_ERRORS}" >&2
         # Log errors to logfile
-        printf "%s\n" "${SERVERS_SSH_ERRORS}" >> $LOGFILE
+        printf "%s\\n" "${SERVERS_SSH_ERRORS}" >> $LOGFILE
         return 1
     fi
 
-    # Extract the day of month, without leading 0 (which would give an octal based number) 
+    # Extract the day of month, without leading 0 (which would give an octal based number)
     today=$(date +%e)
     # A salt is useful to randomize the starting point in the list
     # but stay identical each time it's called for a server (based on hostname).
@@ -123,14 +123,14 @@ pick_server() {
 if [ -e "${PIDFILE}" ]; then
     pid=$(cat "${PIDFILE}")
     # Does process still exist ?
-    if kill -0 ${pid} 2> /dev/null; then
+    if kill -0 "${pid}" 2> /dev/null; then
         # Killing the childs of evobackup.
         for ppid in $(pgrep -P "${pid}"); do
             kill -9 "${ppid}";
         done
         # Then kill the main PID.
         kill -9 "${pid}"
-        printf "%s is still running (PID %s). Process has been killed" "$0" "${pid}\n" >&2
+        printf "%s is still running (PID %s). Process has been killed" "$0" "${pid}\\n" >&2
     else
         rm -f ${PIDFILE}
     fi
@@ -299,7 +299,7 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
 
         ## Dump findmnt(8) output
         FINDMNT_BIN=$(command -v findmnt)
-        if [ -x ${FINDMNT_BIN} ]; then
+        if [ -x "${FINDMNT_BIN}" ]; then
             ${FINDMNT_BIN} > ${LOCAL_BACKUP_DIR}/findmnt.txt
         fi
     else
@@ -366,6 +366,8 @@ if [ "${SYNC_TASKS}" = "1" ]; then
     # Remote shell command
     RSH_COMMAND="ssh -p ${SSH_PORT} -o 'ConnectTimeout ${SSH_CONNECT_TIMEOUT}'"
 
+    # ignore check because we want it to split the different arguments to $rep
+    # shellcheck disable=SC2086
     rsync -avzh --stats --delete --delete-excluded --force --ignore-errors --partial \
         --exclude "lost+found"                             \
         --exclude ".nfs.*"                                 \
@@ -410,11 +412,11 @@ fi
 
 END=$(/bin/date +"%d-%m-%Y ; %H:%M")
 
-printf "EvoBackup - %s - START %s ON %s (LOCAL_TASKS=%s SYNC_TASKS=%s)\n" \
+printf "EvoBackup - %s - START %s ON %s (LOCAL_TASKS=%s SYNC_TASKS=%s)\\n" \
        "${HOSTNAME}" "${BEGINNING}" "${SSH_SERVER}" "${LOCAL_TASKS}" "${SYNC_TASKS}" \
        >> $LOGFILE
 
-printf "EvoBackup - %s - STOP %s ON %s (LOCAL_TASKS=%s SYNC_TASKS=%s)\n" \
+printf "EvoBackup - %s - STOP %s ON %s (LOCAL_TASKS=%s SYNC_TASKS=%s)\\n" \
        "${HOSTNAME}" "${END}" "${SSH_SERVER}" "${LOCAL_TASKS}" "${SYNC_TASKS}" \
        >> $LOGFILE
 

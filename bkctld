@@ -52,17 +52,30 @@ case "${subcommand}" in
     ;;
     "init" | "is-on")
         jail_name="${2:-}"
-        "${LIBDIR}/bkctld-${subcommand}" "${jail_name}"
+        if [ -z "${jail_name}" ]; then
+            "${LIBDIR}/bkctld-help"
+            exit 1
+        else
+            "${LIBDIR}/bkctld-${subcommand}" "${jail_name}" 
+        fi
     ;;
     "key" | "port" | "ip")
         jail_name="${2:-}"
         option="${3:-}"
-        "${LIBDIR}/bkctld-${subcommand}" "${jail_name}" "${option}"
+        if [ "${jail_name}" = "all" ] || [ -z "${jail_name}" ]; then
+            "${LIBDIR}/bkctld-help"
+            exit 1
+        else
+            "${LIBDIR}/bkctld-${subcommand}" "${jail_name}" "${option}"
+        fi
     ;;
     "start" | "stop" | "reload" | "restart" | "sync" | "update" | "remove" | "firewall")
         jail_name="${2:-}"
         if [ "${jail_name}" = "all" ]; then
             "${LIBDIR}/bkctld-list" | xargs --no-run-if-empty --max-args=1 --max-procs=0 "${LIBDIR}/bkctld-${subcommand}"
+        elif [ -z "${jail_name}" ]; then
+            "${LIBDIR}/bkctld-help"
+            exit 1
         else
             "${LIBDIR}/bkctld-${subcommand}" "${jail_name}"
         fi
