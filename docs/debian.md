@@ -49,3 +49,5 @@ Launch git-buildpackage :
 ~~~
 gbp buildpackage
 ~~~
+
+To update the debian changelog, use the command `debchange`
