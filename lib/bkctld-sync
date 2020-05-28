@@ -29,7 +29,7 @@ fi
 rsync -a "${jail_path}/" "${NODE}:${jail_path}/" --exclude proc/* --exclude sys/* --exclude dev/* --exclude run --exclude var/backup/*
 # Sync config (new structure)
 if [ -d "${jail_config_dir}" ]; then
-    rsync -a --delete "${jail_config_dir}" "${NODE}:${jail_config_dir}"
+    rsync -a --delete "${jail_config_dir}/" "${NODE}:${jail_config_dir}/"
 else
     ssh "${NODE}" "rm -rf ${jail_config_dir}" | debug
 fi
