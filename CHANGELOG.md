@@ -16,9 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-* On sync, add trailing slash to rsync command
-
 ### Security
+
+## [2.3.3] - 2020-05-28
+
+### Fixed
+
+* On sync, add trailing slash to rsync command
 
 ## [2.3.2] - 2020-05-03
 
