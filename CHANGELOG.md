@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* New command bkctld upgrade-config to move the legacy config file "/etc/evobackup/<jail>" to the new config structure "/etc/evobackup/<jail>.d/incs_policy"
+
 ### Changed
 
 ### Deprecated
