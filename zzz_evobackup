@@ -368,7 +368,7 @@ if [ "${SYNC_TASKS}" = "1" ]; then
 
     # ignore check because we want it to split the different arguments to $rep
     # shellcheck disable=SC2086
-    rsync -avzh --stats --delete --delete-excluded --force --ignore-errors --partial \
+    rsync -avzh --relative --stats --delete --delete-excluded --force --ignore-errors --partial \
         --exclude "lost+found"                             \
         --exclude ".nfs.*"                                 \
         --exclude "/var/log"                               \
