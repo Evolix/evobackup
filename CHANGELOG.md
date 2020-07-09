@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* bkctld-update: start jail after upgrade if it was started before
+
 ### Deprecated
 
 ### Removed
