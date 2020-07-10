@@ -36,8 +36,12 @@ fi
 
 subcommand="${1:-}"
 case "${subcommand}" in
-    "inc" | "rm" | "check" | "stats" | "help" | "list")
+    "inc" | "rm" | "check-jails" | "check-setup" | "stats" | "help" | "list")
         "${LIBDIR}/bkctld-${subcommand}"
+    ;;
+    "check")
+        # backward compatibility
+        "${LIBDIR}/bkctld-check-jails"
     ;;
     "check-incs")
         option="${2:-}"

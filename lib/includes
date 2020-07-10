@@ -7,12 +7,13 @@
 LIBDIR=${LIBDIR:-/usr/lib/bkctld}
 CONFDIR="${CONFDIR:-/etc/evobackup}"
 BACKUP_DISK="${BACKUP_DISK:-}"
-JAILDIR="${JAILDIR:-/backup/jails}"
-INCDIR="${INCDIR:-/backup/incs}"
+BACKUP_PARTITION="${BACKUP_PARTITION:-/backup}"
+JAILDIR="${JAILDIR:-${BACKUP_PARTITION}/jails}"
+INCDIR="${INCDIR:-${BACKUP_PARTITION}/incs}"
 TPLDIR="${TPLDIR:-/usr/share/bkctld}"
 LOCALTPLDIR="${LOCALTPLDIR:-/usr/local/share/bkctld}"
 LOCKDIR="${LOCKDIR:-/run/lock/bkctld}"
-INDEX_DIR="${INDEX_DIR:-/backup/index}"
+INDEX_DIR="${INDEX_DIR:-${BACKUP_PARTITION}/index}"
 IDX_FILE="${IDX_FILE:-${INDEX_DIR}/bkctld-jails.idx}"
 SSHD_PID="${SSHD_PID:-/run/sshd.pid}"
 SSHD_CONFIG="${SSHD_CONFIG:-/etc/ssh/sshd_config}"
@@ -334,6 +335,15 @@ mount_jail_fs() {
 }
 
 read_variable() {
+    file=${1:?}
+    var_name=${2:?}
+
+    pattern="^\s*${var_name}=.+"
+
+    grep --extended-regexp --only-matching "${pattern}" "${file}" | cut -d= -f2
+}
+
+read_numerical_variable() {
     file=${1:?}
     var_name=${2:?}
 
