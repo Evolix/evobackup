@@ -229,7 +229,14 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
     ## Redis
 
     ## example with copy .rdb file
+    ## for the default instance :
     # cp /var/lib/redis/dump.rdb ${LOCAL_BACKUP_DIR}/
+    ## for multiple instances :
+    # for instance in $(ls -d /var/lib/redis-*); do
+    #     name=$(basename $instance)
+    #     mkdir -p ${LOCAL_BACKUP_DIR}/${name}
+    #     cp -a ${instance}/dump.rdb ${LOCAL_BACKUP_DIR}/${name}
+    # done
 
     ## ElasticSearch
 
