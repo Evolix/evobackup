@@ -249,9 +249,7 @@ setup_jail_chroot() {
     touch ./var/log/lastlog ./var/log/wtmp ./run/utmp
 
     info "2 - Copying essential files"
-    [ -f /etc/ssh/ssh_host_rsa_key ] && cp /etc/ssh/ssh_host_rsa_key ./etc/ssh
-    [ -f /etc/ssh/ssh_host_ecdsa_key ] && cp /etc/ssh/ssh_host_ecdsa_key ./etc/ssh
-    [ -f /etc/ssh/ssh_host_ed25519_key ] && cp /etc/ssh/ssh_host_ed25519_key ./etc/ssh
+    ssh-keygen -A -f .
     touch "./${AUTHORIZED_KEYS}"
     chmod 600 "./${AUTHORIZED_KEYS}"
     cp "${passwd}" ./etc
