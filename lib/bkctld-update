@@ -15,8 +15,24 @@ jail_path=$(jail_path "${jail_name}")
 
 test -d "${jail_path}" || error "${jail_name}: jail not found" 2
 
-"${LIBDIR}/bkctld-is-on" "${jail_name}" && "${LIBDIR}/bkctld-stop" "${jail_name}"
+"${LIBDIR}/bkctld-is-on" "${jail_name}" 2>/dev/null
+case "$?" in
+    0)
+        jail_initial_status="on"
+    ;;
+    100)
+        jail_initial_status="off"
+    ;;
+    *)
+        unset jail_initial_status
+        error "Error evaluating jail \`${jail_name}' state. bkctld-is-on exited with \`$?'"
+    ;;
+esac
+
+test "${jail_initial_status}" = "on" && "${LIBDIR}/bkctld-stop" "${jail_name}"
 
 setup_jail_chroot "${jail_name}"
+
+test "${jail_initial_status}" = "on" && "${LIBDIR}/bkctld-start" "${jail_name}"
 
 notice "Update jail \`${jail_name}' : OK"

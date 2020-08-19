@@ -14,43 +14,6 @@ nb_ok=0
 nb_unkn=0
 output=""
 
-# Check if the backup disk is properly mounted
-
-if [ -b "${BACKUP_DISK}" ]; then
-    # If backup disk is encrypted, verify that it's open
-    cryptsetup isLuks "${BACKUP_DISK}"
-    if [ "$?" -eq 0 ]; then
-        if [ ! -b '/dev/mapper/backup' ]; then
-            echo "Luks disk \`${BACKUP_DISK}' is not mounted !\n"
-            echo "cryptsetup luksOpen ${BACKUP_DISK} backup"
-            exit 2
-        fi
-        # Change value to real device
-        BACKUP_DISK='/dev/mapper/backup'
-    fi
-    # Verify that it's mounted and writable
-    findmnt --source ${BACKUP_DISK} -O rw > /dev/null
-    if [ "$?" -ne 0 ]; then
-         echo "Backup disk \`${BACKUP_DISK}' is not mounted (or read-only) !\n"
-         echo "mount ${BACKUP_DISK} /backup"
-         exit 2
-    fi
-fi
-
-# Check if the firewall file is sourced
-
-minifirewall_config=/etc/default/minifirewall
-
-if [ -n "${FIREWALL_RULES}" ] \
-&& [ -r "${FIREWALL_RULES}" ] \
-&& [ -f "${minifirewall_config}" ]; then
-    if ! grep -qE "^(\.|source) ${FIREWALL_RULES}" "${minifirewall_config}"; then
-        nb_warn=$((nb_warn + 1))
-        output="${output}WARNING - Firewall file '${FIREWALL_RULES}' doesn't seem to be sourced by '${minifirewall_config}'\n"
-        [ "${return}" -le 1 ] && return=1
-    fi
-fi
-
 # Check each jail status
 
 check_jail() {
@@ -64,8 +27,8 @@ check_jail() {
     check_policy_file=$(current_jail_check_policy_file "${jail_name}")
 
     if [ -f "${check_policy_file}" ]; then
-        local_critical=$(read_variable "${check_policy_file}" "CRITICAL")
-        local_warning=$(read_variable "${check_policy_file}" "WARNING")
+        local_critical=$(read_numerical_variable "${check_policy_file}" "CRITICAL")
+        local_warning=$(read_numerical_variable "${check_policy_file}" "WARNING")
     else
         unset local_critical
         unset local_warning

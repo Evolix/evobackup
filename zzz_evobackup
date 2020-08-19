@@ -30,7 +30,7 @@ SERVERS="node0.backup.example.com:2XXX node1.backup.example.com:2XXX"
 SERVERS_FALLBACK=${SERVERS_FALLBACK:-1}
 
 # timeout (in seconds) for SSH connections
-SSH_CONNECT_TIMEOUT=${SSH_CONNECT_TIMEOUT:-30}
+SSH_CONNECT_TIMEOUT=${SSH_CONNECT_TIMEOUT:-90}
 
 ## We use /home/backup : feel free to use your own dir
 LOCAL_BACKUP_DIR="/home/backup"
@@ -156,37 +156,37 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
     ## example with two dumps for each table (.sql/.txt) for all databases
     # for i in $(echo SHOW DATABASES | mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
     # | egrep -v "^(Database|information_schema|performance_schema|sys)" ); \
-    # do mkdir -p -m 700 /home/mysqldump/$i ; chown -RL mysql /home/mysqldump ; \
+    # do mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysql/$i ; chown -RL mysql /home/mysqldump ; \
     # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 -Q --opt --events --hex-blob --skip-comments \
-    #  --fields-enclosed-by='\"' --fields-terminated-by=',' -T /home/mysqldump/$i $i; done
+    #  --fields-enclosed-by='\"' --fields-terminated-by=',' -T ${LOCAL_BACKUP_DIR}/mysql/$i $i; done
 
     ## Dump all grants (requires 'percona-toolkit' package)
-    # mkdir -p -m 700 /home/mysqldump/
-    # pt-show-grants --flush --no-header > /home/mysqldump/all_grants.sql
+    # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysql/
+    # pt-show-grants --flush --no-header > ${LOCAL_BACKUP_DIR}/mysql/all_grants.sql
 
     ## example with SQL dump (schema only, no data) for each databases
-    # mkdir -p -m 700 /home/mysqldump/
+    # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysql/
     # for i in $(mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 -e 'show databases' -s --skip-column-names \
     # | egrep -v "^(Database|information_schema|performance_schema|sys)"); do
-    #     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --no-data --databases $i > /home/mysqldump/${i}.schema.sql
+    #     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --no-data --databases $i > ${LOCAL_BACKUP_DIR}/mysql/${i}.schema.sql
     # done
 
     ## example with compressed SQL dump (with data) for each databases
-    # mkdir -p -m 700 /home/mysqldump/
+    # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysql/
     # for i in $(mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 -e 'show databases' -s --skip-column-names \
     # | egrep -v "^(Database|information_schema|performance_schema|sys)"); do
-    #     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --events --hex-blob $i | gzip --best > /home/mysqldump/${i}.sql.gz
+    #     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --events --hex-blob $i | gzip --best > ${LOCAL_BACKUP_DIR}/mysql/${i}.sql.gz
     # done
 
     ## example with *one* uncompressed SQL dump for *one* database (MYBASE)
-    # mkdir -p -m 700 /home/mysqldump/MYBASE
-    # chown -RL mysql /home/mysqldump/
+    # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysql/MYBASE
+    # chown -RL mysql ${LOCAL_BACKUP_DIR}/mysql/
     # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -Q \
-    # --opt --events --hex-blob --skip-comments -T /home/mysqldump/MYBASE MYBASE
+    # --opt --events --hex-blob --skip-comments -T ${LOCAL_BACKUP_DIR}/mysql/MYBASE MYBASE
 
     ## example with mysqlhotcopy
-    # mkdir -p -m 700 /home/mysqlhotcopy/
-    # mysqlhotcopy BASE /home/mysqlhotcopy/
+    # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysqlhotcopy/
+    # mysqlhotcopy BASE ${LOCAL_BACKUP_DIR}/mysql/mysqlhotcopy/
 
     ## example for multiples MySQL instances
     # mysqladminpasswd=$(grep -m1 'password = .*' /root/.my.cnf|cut -d" " -f3)
@@ -229,7 +229,14 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
     ## Redis
 
     ## example with copy .rdb file
+    ## for the default instance :
     # cp /var/lib/redis/dump.rdb ${LOCAL_BACKUP_DIR}/
+    ## for multiple instances :
+    # for instance in $(ls -d /var/lib/redis-*); do
+    #     name=$(basename $instance)
+    #     mkdir -p ${LOCAL_BACKUP_DIR}/${name}
+    #     cp -a ${instance}/dump.rdb ${LOCAL_BACKUP_DIR}/${name}
+    # done
 
     ## ElasticSearch
 
@@ -368,7 +375,7 @@ if [ "${SYNC_TASKS}" = "1" ]; then
 
     # ignore check because we want it to split the different arguments to $rep
     # shellcheck disable=SC2086
-    rsync -avzh --stats --delete --delete-excluded --force --ignore-errors --partial \
+    rsync -avzh --relative --stats --delete --delete-excluded --force --ignore-errors --partial \
         --exclude "lost+found"                             \
         --exclude ".nfs.*"                                 \
         --exclude "/var/log"                               \
