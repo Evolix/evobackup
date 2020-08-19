@@ -251,16 +251,22 @@ setup_jail_chroot() {
     mkdir -p ./root/.ssh --mode 0700
     # shellcheck disable=SC2174
     mkdir -p ./var/backup --mode 0700
+
     ln -s ./usr/bin ./bin
     ln -s ./usr/lib ./lib
     ln -s ./usr/lib64 ./lib64
     ln -s --target-directory=./var ../run
+
     touch ./var/log/lastlog ./var/log/wtmp ./run/utmp
 
     info "2 - Copying essential files"
+
+    # Generate SSH host keys is missing
     ssh-keygen -A -f "${jail_path}"
+
     touch "./${AUTHORIZED_KEYS}"
     chmod 600 "./${AUTHORIZED_KEYS}"
+
     cp "${passwd}" ./etc
     cp "${shadow}" ./etc
     cp "${group}" ./etc
@@ -270,7 +276,19 @@ setup_jail_chroot() {
     cp -f /lib/ld-linux.so.2 ./lib 2>/dev/null || cp -f /lib64/ld-linux-x86-64.so.2 ./lib64
     cp /lib/x86_64-linux-gnu/libnss* ./lib/x86_64-linux-gnu
 
-    for dbin in /bin/sh /bin/ls /bin/mkdir /bin/cat /bin/rm /bin/sed /usr/bin/rsync /usr/bin/lastlog /usr/bin/touch /usr/sbin/sshd /usr/lib/openssh/sftp-server; do
+    for dbin in \
+        /bin/sh \
+        /bin/ls \
+        /bin/mkdir \
+        /bin/cat \
+        /bin/rm \
+        /bin/sed \
+        /usr/bin/rsync \
+        /usr/bin/lastlog \
+        /usr/bin/touch \
+        /usr/sbin/sshd \
+        /usr/lib/openssh/sftp-server\
+        ; do
         cp -f "${dbin}" "./${dbin}";
         for lib in $(ldd "${dbin}" | grep -Eo "/.*so.[0-9\.]+"); do
             cp -p "${lib}" "./${lib}"
