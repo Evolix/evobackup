@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * bkctld-update: start jail after upgrade if it was started before
+* bkctld: don't replace SSH host keys when creating/updating a jail
 * Split check into check-jails and check-setup
 * bkctld-check-jails checks if jails 
 * bkctld-check-setup checks if the partition is mounted and writable, if firewall is configured and if all jails are started
