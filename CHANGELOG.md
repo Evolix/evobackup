@@ -8,16 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* New command bkctld upgrade-config to move the legacy config file "/etc/evobackup/<jail>" to the new config structure "/etc/evobackup/<jail>.d/incs_policy"
-
 ### Changed
-
-* bkctld-update: start jail after upgrade if it was started before
-* bkctld: don't replace SSH host keys when creating/updating a jail
-* Split check into check-jails and check-setup
-* bkctld-check-jails checks if jails 
-* bkctld-check-setup checks if the partition is mounted and writable, if firewall is configured and if all jails are started
-* create new ssh keys for new jails instead of copying those from the host
 
 ### Deprecated
 
@@ -26,6 +17,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [2.4.0] - 2020-08-19
+
+### Added
+
+* New command bkctld upgrade-config to move the legacy config file "/etc/evobackup/<jail>" to the new config structure "/etc/evobackup/<jail>.d/incs_policy"
+
+### Changed
+
+* bkctld-update: start jail after upgrade if it was started before
+* bkctld: don't replace SSH host keys when creating/updating a jail
+* Split check into check-jails and check-setup
+* bkctld-check-jails checks if jails 
+* bkctld-check-setup checks if the partition is mounted and writable, if firewall is configured and if all jails are in their expected state
+* create new ssh keys for new jails instead of copying those from the host
 
 ## [2.3.3] - 2020-05-28
 
