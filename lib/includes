@@ -258,7 +258,7 @@ setup_jail_chroot() {
     touch ./var/log/lastlog ./var/log/wtmp ./run/utmp
 
     info "2 - Copying essential files"
-    ssh-keygen -A -f .
+    ssh-keygen -A -f "${jail_path}"
     touch "./${AUTHORIZED_KEYS}"
     chmod 600 "./${AUTHORIZED_KEYS}"
     cp "${passwd}" ./etc
