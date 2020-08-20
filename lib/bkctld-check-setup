@@ -63,6 +63,7 @@ for jail_name in $(jails_list); do
 done
 if [ "${nb_off}" -eq 0 ]; then
     output="${output}OK - all jails are in their expected state.\n"
+    nb_ok=$((nb_ok + 1))
 else
     output="${output}CRITICAL - ${nb_off} jail(s) shouldn't be OFF !\n"
     nb_crit=$((nb_crit + 1))
