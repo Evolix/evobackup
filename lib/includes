@@ -94,20 +94,27 @@ is_btrfs() {
 
 # Returns the list of all jails
 jails_list() {
-    # shellcheck disable=SC2091
-    "${LIBDIR}/bkctld-list"
-}
-# Returns the list of all incs for a jail
-incs_list() {
-    jail_name=${1:?}
-    # shellcheck disable=SC2091
-    ls "$(incs_path "${jail_name}")/"
+    # TODO: try if this command works the same :
+    # find "${JAILDIR}" -mindepth 1 -maxdepth 1 -type d -printf '%f\n'
+    find "${JAILDIR}" -mindepth 1 -maxdepth 1 -type d | sed 's!.*/!!' | sort -h
 }
 # Returns the complete path of a jail
 jail_path() {
     jail_name=${1:?}
 
     echo "${JAILDIR}/${jail_name}"
+}
+jail_config_dir() {
+    jail_name=${1:?}
+
+    echo "${CONFDIR}/${jail_name}.d"
+}
+jail_incs_policy_file() {
+    jail_name=${1:?}
+
+    jail_config_dir=$(jail_config_dir "${jail_name}")
+
+    echo "${jail_config_dir}/incs_policy"
 }
 # Returns the path of incs for a jail
 incs_path() {
@@ -131,17 +138,10 @@ inc_exists() {
     # inc_path must not be quoted because it can contain globs
     ls -d ${inc_path} > /dev/null 2>&1
 }
-jail_config_dir() {
+# Returns the list of all incs for a jail
+incs_list() {
     jail_name=${1:?}
-
-    echo "${CONFDIR}/${jail_name}.d"
-}
-jail_incs_policy_file() {
-    jail_name=${1:?}
-
-    jail_config_dir=$(jail_config_dir "${jail_name}")
-
-    echo "${jail_config_dir}/incs_policy"
+    find "$(incs_path "${jail_name}")" -mindepth 1 -maxdepth 1 -type d | sed 's!.*/!!' | sort -h
 }
 current_jail_incs_policy_file() {
     jail_name=${1:?}
