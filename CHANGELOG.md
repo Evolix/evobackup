@@ -8,8 +8,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* jails and incs lists are sorted alphanumerically
-
 ### Changed
 
 ### Deprecated
@@ -18,9 +16,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-* bkctld-check-setup: forgot to increment the summary
-
 ### Security
+
+## [2.4.1] - 2020-08-28
+
+### Added
+
+* jails and incs lists are sorted alphanumerically
+
+### Fixed
+
+* bkctld-check-setup: forgot to increment the summary
 
 ## [2.4.0] - 2020-08-19
 
