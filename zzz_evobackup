@@ -404,6 +404,17 @@ if [ "${SYNC_TASKS}" = "1" ]; then
         --exclude "/var/spool/postfix"                     \
         --exclude "/var/spool/squid"                       \
         --exclude "/var/state"                             \
+        --exclude "lxc/*/rootfs/usr/doc"                   \
+        --exclude "lxc/*/rootfs/usr/obj"                   \
+        --exclude "lxc/*/rootfs/usr/share/doc"             \
+        --exclude "lxc/*/rootfs/usr/src"                   \
+        --exclude "lxc/*/rootfs/var/apt"                   \
+        --exclude "lxc/*/rootfs/var/cache"                 \
+        --exclude "lxc/*/rootfs/var/lib/php5"              \
+        --exclude "lxc/*/rootfs/var/lock"                  \
+        --exclude "lxc/*/rootfs/var/log"                   \
+        --exclude "lxc/*/rootfs/var/run"                   \
+        --exclude "lxc/*/rootfs/var/state"                 \
         --exclude "/home/mysqltmp"                         \
             ${rep}                                         \
             /etc                                           \
