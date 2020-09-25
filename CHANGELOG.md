@@ -16,9 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-* restore compatibility with Debian <10
-
 ### Security
+
+## [2.5.0] - 2020-09-25
+
+### Fixed
+
+* restore compatibility with Debian <10
 
 ## [2.4.1] - 2020-08-28
 
