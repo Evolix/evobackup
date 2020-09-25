@@ -360,7 +360,7 @@ SSH_PORT=$(echo "${server}" | cut -d':' -f2)
 HOSTNAME=$(hostname)
 
 if [ "${SYSTEM}" = "linux" ]; then
-    rep="/bin /boot /lib /opt /sbin /usr /srv"
+    rep="/bin /boot /lib /opt /sbin /usr"
 else
     rep="/bsd /bin /sbin /usr"
 fi
@@ -376,35 +376,46 @@ if [ "${SYNC_TASKS}" = "1" ]; then
     # ignore check because we want it to split the different arguments to $rep
     # shellcheck disable=SC2086
     rsync -avzh --relative --stats --delete --delete-excluded --force --ignore-errors --partial \
+        --exclude "dev"                                    \
         --exclude "lost+found"                             \
         --exclude ".nfs.*"                                 \
-        --exclude "/var/log"                               \
-        --exclude "/var/log/evobackup*"                    \
+        --exclude "/usr/doc"                               \
+        --exclude "/usr/obj"                               \
+        --exclude "/usr/share/doc"                         \
+        --exclude "/usr/src"                               \
+        --exclude "/var/apt"                               \
+        --exclude "/var/cache"                             \
+        --exclude "/var/lib/amavis/amavisd.sock"           \
+        --exclude "/var/lib/amavis/tmp"                    \
+        --exclude "/var/lib/clamav/*.tmp"                  \
+        --exclude "/var/lib/elasticsearch"                 \
+        --exclude "/var/lib/metche"                        \
+        --exclude "/var/lib/munin/*tmp*"                   \
         --exclude "/var/lib/mysql"                         \
+        --exclude "/var/lib/php5"                          \
+        --exclude "/var/lib/php/sessions"                  \
         --exclude "/var/lib/postgres"                      \
         --exclude "/var/lib/postgresql"                    \
         --exclude "/var/lib/sympa"                         \
-        --exclude "/var/lib/metche"                        \
-        --exclude "/var/run"                               \
         --exclude "/var/lock"                              \
-        --exclude "/var/state"                             \
-        --exclude "/var/apt"                               \
-        --exclude "/var/cache"                             \
-        --exclude "/usr/src"                               \
-        --exclude "/usr/doc"                               \
-        --exclude "/usr/share/doc"                         \
-        --exclude "/usr/obj"                               \
-        --exclude "dev"                                    \
+        --exclude "/var/log"                               \
+        --exclude "/var/log/evobackup*"                    \
+        --exclude "/var/run"                               \
         --exclude "/var/spool/postfix"                     \
-        --exclude "/var/lib/amavis/amavisd.sock"           \
-        --exclude "/var/lib/munin/*tmp*"                   \
-        --exclude "/var/lib/php5"                          \
         --exclude "/var/spool/squid"                       \
-        --exclude "/var/lib/elasticsearch"                 \
-        --exclude "/var/lib/amavis/tmp"                    \
-        --exclude "/var/lib/clamav/*.tmp"                  \
+        --exclude "/var/state"                             \
+        --exclude "lxc/*/rootfs/usr/doc"                   \
+        --exclude "lxc/*/rootfs/usr/obj"                   \
+        --exclude "lxc/*/rootfs/usr/share/doc"             \
+        --exclude "lxc/*/rootfs/usr/src"                   \
+        --exclude "lxc/*/rootfs/var/apt"                   \
+        --exclude "lxc/*/rootfs/var/cache"                 \
+        --exclude "lxc/*/rootfs/var/lib/php5"              \
+        --exclude "lxc/*/rootfs/var/lock"                  \
+        --exclude "lxc/*/rootfs/var/log"                   \
+        --exclude "lxc/*/rootfs/var/run"                   \
+        --exclude "lxc/*/rootfs/var/state"                 \
         --exclude "/home/mysqltmp"                         \
-        --exclude "/var/lib/php/sessions"                  \
             ${rep}                                         \
             /etc                                           \
             /root                                          \

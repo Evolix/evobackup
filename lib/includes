@@ -208,6 +208,19 @@ new_lock_file() {
     mkdir --parents "${lock_dir}" && echo $$ > ${lock_file} || error "Failed to acquire lock file '${lock_file}'"
 }
 
+pkg_version() {
+    # $(command -v ssh) -V 2>&1 | grep -iEo 'OpenSSH_(\S+)' | cut -d '_' -f2
+    dpkg-query -W -f='${Version}\n' $1 \
+    | sed 's/[~+-].\+//' \
+    | sed 's/.\+://' \
+    | sed 's/p.*//' \
+    | cut -d. -f1,2
+}
+ssh_keygen_with_prefix() {
+    # openssh-client 7.9 provides ssh-keygen with "-f prefix_path" option
+    dpkg --compare-versions "$(pkg_version 'openssh-client')" ge "7.9"
+}
+
 setup_jail_chroot() {
     jail_name=${1:?}
 
@@ -261,8 +274,16 @@ setup_jail_chroot() {
 
     info "2 - Copying essential files"
 
-    # Generate SSH host keys is missing
-    ssh-keygen -A -f "${jail_path}"
+    #
+    if ssh_keygen_with_prefix; then
+        # Generate SSH host keys if missing in jail
+        ssh-keygen -A -f "${jail_path}"
+    else
+        # Copy SSH host keys from host if missing in jail
+        for key in /etc/ssh/*_key; do
+            cp --no-clobber ${key} ${jail_path}${key};
+        done
+    fi
 
     touch "./${AUTHORIZED_KEYS}"
     chmod 600 "./${AUTHORIZED_KEYS}"
