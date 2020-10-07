@@ -6,7 +6,7 @@
 [ -f /etc/default/bkctld ] && . /etc/default/bkctld
 
 # shellcheck disable=SC2034
-VERSION="2.5.1"
+VERSION="2.6.0"
 
 LIBDIR=${LIBDIR:-/usr/lib/bkctld}
 CONFDIR="${CONFDIR:-/etc/evobackup}"
