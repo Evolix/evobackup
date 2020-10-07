@@ -18,6 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [2.6.0] - 2020-10-07
+
+### Added
+
+* bkctld: add a [-V|--version] option to display release number
+* bkctld: add a [-h|--help|-?] option to display help message
+
 ## [2.5.1] - 2020-10-07
 
 ### Changed

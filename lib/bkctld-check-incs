@@ -1,4 +1,8 @@
 #!/bin/sh
+#
+# Run check on all expected incs of all jails
+# Usage: check-incs all
+#
 
 set -u
 

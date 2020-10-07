@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # Run check on jails (NRPE output)
-# Usage: check
+# Usage: check-jails
 #
 
 # shellcheck source=./includes
