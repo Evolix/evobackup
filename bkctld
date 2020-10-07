@@ -76,7 +76,9 @@ case "${subcommand}" in
     "start" | "stop" | "reload" | "restart" | "sync" | "update" | "remove" | "firewall" | "upgrade-config")
         jail_name="${2:-}"
         if [ "${jail_name}" = "all" ]; then
-            "${LIBDIR}/bkctld-list" | xargs --no-run-if-empty --max-args=1 --max-procs=0 "${LIBDIR}/bkctld-${subcommand}"
+            for jail in $("${LIBDIR}/bkctld-list"); do
+                "${LIBDIR}/bkctld-${subcommand}" "${jail}"
+            done
         elif [ -z "${jail_name}" ]; then
             "${LIBDIR}/bkctld-help"
             exit 1
@@ -87,7 +89,9 @@ case "${subcommand}" in
     "status")
         jail_name="${2:-}"
         if [ "${jail_name}" = "all" ] || [ -z "${jail_name}" ]; then
-            "${LIBDIR}/bkctld-list" | xargs --no-run-if-empty --max-args=1 "${LIBDIR}/bkctld-${subcommand}"
+            for jail in $("${LIBDIR}/bkctld-list"); do
+                "${LIBDIR}/bkctld-${subcommand}" "${jail}"
+            done
         else
             "${LIBDIR}/bkctld-${subcommand}" "${jail_name}"
         fi

@@ -156,9 +156,9 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
     ## example with two dumps for each table (.sql/.txt) for all databases
     # for i in $(echo SHOW DATABASES | mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
     # | egrep -v "^(Database|information_schema|performance_schema|sys)" ); \
-    # do mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysql/$i ; chown -RL mysql /home/mysqldump ; \
+    # do mkdir -p -m 700 /home/mysqldump/$i ; chown -RL mysql /home/mysqldump ; \
     # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 -Q --opt --events --hex-blob --skip-comments \
-    #  --fields-enclosed-by='\"' --fields-terminated-by=',' -T ${LOCAL_BACKUP_DIR}/mysql/$i $i; done
+    #  --fields-enclosed-by='\"' --fields-terminated-by=',' -T /home/mysqldump/$i $i; done
 
     ## Dump all grants (requires 'percona-toolkit' package)
     # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysql/
