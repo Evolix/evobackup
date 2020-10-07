@@ -10,8 +10,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* bkctld: Replace xargs with a simple loop
-
 ### Deprecated
 
 ### Removed
@@ -19,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [2.5.1] - 2020-10-07
+
+### Changed
+
+* bkctld: Replace xargs with a simple loop
 
 ## [2.5.0] - 2020-09-25
 
