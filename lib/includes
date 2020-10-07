@@ -4,6 +4,10 @@
 #
 
 [ -f /etc/default/bkctld ] && . /etc/default/bkctld
+
+# shellcheck disable=SC2034
+VERSION="2.5.1"
+
 LIBDIR=${LIBDIR:-/usr/lib/bkctld}
 CONFDIR="${CONFDIR:-/etc/evobackup}"
 BACKUP_DISK="${BACKUP_DISK:-}"
@@ -23,6 +27,39 @@ LOGLEVEL="${LOGLEVEL:-6}"
 CRITICAL="${CRITICAL:-48}"
 WARNING="${WARNING:-24}"
 DUC=$(command -v duc-nox || command -v duc)
+
+show_version() {
+    cat <<END
+bkctld version ${VERSION}
+
+Copyright 2004-2020 Evolix <info@evolix.fr>,
+                    Victor Laborie <vlaborie@evolix.fr>,
+                    Jérémy Lecour <jlecour@evolix.fr>
+                    and others.
+
+bkctld comes with ABSOLUTELY NO WARRANTY.  This is free software,
+and you are welcome to redistribute it under certain conditions.
+See the GNU Affero General Public License v3.0 for details.
+END
+}
+show_help() {
+    cat <<EOF
+Usage: bkctld [options] <subcommand> [arguments]
+Options
+    -h|--help|-?     Display help
+    -V|--version     Display version, authors and license
+Subcommands:
+EOF
+
+    for subcommand in ${LIBDIR}/bkctld-*; do
+        name=$(basename "${subcommand}"|sed 's/^bkctld-//')
+        desc=$(grep -E "^#" "${subcommand}"|sed -n '3p'|sed "s/^# //")
+        usage=$(grep -E "^# Usage: ${name}" "${subcommand}"|sed "s/^# Usage: ${name}//")
+        printf "    %- 15s %- 30s %- 40s\n" "${name}" "${usage}" "${desc}"
+    done
+
+    printf "\n"
+}
 
 log_date() {
     echo "[$(date +"%Y-%m-%d %H:%M:%S")]"

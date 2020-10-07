@@ -1,4 +1,8 @@
 #!/bin/sh
+#
+# Run check on the last inc of all jails
+# Usage: check-incs last
+#
 
 set -u
 

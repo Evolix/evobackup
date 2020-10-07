@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* bkctld: add a [-V|--version] option to display release number
+* bkctld: add a [-h|--help|-?] option to display help message
+
 ### Changed
 
 ### Deprecated
