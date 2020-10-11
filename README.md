@@ -43,18 +43,70 @@ This architecture is as secure as SSH, Rsync, chroot and iptables are.
 
 See the [installation guide](docs/install.md) for instructions.
 
+## Server-side usage
+
+See [docs/usage.md](docs/usage.md).
+
+The man(1) page, in troff(7) language, can be generated with pandoc:
+
+~~~
+pandoc -f markdown \
+	-t man usage.md \
+	--template default.man \
+	-V title=bkctld \
+	-V section=8 \
+	-V date="$(date '+%d %b %Y')" \
+	-V footer="$(git describe --tags)" \
+	-V header="bkctld man page"
+~~~
+
+~~~
+git clone https://gitea.evolix.org/evolix/evobackup.git
+cd evobackup
+man ./docs/bkctld.8
+~~~
+
+#### Client-side usage
+
+As bkctld creates a dedicated SSH server, everything that connects over SSH can push files to the jail (Rsync, SFTP…).
+
+Example with Rsync :
+
+~~~
+rsync -av -e "ssh -p SSH_PORT" /home/ root@SERVER_NAME:/var/backup/home/
+~~~
+
+An example synchronization script is present in `zzz_evobackup`,
+clone the evobackup repository and read the **CLIENT CONFIGURATION**
+section of the manual.
+
+
 ## Testing
 
-You can deploy test environments with Vagrant :
+You can manage test environments with Vagrant.
+
+There are 4 preconfigured environments :
+* Debian stetch with ext4
+* Debian stetch with btrfs
+* Debian buster with ext4
+* Debian buster with btrfs
+
+You can start them all with :
 
 ~~~
 vagrant up
 ~~~
 
+… or just the one you want :
+
+~~~
+vagrant up buster-btrfs
+~~~
+
 ### Deployment
 
 Run `vagrant rsync-auto` in a terminal for automatic synchronization of
-your local code with Vagrant VM :
+your local code with Vagrant environments :
 
 ~~~
 vagrant rsync-auto
@@ -77,40 +129,4 @@ vagrant@buster-btrfs $ sudo -i
 root@buster-btrfs # bats /vagrant/test/*.bats
 ~~~
 
-You should shellcheck your bats files, but with shellcheck > 0.4.6, because the 0.4.0 version doesn't support bats syntax.
-
-## Usage
-
-See [docs/usage.md](docs/usage.md).
-
-The man(1) page, in troff(7) language, can be generated with pandoc:
-
-~~~
-pandoc -f markdown \
-	-t man usage.md \
-	--template default.man \
-	-V title=bkctld \
-	-V section=8 \
-	-V date="$(date '+%d %b %Y')" \
-	-V footer="$(git describe --tags)" \
-	-V header="bkctld man page"
-~~~
-
-#### Client configuration
-
-You can backup various systems in the evobackup jails : Linux, BSD,
-Windows, macOS. The only need Rsync or an SFTP client.
-
-~~~
-rsync -av -e "ssh -p SSH_PORT" /home/ root@SERVER_NAME:/var/backup/home/
-~~~
-
-An example synchronization script is present in `zzz_evobackup`,
-clone the evobackup repository and read the **CLIENT CONFIGURATION**
-section of the manual.
-
-~~~
-git clone https://gitea.evolix.org/evolix/evobackup.git
-cd evobackup
-man ./docs/bkctld.8
-~~~
+You should [shellcheck](https://www.shellcheck.net) your bats files, but with shellcheck > 0.4.6, because the 0.4.0 version doesn't support bats syntax.

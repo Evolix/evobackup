@@ -1,8 +1,8 @@
-EVOBACKUP-INCL(5) - File Formats Manual
+evobackup-incs-policy(5) - File Formats Manual
 
 # NAME
 
-**evobackup-incl** - incremental backup configuration
+**evobackup-incs-policy** - incremental backup configuration
 
 # SYNOPSIS
 
@@ -13,7 +13,7 @@ EVOBACKUP-INCL(5) - File Formats Manual
 Located by default in
 */etc/evobackup/*,
 each
-**evobackup-incl**
+**evobackup-incs-policy**
 file is named after the
 bkctld(8)
 backup for which the rules it contains must apply.
@@ -31,9 +31,9 @@ character are comments and are ignored.
 The order of the rules does not matter.
 
 Evobackups that do not have their nominal
-**evobackup-incl**
+**evobackup-incs-policy**
 file use the default rules defined in
-*/usr/share/bkctld/inc.tpl*
+*/usr/share/bkctld/incs-policy.tpl*
 
 # EXAMPLES
 
@@ -75,6 +75,6 @@ Keep backups of the last 4 days and the first day of the last 2 months:
 
 bkctld(8),
 cron(8),
-*/etc/evobackup/tpl/inc.tpl*
+*/etc/evobackup/tpl/incs-policy.tpl*
 
 OpenBSD 6.4 - December 28, 2018

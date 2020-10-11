@@ -27,14 +27,14 @@ in it's
 chroot(8)
 (using the root account).
 
-Prior backups are stored incrementally outside of the
+Dated copies (_incs_) of the data are stored outside of the
 chroot(8)
 using
 ln(1)
 hard links or BTRFS snapshots.
 (So they can not be affected by the client),
-which backups are kept over time can be configured in the jail's nominal
-evobackup-incl(5)
+Old dated copies (_incs_) are deleted every day according to the jail's policy, configured in
+evobackup-incs-policy(5)
 configuration file.
 
 A large enough volume must be mounted on
@@ -57,7 +57,7 @@ The following operands are available:
 
 > Update an evobackup jail
 
-**remove** **all** | *jailname*
+**remove** \[-f|--force\] **all** | *jailname*
 
 > Remove an evobackup jail
 
@@ -115,11 +115,11 @@ The following operands are available:
 
 **inc**
 
-> Generate incremental backups
+> Generate a dated copy of the jail
 
 **rm**
 
-> Remove old incremental backups
+> Remove old dated copies of the jail
 
 # FILES
 
@@ -128,9 +128,9 @@ The following operands are available:
 > Template for
 > bkctld.conf(5)
 
-*/usr/share/bkctld/incl.tpl*
+*/usr/share/bkctld/incs-policy.tpl*
 
-> Default rules for the incremental backups are stored here.
+> Default rules for the dated copies retention policy.
 
 # EXAMPLES
 
@@ -139,7 +139,7 @@ the backup server administrator will need:
 
 *	The host name of the client system.
 
-*	The public RSA
+*	The public SSH key
 	ssh(1)
 	key for the
 	"root"
@@ -162,7 +162,7 @@ He can then create the jail:
 	# bkctld status <JAIL_NAME>
 
 And override the default
-evobackup-incl(5)
+evobackup-incs-policy(5)
 rules
 
 	# $EDITOR /etc/evobackup/<JAIL_NAME>.d/incs_policy
@@ -195,13 +195,13 @@ can be found in the
 rsync(1),
 ssh-keygen(1),
 bkctld(5),
-evobackup-incl(5),
+evobackup-incs-policy(5),
 chroot(8),
 cron(8),
 sshd(8)
 
 # AUTHORS
 
-Victor Laborie
+Victor Laborie, Jérémy Lecour and others at Evolix
 
 OpenBSD 6.4 - December 27, 2018

@@ -1,8 +1,8 @@
 .Dd December 28, 2018
-.Dt EVOBACKUP-INCL 5
+.Dt evobackup-incs-policy 5
 .Os
 .Sh NAME
-.Nm evobackup-incl
+.Nm evobackup-incs-policy
 .Nd incremental backup configuration
 .Sh SYNOPSIS
 .D1 +%Y-%m-%d.-%day
@@ -31,7 +31,7 @@ The order of the rules does not matter.
 Evobackups that do not have their nominal
 .Nm
 file use the default rules defined in
-.Pa /usr/share/bkctld/inc.tpl
+.Pa /usr/share/bkctld/incs-policy.tpl
 .Sh EXAMPLES
 Keep today's backup:
 .Bd -literal -offset indent
@@ -76,4 +76,4 @@ Keep backups of the last 4 days and the first day of the last 2 months:
 .Sh SEE ALSO
 .Xr bkctld 8 ,
 .Xr cron 8 ,
-.Pa /etc/evobackup/tpl/inc.tpl
+.Pa /etc/evobackup/tpl/incs-policy.tpl

@@ -366,8 +366,8 @@ setup_jail_config() {
     info "4 - Copie default sshd_config"
     install -m 0640 "${sshd_config_tpl}" "${jail_sshd_config}"
 
-    inctpl="${TPLDIR}/inc.tpl"
-    test -f "${LOCALTPLDIR}/inc.tpl" && inctpl="${LOCALTPLDIR}/inc.tpl"
+    inctpl="${TPLDIR}/incs-policy.tpl"
+    test -f "${LOCALTPLDIR}/incs-policy.tpl" && inctpl="${LOCALTPLDIR}/incs-policy.tpl"
 
     info "5 - Copie default inc configuration"
     jail_incs_policy_file=$(jail_incs_policy_file "${jail_name}")

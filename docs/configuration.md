@@ -32,7 +32,7 @@ The following variables may be defined:
 *CONFDIR*
 
 > Directory where
-> evobackup-incl(5)
+> evobackup-incs-policy(5)
 > files are kept.
 > It's default value is
 > */etc/evobackup/*.
@@ -80,7 +80,7 @@ The following variables may be defined:
 # SEE ALSO
 
 bash(1),
-evobackup-incl(5),
+evobackup-incs-policy(5),
 bkctld(8)
 
 OpenBSD 6.4 - December 28, 2018

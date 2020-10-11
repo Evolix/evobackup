@@ -31,7 +31,7 @@ using
 hard links or BTRFS snapshots.
 (So they can not be affected by the client),
 which backups are kept over time can be configured in the jail's nominal
-.Xr evobackup-incl 5
+.Xr evobackup-incs-policy 5
 configuration file.
 .Pp
 A large enough volume must be mounted on
@@ -131,7 +131,7 @@ He can then create the jail:
 .Ed
 .Pp
 And override the default
-.Xr evobackup-incl 5
+.Xr evobackup-incs-policy 5
 rules
 .Bd -literal -offset indent
 # $EDITOR /etc/evobackup/CLIENT_HOST_NAME
@@ -169,7 +169,7 @@ can be found in the
 .Xr rsync 1 ,
 .Xr ssh-keygen 1 ,
 .Xr bkctld 5 ,
-.Xr evobackup-incl 5 ,
+.Xr evobackup-incs-policy 5 ,
 .Xr chroot 8 ,
 .Xr cron 8 ,
 .Xr sshd 8
