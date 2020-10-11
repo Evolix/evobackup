@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * bkctld: add a [-f|--force] option to remove confirmation on some commands
+* bkctld-remove: confirmation before removal of jails if not in force mode
 
 ### Changed
 
