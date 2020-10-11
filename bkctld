@@ -36,6 +36,10 @@ fi
 
 # Parse options
 # based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
+if [ "$#" = "0" ]; then
+    show_help
+    exit 1
+fi
 while :; do
     case $1 in
         -h|-\?|--help)
@@ -81,7 +85,7 @@ case "${subcommand}" in
             show_help
             exit 1
         else
-            "${LIBDIR}/bkctld-${subcommand}" "${jail_name}" 
+            "${LIBDIR}/bkctld-${subcommand}" "${jail_name}"
         fi
     ;;
     "key" | "port" | "ip")

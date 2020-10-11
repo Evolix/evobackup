@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Set or get ssh pubic key of <jailname>
+# Description: Set or get ssh pubic key
 # Usage: key <jailname> [<keyfile>]
 #
 

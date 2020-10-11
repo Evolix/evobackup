@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Check if a jail is on or not
+# Description: Check if a SSH server is on (exit 0) or not (exit 100)
 # Usage: is-on <jailname>
 #
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Make incremental inc of all jails
+# Description: Make dated copies (incs) of jails
 # Usage: inc
 #
 

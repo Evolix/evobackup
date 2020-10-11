@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Remove jail <jailname> or all
+# Description: Remove jail and all dated copies (incs)
 # Usage: remove <jailname>|all
 #
 

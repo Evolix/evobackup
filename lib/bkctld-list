@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# List jails
+# Description: List jails
 # Usage: list
 #
 

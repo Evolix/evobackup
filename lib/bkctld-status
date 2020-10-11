@@ -1,7 +1,7 @@
 #!/bin/sh
 #
-# Print status of <jailname> (default all jail)
-# Usage: status [<jailname>]
+# Description: Display status of SSH server
+# Usage: status [<jailname>|all]
 #
 
 # shellcheck source=./includes

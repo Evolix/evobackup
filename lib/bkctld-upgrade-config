@@ -1,7 +1,7 @@
 #!/bin/sh
 #
-# Upgrade chroot components for jail <jailname> or all
-# Usage: upgrade-config <jailname>|all
+# Description: Upgrade configuration to new convention
+# Usage: upgrade-config [<jailname>|all]
 #
 
 # shellcheck source=./includes

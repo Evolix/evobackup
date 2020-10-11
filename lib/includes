@@ -51,11 +51,10 @@ Options
 Subcommands:
 EOF
 
-    for subcommand in ${LIBDIR}/bkctld-*; do
-        name=$(basename "${subcommand}"|sed 's/^bkctld-//')
-        desc=$(grep -E "^#" "${subcommand}"|sed -n '3p'|sed "s/^# //")
-        usage=$(grep -E "^# Usage: ${name}" "${subcommand}"|sed "s/^# Usage: ${name}//")
-        printf "    %- 15s %- 30s %- 40s\n" "${name}" "${usage}" "${desc}"
+    for filename in ${LIBDIR}/bkctld-*; do
+        desc=$(grep -E "^# Description:" "${filename}"|sed "s/^# Description: //")
+        usage=$(grep -E "^# Usage:" "${filename}"|sed "s/^# Usage: //")
+        printf "    %- 32s %s\n" "${usage}" "${desc}"
     done
 
     printf "\n"
@@ -380,8 +379,8 @@ is_mounted_inside_jail() {
     target=${1:?}
 
     # TODO: try to find why it doesn't work with this findmnt(8) command
-    # findmnt --target "${target}" --tab-file /proc/mounts 
-    grep -q "${target}" /proc/mounts 
+    # findmnt --target "${target}" --tab-file /proc/mounts
+    grep -q "${target}" /proc/mounts
 }
 
 mount_jail_fs() {

@@ -1,7 +1,7 @@
 #!/bin/sh
 #
-# Sync jail <jailname> or all to another node
-# Usage: sync <jailname>|all
+# Description: Sync jail configuration and state on other node(s)
+# Usage: sync [<jailname>|all]
 #
 
 # shellcheck source=./includes

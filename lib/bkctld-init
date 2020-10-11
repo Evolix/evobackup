@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Init jail <jailname>
+# Description: Initialize a new jail
 # Usage: init <jailname>
 #
 

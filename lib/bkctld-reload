@@ -1,7 +1,7 @@
 #!/bin/sh
 #
-# Reload jail <jailname> or all
-# Usage: reload <jailname>|all
+# Description: Reload SSH server
+# Usage: reload [<jailname>|all]
 #
 
 # shellcheck source=./includes

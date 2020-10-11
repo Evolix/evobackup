@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Start jail <jailname> or all
+# Description: Start SSH Server
 # Usage: start <jailname>|all
 #
 

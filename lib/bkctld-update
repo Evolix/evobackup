@@ -1,7 +1,7 @@
 #!/bin/sh
 #
-# Update jail <jailname> or all
-# Usage: update <jailname>|all
+# Description: Update binaries and libraries
+# Usage: update [<jailname>|all]
 #
 
 # shellcheck source=./includes

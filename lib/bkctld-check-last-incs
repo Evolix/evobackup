@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Run check on the last inc of all jails
+# Description: Run check on the last inc of all jails
 # Usage: check-incs last
 #
 

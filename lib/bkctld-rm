@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Remove old incremtal inc of all jails
+# Description: Remove old dated copies (incs) according to policy
 # Usage: rm
 #
 
@@ -102,7 +102,7 @@ for jail_name in ${jails_list}; do
     # If no incs policy is found, we don't remove incs
     if [ -n "${incs_policy_file}" ]; then
         # shellcheck disable=SC2046
-        
+
         incs_to_delete=$(incs_to_delete "${jail_name}" "${incs_policy_file}")
         incs_total=$(echo ${incs_to_delete} | wc -w)
         incs_count=0
