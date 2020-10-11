@@ -156,8 +156,8 @@ the backup server administrator will need:
 He can then create the jail:
 
 	# bkctld init <JAIL_NAME>
-	# bkctld key <JAIL_NAME> /root/<JAIL_NAME>.pub
-	# bkctld ip <JAIL_NAME> <IP_OR_CIDR>
+	# bkctld key-add <JAIL_NAME> /root/<JAIL_NAME>.pub
+	# bkctld ip-add <JAIL_NAME> <IP_OR_CIDR>
 	# bkctld start <JAIL_NAME>
 	# bkctld status <JAIL_NAME>
 

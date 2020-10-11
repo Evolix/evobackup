@@ -11,7 +11,7 @@ load test_helper
 }
 
 @test "Normal inc creation" {
-    /usr/lib/bkctld/bkctld-inc
+    /usr/lib/bkctld/bkctld-incs-create
 
     if is_btrfs "/backup"; then
         # On a btrfs filesystem, the inc should be a btrfs volume
@@ -27,7 +27,7 @@ load test_helper
 @test "Normal inc creation (with old incs policy)" {
     mv "${CONFDIR}/${JAILNAME}.d/incs_policy" "${CONFDIR}/${JAILNAME}"
 
-    /usr/lib/bkctld/bkctld-inc
+    /usr/lib/bkctld/bkctld-incs-create
 
     if is_btrfs "/backup"; then
         # On a btrfs filesystem, the inc should be a btrfs volume
@@ -46,7 +46,7 @@ load test_helper
     # … and old file
     rm -f "${CONFDIR}/${JAILNAME}"
 
-    /usr/lib/bkctld/bkctld-inc
+    /usr/lib/bkctld/bkctld-incs-create
 
     run test -d "${INCSPATH}/${INC_NAME}"
     assert_failure
@@ -60,8 +60,8 @@ load test_helper
     recent_inc_path="${INCSPATH}/${INC_NAME}"
 
     # Create the inc, then run 'rm'
-    /usr/lib/bkctld/bkctld-inc
-    /usr/lib/bkctld/bkctld-rm
+    /usr/lib/bkctld/bkctld-incs-create
+    /usr/lib/bkctld/bkctld-incs-prune
 
     # Recent inc should be present
     run test -d "${recent_inc_path}"
@@ -78,9 +78,9 @@ load test_helper
     older_inc_path="${INCSPATH}/${older_inc_name}"
 
     # Create the inc, rename it to make it older, then run 'rm'
-    /usr/lib/bkctld/bkctld-inc
+    /usr/lib/bkctld/bkctld-incs-create
     mv "${recent_inc_path}" "${older_inc_path}"
-    /usr/lib/bkctld/bkctld-rm
+    /usr/lib/bkctld/bkctld-incs-prune
 
     # Older inc should be removed
     run test -d "${older_inc_path}"

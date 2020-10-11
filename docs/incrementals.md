@@ -20,7 +20,7 @@ backup for which the rules it contains must apply.
 
 The rules it defines decide which incremental backups are kept when running
 
-	# bkctld rm
+	# bkctld incs-prune
 
 Each line defines a single rule.
 The first part of the rule describes when the backup was taken,

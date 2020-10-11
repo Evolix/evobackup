@@ -61,11 +61,11 @@ Edit the root crontab
 ~~~
 # $editor /etc/cron.d/bkctld
 + MAILTO=alert4@evolix.net
-+ 30 11 * * * root /usr/sbin/bkctld inc && /usr/sbin/bkctld rm
++ 30 11 * * * root /usr/sbin/bkctld incs-create && /usr/sbin/bkctld incs-prune
 + 30 23 * * * root /usr/share/scripts/check-incs.sh 1> /dev/null
 ~~~
 
 ## Notes
 If you want mutiples backups in a day (1 per hour maximum) you can
-run `bkctld inc` multiples times, if you want to keep incremental
-backups **for ever**, just don't run `bkctld rm`.
+run `bkctld incs-create` multiples times, if you want to keep incremental
+backups **for ever**, just don't run `bkctld incs-prune`.

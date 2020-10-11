@@ -111,6 +111,12 @@ error() {
     fi
     exit ${rc}
 }
+deprecated_cmd() {
+    old=${1:?}
+    new=${2:?}
+
+    warning "\`${old}' is deprecated, use \`${new}' instead"
+}
 
 dry_run() {
     test "$DRY_RUN" = "1"

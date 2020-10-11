@@ -51,6 +51,7 @@ while :; do
             exit 0
             ;;
         -f|--force)
+            # shellcheck disable=SC2034
             FORCE=1
             ;;
         *)
@@ -64,11 +65,34 @@ done
 
 subcommand="${1:-}"
 case "${subcommand}" in
-    "inc" | "rm" | "check-jails" | "check-setup" | "stats" | "list")
-        "${LIBDIR}/bkctld-${subcommand}"
+    "list")
+        "${LIBDIR}/bkctld-list"
+    ;;
+    "stats")
+        "${LIBDIR}/bkctld-stats"
+    ;;
+    "incs-create")
+        "${LIBDIR}/bkctld-incs-create"
+    ;;
+    "inc")
+        deprecated_cmd "bkctld inc", "bkctld incs-create"
+        "${LIBDIR}/bkctld-incs-create"
+    ;;
+    "incs-prune")
+        "${LIBDIR}/bkctld-incs-prune"
+    ;;
+    "rm")
+        deprecated_cmd "bkctld rm", "bkctld incs-prune"
+        "${LIBDIR}/bkctld-incs-prune"
     ;;
     "check")
-        # backward compatibility
+        deprecated_cmd "bkctld check", "bkctld jails-check"
+        "${LIBDIR}/bkctld-check-jails"
+    ;;
+    "check-setup")
+        "${LIBDIR}/bkctld-check-setup"
+    ;;
+    "check-jails")
         "${LIBDIR}/bkctld-check-jails"
     ;;
     "check-incs")
@@ -91,17 +115,78 @@ case "${subcommand}" in
             "${LIBDIR}/bkctld-${subcommand}" "${jail_name}"
         fi
     ;;
-    "key" | "port" | "ip")
+    "ip-add")
         jail_name="${2:-}"
         option="${3:-}"
-        if [ "${jail_name}" = "all" ] || [ -z "${jail_name}" ]; then
-            show_help
-            exit 1
-        else
-            "${LIBDIR}/bkctld-${subcommand}" "${jail_name}" "${option}"
+        "${LIBDIR}/bkctld-ip" "${jail_name}" "${option}"
+    ;;
+    "ip-replace")
+        jail_name="${2:-}"
+        option="${3:-}"
+        "${LIBDIR}/bkctld-ip" "${jail_name}" "0.0.0.0/0"
+        if [ -n "${option}" ]; then
+            "${LIBDIR}/bkctld-ip" "${jail_name}" "${option}"
         fi
     ;;
-    "start" | "stop" | "reload" | "restart" | "sync" | "update" | "remove" | "firewall" | "upgrade-config")
+    "ip-list")
+        jail_name="${2:-}"
+        "${LIBDIR}/bkctld-ip" "${jail_name}"
+    ;;
+    "ip")
+        jail_name="${2:-}"
+        option="${3:-}"
+        if [ -n "${option}" ]; then
+            if [ "${option}" = "0.0.0.0/0" ] || [ "${option}" = "all" ]; then
+                deprecated_cmd "bkctld ip ${jail_name} ${option}", "bkctld ip-replace ${jail_name}"
+            else
+                deprecated_cmd "bkctld ip ${jail_name} ${option}", "bkctld ip-add ${jail_name} ${option}"
+            fi
+            "${LIBDIR}/bkctld-ip" "${jail_name}" "${option}"
+        else
+            deprecated_cmd "bkctld ip ${jail_name}", "bkctld ip-list ${jail_name}"
+            "${LIBDIR}/bkctld-ip" "${jail_name}"
+        fi
+    ;;
+    "key-list")
+        jail_name="${2:-}"
+        "${LIBDIR}/bkctld-key" "${jail_name}"
+    ;;
+    "key-replace")
+        jail_name="${2:-}"
+        option="${3:-}"
+        "${LIBDIR}/bkctld-key" "${jail_name}" "${option}"
+    ;;
+    "key-add")
+        error "\`bkctld key-add' command is not available yet!"
+    ;;
+    "key")
+        jail_name="${2:-}"
+        option="${3:-}"
+        if [ -n "${option}" ]; then
+            deprecated_cmd "bkctld key ${jail_name} ${option}", "bkctld key-replace ${jail_name} ${option}"
+            "${LIBDIR}/bkctld-key" "${jail_name}" "${option}"
+        else
+            deprecated_cmd "bkctld key ${jail_name}", "bkctld key-list ${jail_name}"
+            "${LIBDIR}/bkctld-key" "${jail_name}"
+        fi
+    ;;
+    "port")
+        jail_name="${2:-}"
+        option="${3:-}"
+        "${LIBDIR}/bkctld-port" "${jail_name}" "${option}"
+    ;;
+    "archive")
+        error "\`bkctld archive' command is not available yet!"
+    ;;
+    "remove")
+        jail_name="${2:-}"
+        if [ "${jail_name}" = "all" ]; then
+            error "\`bkctld remove all' is too dangerous."
+        else
+            "${LIBDIR}/bkctld-remove" "${jail_name}"
+        fi
+    ;;
+    "start" | "stop" | "reload" | "restart" | "sync" | "update" | "firewall" | "upgrade-config")
         jail_name="${2:-}"
         if [ "${jail_name}" = "all" ]; then
             for jail in $("${LIBDIR}/bkctld-list"); do
