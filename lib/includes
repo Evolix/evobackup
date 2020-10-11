@@ -2,10 +2,10 @@
 #
 # Config for bkctld
 #
+# shellcheck disable=SC2034
 
 [ -f /etc/default/bkctld ] && . /etc/default/bkctld
 
-# shellcheck disable=SC2034
 VERSION="2.6.0"
 
 LIBDIR=${LIBDIR:-/usr/lib/bkctld}
