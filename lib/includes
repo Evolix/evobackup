@@ -129,11 +129,15 @@ is_btrfs() {
     test $inode -eq 256
 }
 
-# Returns the list of all jails
+# Returns the list of jails found in the "jails" directory (default)
 jails_list() {
     # TODO: try if this command works the same :
     # find "${JAILDIR}" -mindepth 1 -maxdepth 1 -type d -printf '%f\n'
     find "${JAILDIR}" -mindepth 1 -maxdepth 1 -type d | sed 's!.*/!!' | sort -h
+}
+# Returns the list of jails found in the "incs" directory
+jails_with_incs_list() {
+    find "${INCDIR}" -mindepth 1 -maxdepth 1 -type d | sed 's!.*/!!' | sort -h
 }
 # Returns the complete path of a jail
 jail_path() {

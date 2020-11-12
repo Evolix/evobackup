@@ -92,7 +92,9 @@ trap "rm -f ${lock_file}; cleanup_tmp;" 0
 kill_or_clean_lockfile "${lock_file}"
 new_lock_file "${lock_file}"
 
-jails_list=$(jails_list)
+# We list jails in "incs" directory, not in "jails" directory
+# so we can clean old incs after a jail is archived
+jails_list=$(jails_with_incs_list)
 jails_total=$(echo $jails_list | wc -w)
 jails_count=0
 

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Better help message composition and formating
+* bkctld-rm: list jails from incs directory
 
 ### Deprecated
 
