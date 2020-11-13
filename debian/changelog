@@ -1,3 +1,9 @@
+bkctld (2.7.0-1) unstable; urgency=high
+
+  * Upstrem release 2.7.0
+
+ -- Jeremy Lecour <jlecour@synopsis.evolix.net>  Fri, 13 Nov 2020 15:51:39 +0100
+
 bkctld (2.6.0-1) unstable; urgency=low
 
   * Upstream release 2.6.0
