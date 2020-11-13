@@ -20,7 +20,7 @@ setup() {
 
 teardown() {
     remove_variable "/etc/default/bkctld" "BACKUP_DISK"
-    /usr/lib/bkctld/bkctld-remove "${JAILNAME}" && rm -rf "${INCSPATH}"
+    FORCE=1 /usr/lib/bkctld/bkctld-remove "${JAILNAME}" && rm -rf "${INCSPATH}"
 }
 
 random_jail_name() {

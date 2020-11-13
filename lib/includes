@@ -27,7 +27,7 @@ LOGLEVEL="${LOGLEVEL:-6}"
 CRITICAL="${CRITICAL:-48}"
 WARNING="${WARNING:-24}"
 DUC=$(command -v duc-nox || command -v duc)
-FORCE=0
+FORCE="${FORCE:-0}"
 
 show_version() {
     cat <<END
