@@ -8,14 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* bkctld: add a [-f|--force] option to remove confirmation on some commands
-* bkctld-remove: confirmation before removal of jails if not in force mode
-* bkctld-rm: delete empty jails in incs directory
-
 ### Changed
-
-* Better help message composition and formating
-* bkctld-rm: list jails from incs directory
 
 ### Deprecated
 
@@ -24,6 +17,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [2.7.0] - 2020-11-13
+
+### Added
+
+* bkctld: add a [-f|--force] option to remove confirmation on some commands
+* bkctld-remove: confirmation before removal of jails if not in force mode
+* bkctld-rm: delete empty jails in incs directory
+
+### Changed
+
+* Better help message composition and formating
+* bkctld-rm: list jails from incs directory
 
 ## [2.6.0] - 2020-10-07
 
