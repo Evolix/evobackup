@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Make and display stats on jails (size, lastconn)
+# Description: Display stats on jails (size, last connection…)
 # Usage: stats
 #
 

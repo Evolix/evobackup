@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Set or get allowed(s) ip(s) of <jailname>
+# Description: Set or get allowed(s) ip(s)
 # Usage: ip <jailname> [<ip>|all]
 #
 

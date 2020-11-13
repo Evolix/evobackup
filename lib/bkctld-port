@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Set or get ssh port of <jailname>
+# Description: Set or get SSH port
 # Usage: port <jailname> [<port>|auto]
 #
 

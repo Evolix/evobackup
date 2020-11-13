@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Run check on jails (NRPE output)
+# Description: Run check on jails (NRPE output)
 # Usage: check-jails
 #
 

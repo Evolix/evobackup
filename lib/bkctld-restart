@@ -1,7 +1,7 @@
 #!/bin/sh
 #
-# Restart jail <jailname> or all
-# Usage: restart <jailname>|all
+# Description: Restart SSH server
+# Usage: restart [<jailname>|all]
 #
 
 set -eu

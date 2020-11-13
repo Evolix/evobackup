@@ -18,6 +18,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [2.7.0] - 2020-11-13
+
+### Added
+
+* bkctld: add a [-f|--force] option to remove confirmation on some commands
+* bkctld-remove: confirmation before removal of jails if not in force mode
+* bkctld-rm: delete empty jails in incs directory
+
+### Changed
+
+* Better help message composition and formating
+* bkctld-rm: list jails from incs directory
+
 ## [2.6.0] - 2020-10-07
 
 ### Added
@@ -58,7 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * bkctld-update: start jail after upgrade if it was started before
 * bkctld: don't replace SSH host keys when creating/updating a jail
 * Split check into check-jails and check-setup
-* bkctld-check-jails checks if jails 
+* bkctld-check-jails checks if jails
 * bkctld-check-setup checks if the partition is mounted and writable, if firewall is configured and if all jails are in their expected state
 * create new ssh keys for new jails instead of copying those from the host
 

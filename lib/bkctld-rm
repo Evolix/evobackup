@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Remove old incremtal inc of all jails
+# Description: Remove old dated copies (incs) according to policy
 # Usage: rm
 #
 
@@ -84,6 +84,21 @@ delete_inc_ext4() {
     fi
 
 }
+delete_empty_inc() {
+    jail_name=$1
+
+    incs_path=$(incs_path "${jail_name}")
+    empty_incs_list=$(find "${incs_path}" -mindepth 0 -maxdepth 0 -type d -empty)
+
+    for empty_inc in ${empty_incs_list}; do
+        if dry_run; then
+            echo "[dry-run] Delete empty \`${empty_inc}'"
+        else
+            rmdir "${empty_inc}"
+            notice "Delete empty \`${empty_inc}' : OK"
+        fi
+    done
+}
 
 lock_file="${LOCKDIR}/rm-global.lock"
 # shellcheck disable=SC2064
@@ -92,7 +107,9 @@ trap "rm -f ${lock_file}; cleanup_tmp;" 0
 kill_or_clean_lockfile "${lock_file}"
 new_lock_file "${lock_file}"
 
-jails_list=$(jails_list)
+# We list jails in "incs" directory, not in "jails" directory
+# so we can clean old incs after a jail is archived
+jails_list=$(jails_with_incs_list)
 jails_total=$(echo $jails_list | wc -w)
 jails_count=0
 
@@ -102,7 +119,6 @@ for jail_name in ${jails_list}; do
     # If no incs policy is found, we don't remove incs
     if [ -n "${incs_policy_file}" ]; then
         # shellcheck disable=SC2046
-        
         incs_to_delete=$(incs_to_delete "${jail_name}" "${incs_policy_file}")
         incs_total=$(echo ${incs_to_delete} | wc -w)
         incs_count=0
@@ -130,6 +146,8 @@ for jail_name in ${jails_list}; do
     else
         notice "Skip jail \`${jail_name}' : incs policy is missing"
     fi
+    # Delete empty incs directory for jail
+    delete_empty_inc "${jail_name}"
 done
 
 # Remove the lock file and cleanup tmp files
