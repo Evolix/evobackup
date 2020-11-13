@@ -87,4 +87,21 @@ load test_helper
     assert_failure
 }
 
+@test "empty inc directory are removed" {
+    # Create an inc
+    /usr/lib/bkctld/bkctld-inc
+    # no inc should be kept
+    echo '' > "${CONFDIR}/${JAILNAME}.d/incs_policy"
+    
+    # The inc directory is present
+    run test -d "${INCSPATH}"
+    assert_success
+    
+    /usr/lib/bkctld/bkctld-rm
+
+    # The inc directory is absent
+    run test -d "${INCSPATH}"
+    assert_failure
+}
+
 # TODO: add many tests for incs (creation and removal)

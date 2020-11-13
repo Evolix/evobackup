@@ -184,6 +184,10 @@ incs_list() {
     jail_name=${1:?}
     find "$(incs_path "${jail_name}")" -mindepth 1 -maxdepth 1 -type d | sed 's!.*/!!' | sort -h
 }
+# Return the list of empty incs directories
+empty_incs_list() {
+    find ${INCDIR} -mindepth 1 -maxdepth 1 -type d -empty
+}
 current_jail_incs_policy_file() {
     jail_name=${1:?}
 
