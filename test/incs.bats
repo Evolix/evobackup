@@ -87,6 +87,24 @@ load test_helper
     assert_failure
 }
 
+@test "All incs are removed by 'rm' with empty inc policy" {
+    # Setup empty incs policy
+    echo "" > "${CONFDIR}/${JAILNAME}.d/incs_policy"
+    inc_path="${INCSPATH}/${INC_NAME}"
+
+    # Create the inc
+    /usr/lib/bkctld/bkctld-inc
+    # Inc should be removed
+    run test -d "${inc_path}"
+    assert_success
+
+    # Remove incs
+    /usr/lib/bkctld/bkctld-rm
+    # Inc should be removed
+    run test -d "${inc_path}"
+    assert_failure
+}
+
 @test "empty inc directory are removed" {
     # Create an inc
     /usr/lib/bkctld/bkctld-inc
