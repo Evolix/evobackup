@@ -391,6 +391,7 @@ if [ "${SYNC_TASKS}" = "1" ]; then
         --exclude "/var/lib/elasticsearch"                 \
         --exclude "/var/lib/metche"                        \
         --exclude "/var/lib/munin/*tmp*"                   \
+        --exclude "/var/db/munin/*.tmp"                    \
         --exclude "/var/lib/mysql"                         \
         --exclude "/var/lib/php5"                          \
         --exclude "/var/lib/php/sessions"                  \
