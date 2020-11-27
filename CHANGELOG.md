@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+* bkctld-upgrade-config is executable
+
 ### Security
 
 ## [2.7.0] - 2020-11-13
