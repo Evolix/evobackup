@@ -110,16 +110,121 @@ load test_helper
     /usr/lib/bkctld/bkctld-inc
     # no inc should be kept
     echo '' > "${CONFDIR}/${JAILNAME}.d/incs_policy"
-    
+
     # The inc directory is present
     run test -d "${INCSPATH}"
     assert_success
-    
+
     /usr/lib/bkctld/bkctld-rm
 
     # The inc directory is absent
     run test -d "${INCSPATH}"
     assert_failure
+}
+
+@test "BTRFS based inc can be unlock with complex pattern" {
+    if is_btrfs "/backup"; then
+        # Prepare an inc older than the policy
+        recent_inc_path="${INCSPATH}/${INC_NAME}"
+        older_inc_name=$(date -d -1month +"%Y-%m-%d-%H")
+        older_inc_path="${INCSPATH}/${older_inc_name}"
+
+        # Create the inc, rename it to make it older, then run 'rm'
+        /usr/lib/bkctld/bkctld-inc
+        mv "${recent_inc_path}" "${older_inc_path}"
+        # run 'inc' again to remake today's inc
+        /usr/lib/bkctld/bkctld-inc
+
+        # inc should be locked
+        run touch "${older_inc_path}/var/log/lastlog"
+        assert_failure
+
+        # unlock inc
+        pattern="${JAILNAME}/$(date -d -1month +"%Y-%m-*")"
+        bkctld inc-unlock "${pattern}"
+
+        # inc should be unlocked
+        run touch "${older_inc_path}/var/log/lastlog"
+        assert_success
+
+        # other inc should still be locked
+        run touch "${recent_inc_path}/var/log/lastlog"
+        assert_failure
+    else
+        # On an ext4 filesystem it's always true
+        run true
+        assert_success
+    fi
+}
+
+@test "BTRFS based inc can be unlock with jail name" {
+    if is_btrfs "/backup"; then
+        # Prepare an inc older than the policy
+        recent_inc_path="${INCSPATH}/${INC_NAME}"
+        older_inc_name=$(date -d -1month +"%Y-%m-%d-%H")
+        older_inc_path="${INCSPATH}/${older_inc_name}"
+
+        # Create the inc, rename it to make it older, then run 'rm'
+        /usr/lib/bkctld/bkctld-inc
+        mv "${recent_inc_path}" "${older_inc_path}"
+        # run 'inc' again to remake today's inc
+        /usr/lib/bkctld/bkctld-inc
+
+        # incs should be locked
+        run touch "${recent_inc_path}/var/log/lastlog"
+        assert_failure
+        run touch "${older_inc_path}/var/log/lastlog"
+        assert_failure
+
+        # unlock incs
+        pattern="${JAILNAME}"
+        bkctld inc-unlock "${pattern}"
+
+        # incs should be unlocked
+        run touch "${recent_inc_path}/var/log/lastlog"
+        assert_success
+        run touch "${older_inc_path}/var/log/lastlog"
+        assert_success
+    else
+        # On an ext4 filesystem it's always true
+        run true
+        assert_success
+    fi
+}
+
+@test "BTRFS based inc can be unlock with 'all' pattern" {
+    if is_btrfs "/backup"; then
+        # Prepare an inc older than the policy
+        recent_inc_path="${INCSPATH}/${INC_NAME}"
+        older_inc_name=$(date -d -1month +"%Y-%m-%d-%H")
+        older_inc_path="${INCSPATH}/${older_inc_name}"
+
+        # Create the inc, rename it to make it older, then run 'rm'
+        /usr/lib/bkctld/bkctld-inc
+        mv "${recent_inc_path}" "${older_inc_path}"
+        # run 'inc' again to remake today's inc
+        /usr/lib/bkctld/bkctld-inc
+
+        # incs should be locked
+        run touch "${recent_inc_path}/var/log/lastlog"
+        assert_failure
+        run touch "${older_inc_path}/var/log/lastlog"
+        assert_failure
+
+        # unlock incs
+        pattern="all"
+        bkctld inc-unlock "${pattern}"
+
+        # incs should be unlocked
+        run touch "${recent_inc_path}/var/log/lastlog"
+        assert_success
+        run touch "${older_inc_path}/var/log/lastlog"
+        assert_success
+    else
+        # On an ext4 filesystem it's always true
+        run true
+        assert_success
+    fi
 }
 
 # TODO: add many tests for incs (creation and removal)
