@@ -124,6 +124,38 @@ case "${subcommand}" in
             "${LIBDIR}/bkctld-${subcommand}" "${jail_name}"
         fi
     ;;
+    "inc-lock" | "inc-unlock")
+        if [ "${subcommand}" = "inc-lock" ]; then
+            lock_status=on
+        elif [ "${subcommand}" = "inc-unlock" ]; then
+            lock_status=off
+        else
+            show_help
+            exit 1
+        fi
+        pattern="${2:-}"
+        if [ "${pattern}" = "all" ]; then
+            target_path_pattern=$(incs_path "*/*")
+        elif [ -n "${pattern}" ]; then
+            # Check if pattern is a jail name
+            if jails_with_incs_list | grep --silent --fixed-strings --line-regexp "${pattern}"; then
+                debug "${pattern} is a jail, change pattern to ${pattern}/*"
+                # then change attern to all subdirectories
+                target_path_pattern=$(incs_path "${pattern}/*")
+            else
+                # or use it as is
+                target_path_pattern=$(incs_path "${pattern}")
+            fi
+        else
+            show_help
+            exit 1
+        fi
+
+        for target_path in ${target_path_pattern}; do
+            "${LIBDIR}/bkctld-inc-lock" "${lock_status}" "${target_path}"
+        done
+        echo "finish"
+    ;;
     *)
         show_help
         exit 1
