@@ -8,8 +8,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* bkctld: new inc-lock and inc-unlock command
-
 ### Changed
 
 ### Deprecated
@@ -19,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [2.8.0] - 2020-11-28
+
+### Added
+
+* bkctld: new inc-lock and inc-unlock command
 
 ## [2.7.1] - 2020-11-28
 
