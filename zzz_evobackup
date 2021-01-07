@@ -405,6 +405,7 @@ if [ "${SYNC_TASKS}" = "1" ]; then
         --exclude "/var/log/evobackup*"                    \
         --exclude "/var/run"                               \
         --exclude "/var/spool/postfix"                     \
+        --exclude "/var/spool/smtpd"                       \
         --exclude "/var/spool/squid"                       \
         --exclude "/var/state"                             \
         --exclude "lxc/*/rootfs/usr/doc"                   \
