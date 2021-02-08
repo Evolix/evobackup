@@ -25,7 +25,7 @@ for jail_name in $("${LIBDIR}/bkctld-list"); do
         jail_config_epoch=$(date --date "$(stat -c %y "${incs_policy_file}")" +"%s")
 
         # read each line in jail configuration
-        while IFS= read -r line < "${incs_policy_file}"; do
+        while read line; do
             # inc date in ISO format
             inc_iso=$(relative_date "${line}")
             # inc date in seconds from epoch
@@ -48,7 +48,7 @@ for jail_name in $("${LIBDIR}/bkctld-list"); do
                     echo "INFO: ${jail_name} : no inc expected for ${inc_iso}"
                 fi
             fi
-        done
+        done < "${incs_policy_file}"
     else
         echo "INFO: ${jail_name} : no inc expected at all"
     fi
