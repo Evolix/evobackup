@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* bkctld-check-incs: Correct shellsheck warnings
+
 ### Deprecated
 
 ### Removed
@@ -19,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 * tests: clean jail configuration after each test
+* bkctld-check-incs: Protect `jail_config_epoch`
 
 ### Security
 

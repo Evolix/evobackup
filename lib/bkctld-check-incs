@@ -7,7 +7,7 @@
 set -u
 
 # shellcheck source=./includes
-LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
+LIBDIR="$(dirname "$0")" && . "${LIBDIR}/includes"
 
 # default return value is 0 (succes)
 rc=0
@@ -20,14 +20,14 @@ for jail_name in $("${LIBDIR}/bkctld-list"); do
     # Today in ISO format
     today_iso=$(date +"%Y-%m-%d")
 
-    # get jail last configuration date
-    jail_config_epoch=$(date --date "$(stat -c %y ${incs_policy_file})" +"%s")
-
     if [ -n "${incs_policy_file}" ]; then
-        # loop for each line in jail configuration
-        for line in $(cat ${incs_policy_file}); do
+        # get jail last configuration date
+        jail_config_epoch=$(date --date "$(stat -c %y "${incs_policy_file}")" +"%s")
+
+        # read each line in jail configuration
+        while IFS= read -r line < "${incs_policy_file}"; do
             # inc date in ISO format
-            inc_iso=$(relative_date ${line})
+            inc_iso=$(relative_date "${line}")
             # inc date in seconds from epoch
             inc_epoch=$(date --date "${inc_iso}" +"%s")
 
