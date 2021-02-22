@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set -e
+
+legacy_incs_policy_tpl="/usr/local/share/bkctld/inc.tpl"
+new_incs_policy_tpl="/usr/local/share/bkctld/incs_policy.tpl"
+
+if [ -e "${legacy_incs_policy_tpl}" ]; then
+    mv -f "${new_incs_policy_tpl}" "${new_incs_policy_tpl}.dpkg-new"
+    mv -f "${legacy_incs_policy_tpl}" "${new_incs_policy_tpl}"
+fi
+
+exit 0
