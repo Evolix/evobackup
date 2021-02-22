@@ -235,4 +235,18 @@ OUT
     run /usr/lib/bkctld/bkctld-check-incs
     assert_equal "0" "$status"
 }
+
+@test "Check-incs doesn't fail without incs_policy file" {
+    # Delete all possible incs polixy files
+    rm -f /etc/evobackup/${JAILNAME}
+    rm -rf /etc/evobackup/${JAILNAME}.d/incs_policy
+
+    # Run bkctld-check-incs and store stderr in a file
+    local stderrPath="${BATS_TMPDIR}/${BATS_TEST_NAME}.stderr"
+    /usr/lib/bkctld/bkctld-check-incs 2> ${stderrPath}
+
+    # Verify if 
+    run grep -E "^stat:" ${stderrPath}
+    assert_failure
+}
 # TODO: write many more tests for bkctld-check-incs

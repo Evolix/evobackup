@@ -18,6 +18,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [2.9.0] - 2021-02-22
+
+### Added
+
+* bkctld-init: install check_policy template
+* bkctld-upgrade-config: install check_policy template if missing
+* test: bkctld check-incs shouldn't fail without incs_policy file
+
+### Changed
+
+* Rename incs_policy template
+* bkctld-check-incs: Correct shellsheck warnings
+
+### Fixed
+
+* tests: clean jail configuration after each test
+* bkctld-check-incs: Protect `jail_config_epoch`
+
 ## [2.8.0] - 2020-11-28
 
 ### Added

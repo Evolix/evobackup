@@ -20,7 +20,8 @@ setup() {
 
 teardown() {
     remove_variable "/etc/default/bkctld" "BACKUP_DISK"
-    FORCE=1 /usr/lib/bkctld/bkctld-remove "${JAILNAME}" && rm -rf "${INCSPATH}"
+    FORCE=1 /usr/lib/bkctld/bkctld-remove "${JAILNAME}" \
+      && rm -rf "${INCSPATH}" "/etc/evobackup/${JAILNAME}" "/etc/evobackup/${JAILNAME}.d"
 }
 
 random_jail_name() {

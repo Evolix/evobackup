@@ -45,3 +45,24 @@ elif [ -f "${legacy_incs_policy_file}" ]; then
 
     info "${jail_name}: config has been upgraded"
 fi
+
+check_policy_file=$(jail_check_policy_file "${jail_name}")
+if [ ! -f "${check_policy_file}" ]; then
+    check_policy_tpl="${TPLDIR}/check_policy.tpl"
+    test -f "${LOCALTPLDIR}/check_policy.tpl" && check_policy_tpl="${LOCALTPLDIR}/check_policy.tpl"
+    mkdir --parents "$(dirname "${check_policy_file}")"
+    install -m 0640 "${check_policy_tpl}" "${check_policy_file}"
+
+    info "${jail_name}: check_policy template ha been installed"
+fi
+
+legacy_incs_policy_tpl="${LOCALTPLDIR}/inc.tpl"
+incs_policy_tpl="${LOCALTPLDIR}/incs_policy.tpl"
+if [ -f "${legacy_incs_policy_tpl}" ]; then
+    # Create directory if missing
+    mkdir -p "$(jail_config_dir "${jail_name}")"
+    # move the main config file
+    mv -f "${legacy_incs_policy_tpl}" "${incs_policy_tpl}"
+
+    info "${jail_name}: incs_policy local template has been renamed"
+fi

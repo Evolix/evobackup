@@ -6,7 +6,7 @@
 
 [ -f /etc/default/bkctld ] && . /etc/default/bkctld
 
-VERSION="2.7.0"
+VERSION="2.9.0"
 
 LIBDIR=${LIBDIR:-/usr/lib/bkctld}
 CONFDIR="${CONFDIR:-/etc/evobackup}"
@@ -374,13 +374,20 @@ setup_jail_config() {
     info "4 - Copie default sshd_config"
     install -m 0640 "${sshd_config_tpl}" "${jail_sshd_config}"
 
-    inctpl="${TPLDIR}/inc.tpl"
-    test -f "${LOCALTPLDIR}/inc.tpl" && inctpl="${LOCALTPLDIR}/inc.tpl"
 
     info "5 - Copie default inc configuration"
+    incs_policy_tpl="${TPLDIR}/incs_policy.tpl"
+    test -f "${LOCALTPLDIR}/incs_policy.tpl" && incs_policy_tpl="${LOCALTPLDIR}/incs_policy.tpl"
     jail_incs_policy_file=$(jail_incs_policy_file "${jail_name}")
     mkdir --parents "$(dirname "${jail_incs_policy_file}")"
-    install -m 0640 "${inctpl}" "${jail_incs_policy_file}"
+    install -m 0640 "${incs_policy_tpl}" "${jail_incs_policy_file}"
+
+    check_policy_tpl="${TPLDIR}/check_policy.tpl"
+    test -f "${LOCALTPLDIR}/check_policy.tpl" && check_policy_tpl="${LOCALTPLDIR}/check_policy.tpl"
+    jail_check_policy_file=$(jail_check_policy_file "${jail_name}")
+    mkdir --parents "$(dirname "${jail_check_policy_file}")"
+    install -m 0640 "${check_policy_tpl}" "${jail_check_policy_file}"
+
     "${LIBDIR}/bkctld-port" "${jail_name}" auto
 }
 

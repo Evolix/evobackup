@@ -15,6 +15,16 @@ load test_helper
     fi
 }
 
+@test "New jail should have a incs_policy file" {
+    run test -f "/etc/evobackup/${JAILNAME}.d/incs_policy"
+    assert_success
+}
+
+@test "New jail should have a check_policy file" {
+    run test -f "/etc/evobackup/${JAILNAME}.d/check_policy"
+    assert_success
+}
+
 @test "A jail should be able to be started" {
     /usr/lib/bkctld/bkctld-start "${JAILNAME}"
     pid=$(cat "${JAILPATH}/${SSHD_PID}")
