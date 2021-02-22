@@ -376,11 +376,11 @@ setup_jail_config() {
 
 
     info "5 - Copie default inc configuration"
-    inc_policy_tpl="${TPLDIR}/inc.tpl"
-    test -f "${LOCALTPLDIR}/inc.tpl" && inc_policy_tpl="${LOCALTPLDIR}/inc.tpl"
+    incs_policy_tpl="${TPLDIR}/incs_policy.tpl"
+    test -f "${LOCALTPLDIR}/incs_policy.tpl" && incs_policy_tpl="${LOCALTPLDIR}/incs_policy.tpl"
     jail_incs_policy_file=$(jail_incs_policy_file "${jail_name}")
     mkdir --parents "$(dirname "${jail_incs_policy_file}")"
-    install -m 0640 "${inc_policy_tpl}" "${jail_incs_policy_file}"
+    install -m 0640 "${incs_policy_tpl}" "${jail_incs_policy_file}"
 
     check_policy_tpl="${TPLDIR}/check_policy.tpl"
     test -f "${LOCALTPLDIR}/check_policy.tpl" && check_policy_tpl="${LOCALTPLDIR}/check_policy.tpl"

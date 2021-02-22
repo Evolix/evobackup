@@ -55,3 +55,14 @@ if [ ! -f "${check_policy_file}" ]; then
 
     info "${jail_name}: check_policy template ha been installed"
 fi
+
+legacy_incs_policy_tpl="${LOCALTPLDIR}/inc.tpl"
+incs_policy_tpl="${LOCALTPLDIR}/incs_policy.tpl"
+if [ -f "${legacy_incs_policy_tpl}" ]; then
+    # Create directory if missing
+    mkdir -p "$(jail_config_dir "${jail_name}")"
+    # move the main config file
+    mv -f "${legacy_incs_policy_tpl}" "${incs_policy_tpl}"
+
+    info "${jail_name}: incs_policy local template has been renamed"
+fi
