@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* bkctld-init: install check_policy template
 * test: bkctld check-incs shouldn't fail without incs_policy file
 
 ### Changed
