@@ -416,6 +416,7 @@ if [ "${SYNC_TASKS}" = "1" ]; then
         --exclude "lxc/*/rootfs/var/apt"                   \
         --exclude "lxc/*/rootfs/var/cache"                 \
         --exclude "lxc/*/rootfs/var/lib/php5"              \
+        --exclude "lxc/*/rootfs/var/lib/php/sessions"      \
         --exclude "lxc/*/rootfs/var/lock"                  \
         --exclude "lxc/*/rootfs/var/log"                   \
         --exclude "lxc/*/rootfs/var/run"                   \
