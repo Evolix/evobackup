@@ -313,8 +313,9 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
             ${FINDMNT_BIN} > ${LOCAL_BACKUP_DIR}/findmnt.txt
         fi
     else
-        ## Dump network connections with netstat
-        netstat -finet -atn > ${LOCAL_BACKUP_DIR}/netstat.out
+        ## Dump network connections with fstat
+        fstat | head -1 > ${LOCAL_BACKUP_DIR}/netstat.out
+        fstat | grep internet >> ${LOCAL_BACKUP_DIR}/netstat.out
 
         ## List OpenBSD packages
         pkg_info -m > ${LOCAL_BACKUP_DIR}/packages
