@@ -152,6 +152,12 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
 
     ## MySQL
 
+    ## Purge previous dumps
+    # rm -f  ${LOCAL_BACKUP_DIR}/mysql.*.gz
+    # rm -rf ${LOCAL_BACKUP_DIR}/mysql
+    # rm -rf ${LOCAL_BACKUP_DIR}/mysqlhotcopy
+    # rm -rf /home/mysqldump
+
     ## example with global and compressed mysqldump
     # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
     #  --opt --all-databases --force --events --hex-blob | gzip --best > ${LOCAL_BACKUP_DIR}/mysql.bak.gz
@@ -189,7 +195,7 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
 
     ## example with mysqlhotcopy
     # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysqlhotcopy/
-    # mysqlhotcopy BASE ${LOCAL_BACKUP_DIR}/mysql/mysqlhotcopy/
+    # mysqlhotcopy MYBASE ${LOCAL_BACKUP_DIR}/mysqlhotcopy/
 
     ## example for multiples MySQL instances
     # mysqladminpasswd=$(grep -m1 'password = .*' /root/.my.cnf|cut -d" " -f3)
@@ -197,12 +203,15 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
     #     instance=$(echo "$instance"|awk '{ print $3 }')
     #     if [ "$instance" != "3306" ]
     #     then
-    #         mysqldump -P $instance --opt --all-databases --hex-blob -u mysqladmin -p$mysqladminpasswd > ${LOCAL_BACKUP_DIR}/mysql.$instance.bak
+    #         mysqldump -P $instance --opt --all-databases --hex-blob -u mysqladmin -p$mysqladminpasswd | gzip --best > ${LOCAL_BACKUP_DIR}/mysql.$instance.bak.gz
     #     fi
     # done
 
     ## PostgreSQL
 
+    ## Purge previous dumps
+    # rm ${LOCAL_BACKUP_DIR}/pg.*.gz
+    # rm ${LOCAL_BACKUP_DIR}/pg-backup.tar
     ## example with pg_dumpall (warning: you need space in ~postgres)
     # su - postgres -c "pg_dumpall > ~/pg.dump.bak"
     # mv ~postgres/pg.dump.bak ${LOCAL_BACKUP_DIR}/
@@ -222,7 +231,8 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
     ## don't forget to create use with read-only access
     ## > use admin
     ## > db.createUser( { user: "mongobackup", pwd: "PASS", roles: [ "backup", ] } )
-    # test -d ${LOCAL_BACKUP_DIR}/mongodump/ && rm -rf ${LOCAL_BACKUP_DIR}/mongodump/
+    ## Purge previous dumps
+    # rm -rf ${LOCAL_BACKUP_DIR}/mongodump/
     # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mongodump/
     # mongodump --quiet -u mongobackup -pPASS -o ${LOCAL_BACKUP_DIR}/mongodump/
     # if [ $? -ne 0 ]; then
@@ -231,9 +241,13 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
 
     ## Redis
 
+    ## Purge previous dumps
+    # rm -rf ${LOCAL_BACKUP_DIR}/redis/
+    # rm -rf ${LOCAL_BACKUP_DIR}/redis-*
     ## example with copy .rdb file
     ## for the default instance :
-    # cp /var/lib/redis/dump.rdb ${LOCAL_BACKUP_DIR}/
+    # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/redis/
+    # cp /var/lib/redis/dump.rdb ${LOCAL_BACKUP_DIR}/redis/
     ## for multiple instances :
     # for instance in $(ls -d /var/lib/redis-*); do
     #     name=$(basename $instance)
