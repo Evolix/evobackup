@@ -212,6 +212,7 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
     ## Purge previous dumps
     # rm ${LOCAL_BACKUP_DIR}/pg.*.gz
     # rm ${LOCAL_BACKUP_DIR}/pg-backup.tar
+    # rm ${LOCAL_BACKUP_DIR}/postgresql/*
     ## example with pg_dumpall (warning: you need space in ~postgres)
     # su - postgres -c "pg_dumpall > ~/pg.dump.bak"
     # mv ~postgres/pg.dump.bak ${LOCAL_BACKUP_DIR}/
@@ -225,6 +226,13 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
 
     ## example with only TABLE1 and TABLE2 from MYBASE
     # pg_dump -p 5432 -h 127.0.0.1 -U USER --clean -F t --inserts -f ${LOCAL_BACKUP_DIR}/pg-backup.tar -T 'TABLE1' -T 'TABLE2' MYBASE
+
+    ## example with compressed PostgreSQL dump for each databases
+    # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/postgresql
+    # chown postgres:postgres ${LOCAL_BACKUP_DIR}/postgresql
+    # dbs=$(sudo -u postgres psql -U postgres -lt | awk -F\| '{print $1}' |grep -v template*)
+    # 
+    # for databases in $dbs ; do sudo -u postgres /usr/bin/pg_dump --create -s -U postgres -d $databases | gzip --best -c > ${LOCAL_BACKUP_DIR}/postgresql/$databases.sql.gz ; done
 
     ## MongoDB
 
