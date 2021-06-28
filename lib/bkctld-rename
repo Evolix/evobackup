@@ -65,6 +65,8 @@ if [ -f "${legacy_config_file}" ]; then
         echo "[dry-run] rename ${legacy_config_file} to ${new_legacy_config_file}"
     fi
 fi
+# Reset firewall for new jail name
+"${LIBDIR}/bkctld-firewall" "${new_jail_name}"
 
 test "${jail_initial_status}" = "on" && "${LIBDIR}/bkctld-start" "${new_jail_name}"
 
