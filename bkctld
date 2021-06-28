@@ -156,6 +156,16 @@ case "${subcommand}" in
         done
         echo "finish"
     ;;
+    "rename")
+        jail_name="${2:-}"
+        new_jail_name="${3:-}"
+        if [ -z "${jail_name}" ] || [ -z "${new_jail_name}" ]; then
+            show_help
+            exit 1
+        else
+            "${LIBDIR}/bkctld-${subcommand}" "${jail_name}" "${new_jail_name}"
+        fi
+    ;;
     *)
         show_help
         exit 1

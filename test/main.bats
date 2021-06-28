@@ -61,6 +61,20 @@ load test_helper
     refute_equal "${pid_before}" "${pid_after}"
 }
 
+@test "A jail should be able to be renamed" {
+    /usr/lib/bkctld/bkctld-start "${JAILNAME}"
+    new_name="${JAILNAME}-new"
+    # A started jail should report to be ON
+    run /usr/lib/bkctld/bkctld-rename "${JAILNAME}" "${new_name}"
+    assert_success
+
+    run /usr/lib/bkctld/bkctld-is-on "${new_name}"
+    assert_success
+
+    # change variable to new name,for teardown
+    JAILNAME="${new_name}"
+}
+
 @test "Status should return information" {
     run /usr/lib/bkctld/bkctld-status "${JAILNAME}"
     assert_success
