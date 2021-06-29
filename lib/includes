@@ -71,7 +71,7 @@ process_name() {
 debug() {
     msg="${1:-$(cat /dev/stdin)}"
     if [ "${LOGLEVEL}" -ge 7 ]; then
-        echo "$(log_date) DEBUG $(process_name) ${msg}"
+        echo "${msg}"
         logger -t bkctld -p daemon.debug "$(process_name) ${msg}"
     fi
 }
@@ -79,22 +79,22 @@ debug() {
 info() {
     msg="${1:-$(cat /dev/stdin)}"
     if [ "${LOGLEVEL}" -ge 6 ]; then
-        tty -s && echo "$(log_date) INFO $(process_name) ${msg}"
+        tty -s && echo "${msg}"
         logger -t bkctld -p daemon.info "$(process_name) ${msg}"
     fi
 }
 
 notice() {
     msg="${1:-$(cat /dev/stdin)}"
-    tty -s && echo "$(log_date) NOTICE $(process_name) ${msg}"
+    tty -s && echo "${msg}"
     [ "${LOGLEVEL}" -ge 5 ] && logger -t bkctld -p daemon.notice "$(process_name) ${msg}"
 }
 
 warning() {
     msg="${1:-$(cat /dev/stdin)}"
-    tty -s && echo "$(log_date) WARNING $(process_name) ${msg}" >&2
+    tty -s && echo "${msg}" >&2
     if [ "${LOGLEVEL}" -ge 4 ]; then
-        tty -s || echo "$(log_date) WARNING $(process_name) ${msg}" >&2
+        tty -s || echo "${msg}" >&2
         logger -t bkctld -p daemon.warning "$(process_name) ${msg}"
     fi
 }
@@ -105,9 +105,9 @@ warning() {
 error() {
     msg="${1:-$(cat /dev/stdin)}"
     rc="${2:-1}"
-    tty -s && echo "$(log_date) ERROR $(process_name) ${msg}" >&2
+    tty -s && echo "${msg}" >&2
     if [ "${LOGLEVEL}" -ge 5 ]; then
-        tty -s || echo "$(log_date) ERROR $(process_name) ${msg}" >&2
+        tty -s || echo "${msg}" >&2
         logger -t bkctld -p daemon.error "$(process_name) ${msg}"
     fi
     exit ${rc}
