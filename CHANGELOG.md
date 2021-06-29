@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* bkctld-archive: archive a jail
 * bkctld-rename: rename a jail and all its incs and configuration…
 
 ### Changed

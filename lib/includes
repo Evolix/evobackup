@@ -17,6 +17,7 @@ INCDIR="${INCDIR:-${BACKUP_PARTITION}/incs}"
 TPLDIR="${TPLDIR:-/usr/share/bkctld}"
 LOCALTPLDIR="${LOCALTPLDIR:-/usr/local/share/bkctld}"
 LOCKDIR="${LOCKDIR:-/run/lock/bkctld}"
+ARCHIVESDIR="${ARCHIVESDIR:-${BACKUP_PARTITION}/archives}"
 INDEX_DIR="${INDEX_DIR:-${BACKUP_PARTITION}/index}"
 IDX_FILE="${IDX_FILE:-${INDEX_DIR}/bkctld-jails.idx}"
 SSHD_PID="${SSHD_PID:-/run/sshd.pid}"
@@ -156,6 +157,12 @@ jail_incs_policy_file() {
     jail_config_dir=$(jail_config_dir "${jail_name}")
 
     echo "${jail_config_dir}/incs_policy"
+}
+# Returns the complete path of an archived jail
+archive_path() {
+    jail_name=${1:?}
+
+    echo "${ARCHIVESDIR}/${jail_name}"
 }
 # Returns the path of incs for a jail
 incs_path() {
