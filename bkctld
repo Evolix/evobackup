@@ -101,7 +101,7 @@ case "${subcommand}" in
             "${LIBDIR}/bkctld-${subcommand}" "${jail_name}" "${option}"
         fi
     ;;
-    "start" | "stop" | "reload" | "restart" | "sync" | "update" | "remove" | "firewall" | "upgrade-config")
+    "start" | "stop" | "reload" | "restart" | "sync" | "update" | "remove" | "firewall" | "upgrade-config" | "archive")
         jail_name="${2:-}"
         if [ "${jail_name}" = "all" ]; then
             for jail in $("${LIBDIR}/bkctld-list"); do
@@ -155,6 +155,16 @@ case "${subcommand}" in
             "${LIBDIR}/bkctld-inc-lock" "${lock_status}" "${target_path}"
         done
         echo "finish"
+    ;;
+    "rename")
+        jail_name="${2:-}"
+        new_jail_name="${3:-}"
+        if [ -z "${jail_name}" ] || [ -z "${new_jail_name}" ]; then
+            show_help
+            exit 1
+        else
+            "${LIBDIR}/bkctld-${subcommand}" "${jail_name}" "${new_jail_name}"
+        fi
     ;;
     *)
         show_help

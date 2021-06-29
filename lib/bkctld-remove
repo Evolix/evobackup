@@ -16,7 +16,14 @@ fi
 jail_path=$(jail_path "${jail_name}")
 incs_path=$(incs_path "${jail_name}")
 
-test -d "${jail_path}" || error "${jail_name}: jail not found" 2
+if ! test -d "${jail_path}"; then
+    if [ "${FORCE}" = "1" ]; then
+        warning "${jail_name}: jail not found (ignore in FORCE mode)"
+        exit 0
+    else
+        error "${jail_name}: jail not found" 2
+    fi
+fi
 
 if [ "${FORCE}" != "1" ]; then
     answer=""

@@ -18,6 +18,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [2.10.0] - 2021-06-29
+
+### Added
+
+* bkctld-archive: archive a jail
+* bkctld-rename: rename a jail and all its incs and configuration…
+
+### Removed
+
+* Do not print out date, log level and process name on stdout/stderr
 ## [2.9.0] - 2021-02-22
 
 ### Added
