@@ -46,16 +46,23 @@ test "${jail_initial_status}" = "on" && "${LIBDIR}/bkctld-stop" "${jail_name}"
 
 if dry_run; then
     echo "[dry-run] rename ${jail_path} to ${new_jail_path}"
-    echo "[dry-run] rename ${incs_path} to ${new_incs_path}"
 else
     mv "${jail_path}" "${new_jail_path}"
-    mv "${incs_path}" "${new_incs_path}"
+fi
+if dry_run; then
+    if [ -d "${incs_path}" ]; then
+        echo "[dry-run] rename ${incs_path} to ${new_incs_path}"
+    fi
+else
+    if [ -d "${incs_path}" ]; then
+        mv "${incs_path}" "${new_incs_path}"
+    fi
 fi
 if [ -d "${jail_config_dir}" ]; then
     if dry_run; then
-        mv "${jail_config_dir}" "${new_jail_config_dir}"
-    else
         echo "[dry-run] rename ${jail_config_dir} to ${new_jail_config_dir}"
+    else
+        mv "${jail_config_dir}" "${new_jail_config_dir}"
     fi
 fi
 if [ -f "${legacy_config_file}" ]; then
@@ -66,6 +73,7 @@ if [ -f "${legacy_config_file}" ]; then
     fi
 fi
 # Reset firewall for new jail name
+"${LIBDIR}/bkctld-firewall" "${jail_name}"
 "${LIBDIR}/bkctld-firewall" "${new_jail_name}"
 
 test "${jail_initial_status}" = "on" && "${LIBDIR}/bkctld-start" "${new_jail_name}"
