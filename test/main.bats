@@ -75,6 +75,26 @@ load test_helper
     JAILNAME="${new_name}"
 }
 
+@test "A jail should be able to be archived" {
+    /usr/lib/bkctld/bkctld-start "${JAILNAME}"
+    # A started jail should report to be ON
+    run /usr/lib/bkctld/bkctld-is-on "${JAILNAME}"
+    assert_success
+
+    run /usr/lib/bkctld/bkctld-archive "${JAILNAME}"
+    assert_success
+
+    # A started jail should report to be OFF
+    run /usr/lib/bkctld/bkctld-is-on "${JAILNAME}"
+    assert_failure
+
+    run test -d "${JAILPATH}"
+    assert_failure
+
+    run test -d "/backup/archives/${JAILNAME}"
+    assert_success
+}
+
 @test "Status should return information" {
     run /usr/lib/bkctld/bkctld-status "${JAILNAME}"
     assert_success
