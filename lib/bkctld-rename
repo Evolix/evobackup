@@ -14,6 +14,7 @@ new_jail_name="${2:?}"
 if [ -z "${jail_name}" ] || [ -z "${new_jail_name}" ]; then
     show_help && exit 1
 fi
+
 jail_path=$(jail_path "${jail_name}")
 incs_path=$(incs_path "${jail_name}")
 jail_config_dir=$(jail_config_dir "${jail_name}")
@@ -27,6 +28,7 @@ new_jail_config_dir=$(jail_config_dir "${new_jail_name}")
 new_legacy_config_file="${CONFDIR}/${new_jail_name}"
 
 test -d "${new_jail_path}" && error "${new_jail_name}: jail already exists" 2
+test -d "${new_incs_path}" && error "${new_jail_name}: incs already exists" 2
 
 "${LIBDIR}/bkctld-is-on" "${jail_name}" 2>/dev/null
 case "$?" in
