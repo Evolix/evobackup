@@ -1,3 +1,9 @@
+bkctld (2.11.0-1) stable; urgency=medium
+
+  * Upstream release 2.11.0
+
+ -- Jeremy Lecour <jlecour@synopsis.evolix.net>  Wed, 30 Jun 2021 15:24:18 +0200
+
 bkctld (2.10.0-1) stable; urgency=low
 
   * Upstream release 2.10.0
