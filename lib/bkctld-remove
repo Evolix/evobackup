@@ -28,13 +28,13 @@ fi
 if [ "${FORCE}" != "1" ]; then
     answer=""
     while :; do
-        printf "> Are you sure you want to delete jail \`%s'? [Y,n,?] " "${jail_name}"
+        printf "> Are you sure you want to delete jail \`%s'? [y,N,?] " "${jail_name}"
         read -r answer
         case $answer in
-            [Yy]|"" )
+            [Yy] )
                 break
                 ;;
-            [Nn] )
+            [Nn]|"" )
                 tty -s && echo "Abort." >&2
                 exit 101
                 ;;
@@ -51,14 +51,16 @@ fi
 
 rm -f "${CONFDIR}/${jail_name}"
 rm -rf "$(jail_config_dir "${jail_name}")"
+
 jail_inode=$(stat --format=%i "${jail_path}")
 if [ "${jail_inode}" -eq 256 ]; then
     /bin/btrfs subvolume delete "${jail_path}" | debug
 else
     rm -rf "${jail_path:?}" | debug
 fi
+
 # TODO: use functions here
-if [ -d  "${incs_path}" ]; then
+if [ -d "${incs_path}" ]; then
     incs=$(ls "${incs_path}")
     for inc in ${incs}; do
         inc_inode=$(stat --format=%i "${incs_path}/${inc}")
@@ -70,5 +72,6 @@ if [ -d  "${incs_path}" ]; then
     done
     rmdir --ignore-fail-on-non-empty "${incs_path}" | debug
 fi
+
 "${LIBDIR}/bkctld-firewall" "${jail_name}"
 notice "Delete jail \`${jail_name}' : OK"
