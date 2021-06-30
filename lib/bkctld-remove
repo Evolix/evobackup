@@ -28,13 +28,13 @@ fi
 if [ "${FORCE}" != "1" ]; then
     answer=""
     while :; do
-        printf "> Are you sure you want to delete jail \`%s'? [y,N,?] " "${jail_name}"
+        printf "> Are you sure you want to delete jail \`%s'? [Y,n,?] " "${jail_name}"
         read -r answer
         case $answer in
-            [Yy] )
+            [Yy]|"" )
                 break
                 ;;
-            [Nn]|"" )
+            [Nn] )
                 tty -s && echo "Abort." >&2
                 exit 101
                 ;;

@@ -6,7 +6,7 @@
 
 [ -f /etc/default/bkctld ] && . /etc/default/bkctld
 
-VERSION="2.10.0"
+VERSION="2.11.0"
 
 LIBDIR=${LIBDIR:-/usr/lib/bkctld}
 CONFDIR="${CONFDIR:-/etc/evobackup}"
