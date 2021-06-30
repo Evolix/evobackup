@@ -50,6 +50,7 @@ fi
 "${LIBDIR}/bkctld-is-on" "${jail_name}" && "${LIBDIR}/bkctld-stop" "${jail_name}"
 
 rm -f "${CONFDIR}/${jail_name}"
+rm -rf "$(jail_config_dir "${jail_name}")"
 jail_inode=$(stat --format=%i "${jail_path}")
 if [ "${jail_inode}" -eq 256 ]; then
     /bin/btrfs subvolume delete "${jail_path}" | debug
