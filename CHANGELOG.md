@@ -10,8 +10,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* bkctld-rename: abort operation if incs exist with the new name
-
 ### Deprecated
 
 ### Removed
@@ -19,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [2.11.1] - 2021-06-30
+
+### Changed
+
+* bkctld-rename: abort operation if incs exist with the new name
 
 ## [2.11.0] - 2021-06-29
 
