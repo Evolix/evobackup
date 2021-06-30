@@ -51,7 +51,7 @@ while :; do
             exit 0
             ;;
         -f|--force)
-            FORCE=1
+            export FORCE=1
             ;;
         *)
             # Default case: If no more options then break out of the loop.
