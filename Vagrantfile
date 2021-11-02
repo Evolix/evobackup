@@ -47,7 +47,9 @@ SCRIPT
     { :version => "stretch", :fs => "btrfs" },
     { :version => "stretch", :fs => "ext4" },
     { :version => "buster", :fs => "btrfs" },
-    { :version => "buster", :fs => "ext4" }
+    { :version => "buster", :fs => "ext4" },
+    { :version => "bullseye", :fs => "btrfs" },
+    { :version => "bullseye", :fs => "ext4" }
   ]
 
   nodes.each do |i|
