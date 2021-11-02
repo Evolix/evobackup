@@ -12,8 +12,12 @@ target_path="${2:?}"
 
 lock_target() {
     target="${1:?}"
+    btrfs_bin=$(command -v btrfs)
+    if [ -z ${btrfs_bin} ]; then
+        error "btrfs not found. Please install brtfs-progs."
+    fi
     if is_btrfs "${target}"; then
-        btrfs property set -ts "${target}" ro true
+        ${btrfs_bin} property set -ts "${target}" ro true
         info "Lock ${target}: done".
     else
         info "Lock ${target}: not BTRFS, nothing done".
@@ -21,8 +25,12 @@ lock_target() {
 }
 unlock_target() {
     target="${1:?}"
+    btrfs_bin=$(command -v btrfs)
+    if [ -z ${btrfs_bin} ]; then
+        error "btrfs not found. Please install brtfs-progs."
+    fi
     if is_btrfs "${target}"; then
-        btrfs property set -ts "${target}" ro false
+        ${btrfs_bin} property set -ts "${target}" ro false
         info "Unlock ${target}: done."
     else
         info "Unlock ${target}: not BTRFS, nothing done."

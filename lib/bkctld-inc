@@ -14,12 +14,17 @@ create_inc_btrfs() {
     jail_path=$(jail_path "${jail_name}")
     inc_path=$(inc_path "${jail_name}" "${inc_name}")
 
+    btrfs_bin=$(command -v btrfs)
+    if [ -z "${btrfs_bin}" ]; then
+        error "btrfs not found. Please install brtfs-progs."
+    fi
+
     if dry_run; then
         echo "[dry-run] btrfs subvolume snapshot of ${jail_path} to ${inc_path}"
     else
         mkdir --parents "$(dirname "${inc_path}")"
         # create a btrfs readonly snapshot from the jail
-        /bin/btrfs subvolume snapshot -r "${jail_path}" "${inc_path}" | debug
+        ${btrfs_bin} subvolume snapshot -r "${jail_path}" "${inc_path}" | debug
     fi
 }
 create_inc_ext4() {
@@ -52,7 +57,7 @@ for jail_name in ${jails_list}; do
 
     # If no incs policy is found, we don't create incs
     if [ -n "${incs_policy_file}" ]; then
-        # If no incs directory is found, we don't create incs
+        # If inc directory is not present, we proceed with inc creation
         if [ ! -d "${inc_path}" ]; then
             info "Progress: jail ${jails_count} out of ${jails_total}"
             notice "Create inc \`${inc_name}' for jail \`${jail_name}' : start"

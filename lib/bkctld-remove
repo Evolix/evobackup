@@ -52,9 +52,13 @@ fi
 rm -f "${CONFDIR}/${jail_name}"
 rm -rf "$(jail_config_dir "${jail_name}")"
 
-jail_inode=$(stat --format=%i "${jail_path}")
-if [ "${jail_inode}" -eq 256 ]; then
-    /bin/btrfs subvolume delete "${jail_path}" | debug
+btrfs_bin=$(command -v btrfs)
+if [ -z ${btrfs_bin} ]; then
+    error "btrfs not found. Please install brtfs-progs."
+fi
+
+if is_btrfs "${jail_path}"; then
+    ${btrfs_bin} subvolume delete "${jail_path}" | debug
 else
     rm -rf "${jail_path:?}" | debug
 fi
@@ -65,7 +69,7 @@ if [ -d "${incs_path}" ]; then
     for inc in ${incs}; do
         inc_inode=$(stat --format=%i "${incs_path}/${inc}")
         if [ "${inc_inode}" -eq 256 ]; then
-            /bin/btrfs subvolume delete "${incs_path}/${inc}" | debug
+            ${btrfs_bin} subvolume delete "${incs_path}/${inc}" | debug
         else
             warning "You need to purge \`${incs_path}/${inc}' manually"
         fi

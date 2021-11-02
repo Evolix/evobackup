@@ -162,12 +162,12 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
     # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
     #  --opt --all-databases --force --events --hex-blob | gzip --best > ${LOCAL_BACKUP_DIR}/mysql.bak.gz
 
-    ## example with two dumps for each table (.sql/.txt) for all databases
-    # for i in $(echo SHOW DATABASES | mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
-    # | egrep -v "^(Database|information_schema|performance_schema|sys)" ); \
-    # do mkdir -p -m 700 /home/mysqldump/$i ; chown -RL mysql /home/mysqldump ; \
-    # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 -Q --opt --events --hex-blob --skip-comments \
-    #  --fields-enclosed-by='\"' --fields-terminated-by=',' -T /home/mysqldump/$i $i; done
+    ## example with compressed SQL dump (with data) for each databases
+    # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysql/
+    # for i in $(mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 -e 'show databases' -s --skip-column-names \
+    # | egrep -v "^(Database|information_schema|performance_schema|sys)"); do
+    #     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --events --hex-blob $i | gzip --best > ${LOCAL_BACKUP_DIR}/mysql/${i}.sql.gz
+    # done
 
     ## Dump all grants (requires 'percona-toolkit' package)
     # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysql/
@@ -180,18 +180,18 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
     #     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --no-data --databases $i > ${LOCAL_BACKUP_DIR}/mysql/${i}.schema.sql
     # done
 
-    ## example with compressed SQL dump (with data) for each databases
-    # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysql/
-    # for i in $(mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 -e 'show databases' -s --skip-column-names \
-    # | egrep -v "^(Database|information_schema|performance_schema|sys)"); do
-    #     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --events --hex-blob $i | gzip --best > ${LOCAL_BACKUP_DIR}/mysql/${i}.sql.gz
-    # done
-
     ## example with *one* uncompressed SQL dump for *one* database (MYBASE)
     # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysql/MYBASE
     # chown -RL mysql ${LOCAL_BACKUP_DIR}/mysql/
     # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -Q \
     # --opt --events --hex-blob --skip-comments -T ${LOCAL_BACKUP_DIR}/mysql/MYBASE MYBASE
+
+    ## example with two dumps for each table (.sql/.txt) for all databases
+    # for i in $(echo SHOW DATABASES | mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
+    # | egrep -v "^(Database|information_schema|performance_schema|sys)" ); \
+    # do mkdir -p -m 700 /home/mysqldump/$i ; chown -RL mysql /home/mysqldump ; \
+    # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 -Q --opt --events --hex-blob --skip-comments \
+    #  --fields-enclosed-by='\"' --fields-terminated-by=',' -T /home/mysqldump/$i $i; done
 
     ## example with mysqlhotcopy
     # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysqlhotcopy/

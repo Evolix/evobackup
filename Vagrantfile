@@ -24,7 +24,7 @@ mkdir -p /usr/lib/nagios/plugins/
 SCRIPT
 
   $deps = <<SCRIPT
-DEBIAN_FRONTEND=noninteractive apt-get -yq install openssh-server btrfs-tools rsync lsb-base coreutils sed dash mount openssh-sftp-server libc6 bash-completion duc-nox cryptsetup bats
+DEBIAN_FRONTEND=noninteractive apt-get -yq install openssh-server btrfs-progs rsync lsb-base coreutils sed dash mount openssh-sftp-server libc6 bash-completion duc-nox cryptsetup bats
 SCRIPT
 
   $pre_part = <<SCRIPT
@@ -47,7 +47,9 @@ SCRIPT
     { :version => "stretch", :fs => "btrfs" },
     { :version => "stretch", :fs => "ext4" },
     { :version => "buster", :fs => "btrfs" },
-    { :version => "buster", :fs => "ext4" }
+    { :version => "buster", :fs => "ext4" },
+    { :version => "bullseye", :fs => "btrfs" },
+    { :version => "bullseye", :fs => "ext4" }
   ]
 
   nodes.each do |i|
