@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [2.12.0] - 2021-11-02
+
+### Changed
+
+* btrfs depends on the btrfd-progs package instead of btrfs-tools
+
 ## [2.11.1] - 2021-06-30
 
 ### Changed
