@@ -15,10 +15,9 @@ create_inc_btrfs() {
     inc_path=$(inc_path "${jail_name}" "${inc_name}")
 
     btrfs_bin=$(command -v btrfs)
-    ### Pseudo-code
-    # if [ -z "${btrfs_bin}" ]; then
-    #     error "Can't find btrfs"
-    # fi
+    if [ -z "${btrfs_bin}" ]; then
+        error "btrfs not found. Please install brtfs-progs."
+    fi
 
     if dry_run; then
         echo "[dry-run] btrfs subvolume snapshot of ${jail_path} to ${inc_path}"

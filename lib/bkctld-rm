@@ -61,11 +61,16 @@ delete_inc_btrfs() {
     inc_name=$2
 
     inc_path=$(inc_path "${jail_name}" "${inc_name}")
+    btrfs_bin=$(command -v btrfs)
+
+    if [ -z ${btrfs_bin} ]; then
+        error "btrfs not found. Please install brtfs-progs."
+    fi
 
     if dry_run; then
         echo "[dry-run] delete btrfs subvolume ${inc_path}"
     else
-        /bin/btrfs subvolume delete "${inc_path}" | debug
+        ${btrfs_bin} subvolume delete "${inc_path}" | debug
     fi
 }
 delete_inc_ext4() {
