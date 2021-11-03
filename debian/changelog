@@ -1,3 +1,9 @@
+bkctld (2.12.0-2) stable; urgency=low
+
+  * Package rebuild
+
+ -- Jeremy Lecour <jlecour@synopsis.evolix.net>  Wed, 03 Nov 2021 10:12:36 +0100
+
 bkctld (2.12.0-1) stable; urgency=low
 
   * Upstream release 2.12.0
