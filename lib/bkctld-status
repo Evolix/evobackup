@@ -18,7 +18,7 @@ incs_policy="0"
 if [ -r "${incs_policy_file}" ]; then
     days=$(grep "^\+" "${incs_policy_file}" | grep --count "day")
     months=$(grep "^\+" "${incs_policy_file}" | grep --count "month")
-    incs_policy="${days}/${months}"
+    incs_policy="${days}d/${months}m"
 fi
 
 status="OFF"
