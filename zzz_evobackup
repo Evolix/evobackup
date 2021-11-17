@@ -432,6 +432,7 @@ if [ "${SYNC_TASKS}" = "1" ]; then
         --exclude "/var/spool/smtpd"                       \
         --exclude "/var/spool/squid"                       \
         --exclude "/var/state"                             \
+        --exclude "/var/tmp"                               \
         --exclude "lxc/*/rootfs/usr/doc"                   \
         --exclude "lxc/*/rootfs/usr/obj"                   \
         --exclude "lxc/*/rootfs/usr/share/doc"             \
