@@ -5,7 +5,7 @@
 A Debian package is available in the Evolix repository
 
 ~~~
-echo "http://pub.evolix.net/jessie/" >> /etc/apt/sources.list
+echo "deb http://pub.evolix.net/ stretch" >> /etc/apt/sources.list
 apt update
 apt install bkctld
 ~~~
