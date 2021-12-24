@@ -433,6 +433,7 @@ if [ "${SYNC_TASKS}" = "1" ]; then
         --exclude "/var/spool/squid"                       \
         --exclude "/var/state"                             \
         --exclude "/var/tmp"                               \
+        --exclude "lxc/*/rootfs/tmp"                       \
         --exclude "lxc/*/rootfs/usr/doc"                   \
         --exclude "lxc/*/rootfs/usr/obj"                   \
         --exclude "lxc/*/rootfs/usr/share/doc"             \
@@ -445,6 +446,7 @@ if [ "${SYNC_TASKS}" = "1" ]; then
         --exclude "lxc/*/rootfs/var/log"                   \
         --exclude "lxc/*/rootfs/var/run"                   \
         --exclude "lxc/*/rootfs/var/state"                 \
+        --exclude "lxc/*/rootfs/var/tmp"                   \
         --exclude "/home/mysqltmp"                         \
             ${rep}                                         \
             /etc                                           \
