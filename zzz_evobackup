@@ -39,9 +39,9 @@ LOCAL_BACKUP_DIR="/home/backup"
 SYSTEM=$(uname | tr '[:upper:]' '[:lower:]')
 
 # Store pid and logs in a file named after this program's name
-PROGNAME=$(basename $0)
+PROGNAME=$(basename "$0")
 PIDFILE="/var/run/${PROGNAME}.pid"
-LOGFILE="/var/log/${PROGNAME}.log"
+LOGFILE="/var/log/evobackup/${PROGNAME}.log"
 
 # Enable/Disable tasks
 LOCAL_TASKS=${LOCAL_TASKS:-1}
@@ -53,6 +53,8 @@ BEGINNING=$(/bin/date +"%d-%m-%Y ; %H:%M")
 
 # shellcheck disable=SC2174
 mkdir -p -m 700 ${LOCAL_BACKUP_DIR}
+# shellcheck disable=SC2174
+mkdir -p -m 700 "$(dirname "${LOGFILE}")"
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
@@ -102,7 +104,7 @@ pick_server() {
         # Log errors to stderr
         printf "%s\\n" "${SERVERS_SSH_ERRORS}" >&2
         # Log errors to logfile
-        printf "%s\\n" "${SERVERS_SSH_ERRORS}" >> $LOGFILE
+        printf "%s\\n" "${SERVERS_SSH_ERRORS}" >> "${LOGFILE}"
         return 1
     fi
 
@@ -133,10 +135,10 @@ if [ -e "${PIDFILE}" ]; then
         kill -9 "${pid}"
         printf "%s is still running (PID %s). Process has been killed" "$0" "${pid}\\n" >&2
     else
-        rm -f ${PIDFILE}
+        rm -f "${PIDFILE}"
     fi
 fi
-echo "$$" > ${PIDFILE}
+echo "$$" > "${PIDFILE}"
 # shellcheck disable=SC2064
 trap "rm -f ${PIDFILE}" EXIT
 
@@ -464,12 +466,12 @@ END=$(/bin/date +"%d-%m-%Y ; %H:%M")
 
 printf "EvoBackup - %s - START %s ON %s (LOCAL_TASKS=%s SYNC_TASKS=%s)\\n" \
        "${HOSTNAME}" "${BEGINNING}" "${SSH_SERVER}" "${LOCAL_TASKS}" "${SYNC_TASKS}" \
-       >> $LOGFILE
+       >> "${LOGFILE}"
 
 printf "EvoBackup - %s - STOP %s ON %s (LOCAL_TASKS=%s SYNC_TASKS=%s)\\n" \
        "${HOSTNAME}" "${END}" "${SSH_SERVER}" "${LOCAL_TASKS}" "${SYNC_TASKS}" \
-       >> $LOGFILE
+       >> "${LOGFILE}"
 
-tail -10 $LOGFILE |                                    \
+tail -10 "${LOGFILE}" |                                    \
     mail -s "[info] EvoBackup - Client ${HOSTNAME}"    \
     ${MAIL}
