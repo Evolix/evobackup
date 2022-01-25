@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * evobackup: store logs in /var/log/evobackup
+* evobackup: /var/log is no longer excluded
 
 ### Deprecated
 

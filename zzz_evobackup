@@ -427,8 +427,6 @@ if [ "${SYNC_TASKS}" = "1" ]; then
         --exclude "/var/lib/postgresql"                    \
         --exclude "/var/lib/sympa"                         \
         --exclude "/var/lock"                              \
-        --exclude "/var/log"                               \
-        --exclude "/var/log/evobackup*"                    \
         --exclude "/var/run"                               \
         --exclude "/var/spool/postfix"                     \
         --exclude "/var/spool/smtpd"                       \
