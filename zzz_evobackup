@@ -89,6 +89,7 @@ test_server() {
     else
         # SSH connection failed
         new_error=$(printf "Failed to connect to \`%s' within %s seconds" "${item}" "${SSH_CONNECT_TIMEOUT}")
+        log "${new_error}"
         SERVERS_SSH_ERRORS=$(printf "%s\\n%s" "${SERVERS_SSH_ERRORS}" "${new_error}" | sed -e '/^$/d')
 
         return 1
@@ -102,12 +103,11 @@ pick_server() {
     if [ "${increment}" -ge "${list_length}" ]; then
         # We've reached the end of the list
         new_error="No more server available"
+        log "${new_error}"
         SERVERS_SSH_ERRORS=$(printf "%s\\n%s" "${SERVERS_SSH_ERRORS}" "${new_error}" | sed -e '/^$/d')
 
         # Log errors to stderr
         printf "%s\\n" "${SERVERS_SSH_ERRORS}" >&2
-        # Log errors to logfile
-        printf "%s\\n" "${SERVERS_SSH_ERRORS}" >> "${LOGFILE}"
         return 1
     fi
 
