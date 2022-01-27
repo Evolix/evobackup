@@ -114,7 +114,7 @@ pick_server() {
     fi
 
     # Extract the day of month, without leading 0 (which would give an octal based number)
-    today=$(date +%e)
+    today=$(/bin/date +%e)
     # A salt is useful to randomize the starting point in the list
     # but stay identical each time it's called for a server (based on hostname).
     salt=$(hostname | cksum | cut -d' ' -f1)
@@ -130,7 +130,7 @@ log() {
     msg="${1:-$(cat /dev/stdin)}"
     pid=$$
     printf "[%s] %s[%s]: %s\\n" \
-        "$(/bin/date +${DATE_FORMAT})" "${PROGNAME}" "${pid}" "${msg}" \
+        "$(/bin/date +"${DATE_FORMAT}")" "${PROGNAME}" "${pid}" "${msg}" \
         >> "${LOGFILE}"
 }
 
@@ -301,7 +301,7 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
     # for snapshot in $(curl -s -XGET "localhost:9200/_snapshot/snaprepo/_all?pretty=true" | grep -Eo 'snapshot_[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -n -10); do
     #     curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/${snapshot}" | grep -v -Fx '{"acknowledged":true}'
     # done
-    # date=$(date +%F)
+    # date=$(/bin/date +%F)
     # curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot_${date}?wait_for_completion=true" -o /tmp/es_snapshot_${date}.log
 
     ## RabbitMQ
