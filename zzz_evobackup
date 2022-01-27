@@ -20,6 +20,8 @@ set -u
 
 ##### Configuration ###################################################
 
+VERSION="22.01"
+
 # email adress for notifications
 MAIL=jdoe@example.com
 
@@ -132,7 +134,7 @@ log() {
         >> "${LOGFILE}"
 }
 
-log "START GLOBAL - LOCAL_TASKS=${LOCAL_TASKS} SYNC_TASKS=${SYNC_TASKS}"
+log "START GLOBAL - VERSION=${VERSION} LOCAL_TASKS=${LOCAL_TASKS} SYNC_TASKS=${SYNC_TASKS}"
 
 ## Verify other evobackup process and kill if needed
 if [ -e "${PIDFILE}" ]; then
