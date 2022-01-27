@@ -506,11 +506,11 @@ fi
 
 STOP_EPOCH=$(/bin/date +%s)
 
-start=$(/bin/date --date="@${START_EPOCH}" +"${DATE_FORMAT}")
-stop=$(/bin/date --date="@${STOP_EPOCH}" +"${DATE_FORMAT}")
+start_time=$(/bin/date --date="@${START_EPOCH}" +"${DATE_FORMAT}")
+stop_time=$(/bin/date --date="@${STOP_EPOCH}" +"${DATE_FORMAT}")
 duration=$(( STOP_EPOCH - START_EPOCH ))
 
-log "STOP GLOBAL - start='${start}' stop='${stop}' duration=${duration}s"
+log "STOP GLOBAL - start='${start_time}' stop='${stop_time}' duration=${duration}s"
 
 tail -20 "${LOGFILE}" \
     | mail -s "[info] EvoBackup - Client ${HOSTNAME}" ${MAIL}
