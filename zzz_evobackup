@@ -313,66 +313,91 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
 
     #megacli -CfgSave -f ${LOCAL_BACKUP_DIR}/megacli_conf.dump -a0 >/dev/null
 
-    ## Dump system and kernel versions
-    uname -a > ${LOCAL_BACKUP_DIR}/uname
-
     ## Dump network routes with mtr and traceroute (warning: could be long with aggressive firewalls)
     for addr in 8.8.8.8 www.evolix.fr travaux.evolix.net; do
         mtr -r ${addr} > ${LOCAL_BACKUP_DIR}/mtr-${addr}
         traceroute -n ${addr} > ${LOCAL_BACKUP_DIR}/traceroute-${addr} 2>&1
     done
 
-    ## Dump process with ps
-    ps auwwx >${LOCAL_BACKUP_DIR}/ps.out
+    server_state_dir="${LOCAL_BACKUP_DIR}/server-state"
+
+    backup_server_state_bin=$(command -v backup-server-state)
 
     if [ "${SYSTEM}" = "linux" ]; then
-        ## Dump network connections with ss
-        ss -taupen > ${LOCAL_BACKUP_DIR}/netstat.out
+        if [ -n "${backup_server_state_bin}" ]; then
+            rm -rf "${server_state_dir}"
 
-        ## List Debian packages
-        dpkg -l > ${LOCAL_BACKUP_DIR}/packages
-        dpkg --get-selections > ${LOCAL_BACKUP_DIR}/packages.getselections
-        apt-cache dumpavail > ${LOCAL_BACKUP_DIR}/packages.available
+            ${backup_server_state_bin} --etc --dpkg-full --backup-directory "${server_state_dir}"
+        else
+            mkdir -p "${server_state_dir}"
 
-        ## Dump MBR / table partitions
-        disks=$(lsblk -l | grep disk | grep -v -E '(drbd|fd[0-9]+)' | awk '{print $1}')
-        for disk in ${disks}; do
-            dd if="/dev/${disk}" of="${LOCAL_BACKUP_DIR}/MBR-${disk}" bs=512 count=1 2>&1 | grep -Ev "(records in|records out|512 bytes)"
-            fdisk -l "/dev/${disk}" > "${LOCAL_BACKUP_DIR}/partitions-${disk}" 2>&1
-        done
-        cat ${LOCAL_BACKUP_DIR}/partitions-* > ${LOCAL_BACKUP_DIR}/partitions
+            ## Dump system and kernel versions
+            uname -a > ${server_state_dir}/uname.txt
 
-        ## Dump iptables
-        if [ -x /sbin/iptables ]; then
-            { /sbin/iptables -L -n -v; /sbin/iptables -t filter -L -n -v; } > ${LOCAL_BACKUP_DIR}/iptables.txt
-        fi
+            ## Dump process with ps
+            ps auwwx > ${server_state_dir}/ps.txt
 
-        ## Dump findmnt(8) output
-        FINDMNT_BIN=$(command -v findmnt)
-        if [ -x "${FINDMNT_BIN}" ]; then
-            ${FINDMNT_BIN} > ${LOCAL_BACKUP_DIR}/findmnt.txt
+            ## Dump network connections with ss
+            ss -taupen > ${server_state_dir}/netstat.txt
+
+            ## List Debian packages
+            dpkg -l > ${server_state_dir}/packages
+            dpkg --get-selections > ${server_state_dir}/packages.getselections
+            apt-cache dumpavail > ${server_state_dir}/packages.available
+
+            ## Dump iptables
+            if [ -x /sbin/iptables ]; then
+                { /sbin/iptables -L -n -v; /sbin/iptables -t filter -L -n -v; } > ${server_state_dir}/iptables.txt
+            fi
+
+            ## Dump findmnt(8) output
+            FINDMNT_BIN=$(command -v findmnt)
+            if [ -x "${FINDMNT_BIN}" ]; then
+                ${FINDMNT_BIN} > ${server_state_dir}/findmnt.txt
+            fi
+
+            ## Dump MBR / table partitions
+            disks=$(lsblk -l | grep disk | grep -v -E '(drbd|fd[0-9]+)' | awk '{print $1}')
+            for disk in ${disks}; do
+                dd if="/dev/${disk}" of="${server_state_dir}/MBR-${disk}" bs=512 count=1 2>&1 | grep -Ev "(records in|records out|512 bytes)"
+                fdisk -l "/dev/${disk}" > "${server_state_dir}/partitions-${disk}" 2>&1
+            done
+            cat ${server_state_dir}/partitions-* > ${server_state_dir}/partitions
         fi
     else
-        ## Dump network connections with fstat
-        fstat | head -1 > ${LOCAL_BACKUP_DIR}/netstat.out
-        fstat | grep internet >> ${LOCAL_BACKUP_DIR}/netstat.out
+        if [ -n "${backup_server_state_bin}" ]; then
+            rm -rf "${server_state_dir}"
 
-        ## List OpenBSD packages
-        pkg_info -m > ${LOCAL_BACKUP_DIR}/packages
+            ${backup_server_state_bin} --backup-directory "${server_state_dir}"
+        else
+            mkdir -p "${server_state_dir}"
 
-        ## Dump MBR / table partitions
-        disklabel sd0 > ${LOCAL_BACKUP_DIR}/partitions
+            ## Dump system and kernel versions
+            uname -a > ${server_state_dir}/uname
 
-        ## Dump pf infos
-        pfctl -sa > ${LOCAL_BACKUP_DIR}/pfctl-sa.txt
+            ## Dump process with ps
+            ps auwwx > ${server_state_dir}/ps.out
 
+            ## Dump network connections with fstat
+            fstat | head -1 > ${server_state_dir}/netstat.out
+            fstat | grep internet >> ${server_state_dir}/netstat.out
+
+            ## List OpenBSD packages
+            pkg_info -m > ${server_state_dir}/packages
+
+            ## Dump MBR / table partitions
+            disklabel sd0 > ${server_state_dir}/partitions
+
+            ## Dump pf infos
+            pfctl -sa > ${server_state_dir}/pfctl-sa.txt
+        fi
     fi
 
     ## Dump rights
-    #getfacl -R /var > ${LOCAL_BACKUP_DIR}/rights-var.txt
-    #getfacl -R /etc > ${LOCAL_BACKUP_DIR}/rights-etc.txt
-    #getfacl -R /usr > ${LOCAL_BACKUP_DIR}/rights-usr.txt
-    #getfacl -R /home > ${LOCAL_BACKUP_DIR}/rights-home.txt
+    #getfacl -R /var  > ${server_state_dir}/rights-var.txt
+    #getfacl -R /etc  > ${server_state_dir}/rights-etc.txt
+    #getfacl -R /usr  > ${server_state_dir}/rights-usr.txt
+    #getfacl -R /home > ${server_state_dir}/rights-home.txt
 
     log "STOP LOCAL_TASKS"
 fi
