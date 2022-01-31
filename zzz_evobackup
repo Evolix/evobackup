@@ -325,7 +325,7 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
 
     if [ "${SYSTEM}" = "linux" ]; then
         if [ -n "${backup_server_state_bin}" ]; then
-            ${backup_server_state_bin} --etc --dpkg-full --force --backup-directory "${server_state_dir}"
+            ${backup_server_state_bin} --etc --dpkg-full --force --backup-dir "${server_state_dir}"
         else
             mkdir -p "${server_state_dir}"
 
@@ -364,7 +364,7 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
         fi
     else
         if [ -n "${backup_server_state_bin}" ]; then
-            ${backup_server_state_bin} --force --backup-directory "${server_state_dir}"
+            ${backup_server_state_bin} --force --backup-dir "${server_state_dir}"
         else
             mkdir -p "${server_state_dir}"
 
