@@ -228,9 +228,9 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
     ## PostgreSQL
 
     ## Purge previous dumps
-    # rm ${LOCAL_BACKUP_DIR}/pg.*.gz
-    # rm ${LOCAL_BACKUP_DIR}/pg-backup.tar
-    # rm ${LOCAL_BACKUP_DIR}/postgresql/*
+    # rm -rf ${LOCAL_BACKUP_DIR}/pg.*.gz
+    # rm -rf ${LOCAL_BACKUP_DIR}/pg-backup.tar
+    # rm -rf ${LOCAL_BACKUP_DIR}/postgresql/*
     ## example with pg_dumpall (warning: you need space in ~postgres)
     # su - postgres -c "pg_dumpall > ~/pg.dump.bak"
     # mv ~postgres/pg.dump.bak ${LOCAL_BACKUP_DIR}/
