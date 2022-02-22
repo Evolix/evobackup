@@ -19,7 +19,7 @@ test -d "${jail_path}" && error "Skip jail \`${jail_name}' : it already exists"
 mkdir --parents "${CONFDIR}" "${JAILDIR}"
 
 btrfs_bin=$(command -v btrfs)
-if [ -z ${btrfs_bin} ]; then
+if [ -z ${btrfs_bin} ]; then
     error "btrfs not found. Please install brtfs-progs."
 fi
 
