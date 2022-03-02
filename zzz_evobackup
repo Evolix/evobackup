@@ -191,6 +191,9 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
     # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysql/
     # pt-show-grants --flush --no-header > ${LOCAL_BACKUP_DIR}/mysql/all_grants.sql
 
+    # Dump all variables
+    # mysql -A -e"SHOW GLOBAL VARIABLES;" > ${LOCAL_BACKUP_DIR}/MySQLCurrentSettings.txt
+
     ## example with SQL dump (schema only, no data) for each databases
     # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysql/
     # for i in $(mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 -e 'show databases' -s --skip-column-names \
