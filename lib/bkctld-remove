@@ -54,7 +54,7 @@ rm -rf "$(jail_config_dir "${jail_name}")"
 
 btrfs_bin=$(command -v btrfs)
 if [ -z ${btrfs_bin} ]; then
-    error "btrfs not found. Please install brtfs-progs."
+    error "btrfs not found. Please install btrfs-progs."
 fi
 
 if is_btrfs "${jail_path}"; then

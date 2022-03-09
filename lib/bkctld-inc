@@ -16,7 +16,7 @@ create_inc_btrfs() {
 
     btrfs_bin=$(command -v btrfs)
     if [ -z "${btrfs_bin}" ]; then
-        error "btrfs not found. Please install brtfs-progs."
+        error "btrfs not found. Please install btrfs-progs."
     fi
 
     if dry_run; then
