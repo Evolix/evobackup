@@ -25,7 +25,7 @@ iptables_input_accept() {
 
 if [ -n "${FIREWALL_RULES}" ]; then
     # remove existing rules for this jail
-    [ -f "${FIREWALL_RULES}" ] && sed -i "/#${jail_name}$/d" "${FIREWALL_RULES}"
+    [ -f "${FIREWALL_RULES}" ] && sed --follow-symlinks --in-place "/#${jail_name}$/d" "${FIREWALL_RULES}"
     if [ -d "${jail_path}" ]; then
         port=$("${LIBDIR}/bkctld-port" "${jail_name}")
         # Add a rule for each IP
