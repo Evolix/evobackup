@@ -20,7 +20,7 @@ set -u
 
 ##### Configuration ###################################################
 
-VERSION="22.01"
+VERSION="22.03"
 
 # email adress for notifications
 MAIL=jdoe@example.com
@@ -367,7 +367,7 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
         fi
     else
         if [ -n "${backup_server_state_bin}" ]; then
-            ${backup_server_state_bin} --force --backup-dir "${server_state_dir}"
+            ${backup_server_state_bin} --etc --force --backup-dir "${server_state_dir}"
         else
             mkdir -p "${server_state_dir}"
 
