@@ -324,11 +324,11 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
 
     server_state_dir="${LOCAL_BACKUP_DIR}/server-state"
 
-    backup_server_state_bin=$(command -v backup-server-state)
+    dump_server_state_bin=$(command -v dump-server-state)
 
     if [ "${SYSTEM}" = "linux" ]; then
-        if [ -n "${backup_server_state_bin}" ]; then
-            ${backup_server_state_bin} --etc --dpkg-full --force --backup-dir "${server_state_dir}"
+        if [ -n "${dump_server_state_bin}" ]; then
+            ${dump_server_state_bin} --etc --dpkg-full --force --backup-dir "${server_state_dir}"
         else
             mkdir -p "${server_state_dir}"
 
@@ -366,8 +366,8 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
             cat ${server_state_dir}/partitions-* > ${server_state_dir}/partitions
         fi
     else
-        if [ -n "${backup_server_state_bin}" ]; then
-            ${backup_server_state_bin} --etc --force --backup-dir "${server_state_dir}"
+        if [ -n "${dump_server_state_bin}" ]; then
+            ${dump_server_state_bin} --etc --force --backup-dir "${server_state_dir}"
         else
             mkdir -p "${server_state_dir}"
 
