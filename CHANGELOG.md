@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * Run the test suite on Bullseye (ext4/btrfs) in addition of Stretch and Buster (ext4/btrfs)
+* Tell sed to follow symlinks
 * evobackup : exclude tmp directories of LXC containers.
 * Add a header in `bkctld status` output and improved columns width.
 
