@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Tell sed to follow symlinks
 * evobackup : exclude tmp directories of LXC containers.
 * Add a header in `bkctld status` output and improved columns width.
+* bkctld-check-setup: compatibility with minifirewall 22.03+
 
 ### Changed
 
