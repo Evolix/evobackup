@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+* Make start_time and stop_time compatible with OpenBSD
+
 ### Security
 
 ## [22.03]

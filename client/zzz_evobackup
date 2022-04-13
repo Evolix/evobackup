@@ -505,8 +505,13 @@ fi
 
 STOP_EPOCH=$(/bin/date +%s)
 
-start_time=$(/bin/date --date="@${START_EPOCH}" +"${DATE_FORMAT}")
-stop_time=$(/bin/date --date="@${STOP_EPOCH}" +"${DATE_FORMAT}")
+if [ "${SYSTEM}" = "openbsd" ]; then
+    start_time=$(/bin/date -f "%s" -j "${START_EPOCH}" +"${DATE_FORMAT}")
+    stop_time=$(/bin/date -f "%s" -j "${STOP_EPOCH}" +"${DATE_FORMAT}")
+else
+    start_time=$(/bin/date --date="@${START_EPOCH}" +"${DATE_FORMAT}")
+    stop_time=$(/bin/date --date="@${STOP_EPOCH}" +"${DATE_FORMAT}")
+fi
 duration=$(( STOP_EPOCH - START_EPOCH ))
 
 log "STOP GLOBAL - start='${start_time}' stop='${stop_time}' duration=${duration}s"
