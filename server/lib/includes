@@ -6,7 +6,7 @@
 
 [ -f /etc/default/bkctld ] && . /etc/default/bkctld
 
-VERSION="2.11.1"
+VERSION="22.04"
 
 LIBDIR=${LIBDIR:-/usr/lib/bkctld}
 CONFDIR="${CONFDIR:-/etc/evobackup}"
@@ -34,7 +34,7 @@ show_version() {
     cat <<END
 bkctld version ${VERSION}
 
-Copyright 2004-2021 Evolix <info@evolix.fr>,
+Copyright 2004-2022 Evolix <info@evolix.fr>,
                     Victor Laborie <vlaborie@evolix.fr>,
                     Jérémy Lecour <jlecour@evolix.fr>
                     and others.
