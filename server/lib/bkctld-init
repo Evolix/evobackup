@@ -20,7 +20,7 @@ mkdir --parents "${CONFDIR}" "${JAILDIR}"
 
 if is_btrfs "$(dirname "${JAILDIR}")" || is_btrfs "${JAILDIR}"; then
     btrfs_bin=$(command -v btrfs)
-    if [ -z ${btrfs_bin} ]; then
+    if [ -z "${btrfs_bin}" ]; then
         error "btrfs not found. Please install btrfs-progs."
     fi
     ${btrfs_bin} subvolume create "${jail_path}"
