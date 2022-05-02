@@ -3,24 +3,22 @@
 # Script Evobackup client
 # See https://gitea.evolix.org/evolix/evobackup
 #
-# Author: Gregory Colpart <reg@evolix.fr>
-# Contributors:
-# Romain Dessort <rdessort@evolix.fr>
-# Benoît Série <bserie@evolix.fr>
-# Tristan Pilat <tpilat@evolix.fr>
-# Victor Laborie <vlaborie@evolix.fr>
-# Jérémy Lecour <jlecour@evolix.fr>
+# Autors Evolix <info@evolix.fr>,
+#               Gregory Colpart <reg@evolix.fr>,
+#               Romain Dessort <rdessort@evolix.fr>,
+#               Benoit Série <bserie@evolix.fr>,
+#               Tristan Pilat <tpilat@evolix.fr>,
+#               Victor Laborie <vlaborie@evolix.fr>,
+#               Jérémy Lecour <jlecour@evolix.fr>
+#               and others.
 #
 # Licence: AGPLv3
 #
 # /!\ DON'T FORGET TO SET "MAIL" and "SERVERS" VARIABLES
 
-# Fail on unassigned variables
-set -u
-
 ##### Configuration ###################################################
 
-VERSION="22.03"
+VERSION="22.05"
 
 # email adress for notifications
 MAIL=jdoe@example.com
@@ -28,7 +26,10 @@ MAIL=jdoe@example.com
 # list of hosts (hostname or IP) and SSH port for Rsync
 SERVERS="node0.backup.example.com:2XXX node1.backup.example.com:2XXX"
 
-# Should we fallback on servers when the first is unreachable ?
+# explicit PATH
+PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/sbin:/usr/local/bin
+
+# Should we fallback on other servers when the first one is unreachable?
 SERVERS_FALLBACK=${SERVERS_FALLBACK:-1}
 
 # timeout (in seconds) for SSH connections
@@ -46,119 +47,20 @@ PIDFILE="/var/run/${PROGNAME}.pid"
 
 # Customize the log path if you have multiple scripts and with separate logs
 LOGFILE="/var/log/evobackup.log"
-
-# Enable/Disable tasks
-LOCAL_TASKS=${LOCAL_TASKS:-1}
-SYNC_TASKS=${SYNC_TASKS:-1}
+RSYNC_LOGFILE="/var/log/evobackup.rsync.log"
 
 HOSTNAME=$(hostname)
 
-##### SETUP AND FUNCTIONS #############################################
-
-START_EPOCH=$(/bin/date +%s)
 DATE_FORMAT="%Y-%m-%d %H:%M:%S"
 
-# shellcheck disable=SC2174
-mkdir -p -m 700 ${LOCAL_BACKUP_DIR}
+# Enable/disable local tasks (default: enabled)
+: "${LOCAL_TASKS:=1}"
+# Enable/disable sync tasks (default: enabled)
+: "${SYNC_TASKS:=1}"
 
-PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/sbin:/usr/local/bin
+##### SETUP AND FUNCTIONS #############################################
 
-## lang = C for english outputs
-export LANGUAGE=C
-export LANG=C
-
-## Force umask
-umask 077
-
-## Initialize variable to store SSH connection errors
-SERVERS_SSH_ERRORS=""
-
-# Call test_server with "HOST:PORT" string
-# It will return with 0 if the server is reachable.
-# It will return with 1 and a message on stderr if not.
-test_server() {
-    item=$1
-    # split HOST and PORT from the input string
-    host=$(echo "${item}" | cut -d':' -f1)
-    port=$(echo "${item}" | cut -d':' -f2)
-
-    # Test if the server is accepting connections
-    ssh -q -o "ConnectTimeout ${SSH_CONNECT_TIMEOUT}" "${host}" -p "${port}" -t "exit"
-    # shellcheck disable=SC2181
-    if [ $? = 0 ]; then
-        # SSH connection is OK
-        return 0
-    else
-        # SSH connection failed
-        new_error=$(printf "Failed to connect to \`%s' within %s seconds" "${item}" "${SSH_CONNECT_TIMEOUT}")
-        log "${new_error}"
-        SERVERS_SSH_ERRORS=$(printf "%s\\n%s" "${SERVERS_SSH_ERRORS}" "${new_error}" | sed -e '/^$/d')
-
-        return 1
-    fi
-}
-# Call pick_server with an optional positive integer to get the nth server in the list.
-pick_server() {
-    increment=${1:-0}
-    list_length=$(echo "${SERVERS}" | wc -w)
-
-    if [ "${increment}" -ge "${list_length}" ]; then
-        # We've reached the end of the list
-        new_error="No more server available"
-        log "${new_error}"
-        SERVERS_SSH_ERRORS=$(printf "%s\\n%s" "${SERVERS_SSH_ERRORS}" "${new_error}" | sed -e '/^$/d')
-
-        # Log errors to stderr
-        printf "%s\\n" "${SERVERS_SSH_ERRORS}" >&2
-        return 1
-    fi
-
-    # Extract the day of month, without leading 0 (which would give an octal based number)
-    today=$(/bin/date +%e)
-    # A salt is useful to randomize the starting point in the list
-    # but stay identical each time it's called for a server (based on hostname).
-    salt=$(hostname | cksum | cut -d' ' -f1)
-    # Pick an integer between 0 and the length of the SERVERS list
-    # It changes each day
-    item=$(( (today + salt + increment) % list_length ))
-    # cut starts counting fields at 1, not 0.
-    field=$(( item + 1 ))
-
-    echo "${SERVERS}" | cut -d' ' -f${field}
-}
-log() {
-    msg="${1:-$(cat /dev/stdin)}"
-    pid=$$
-    printf "[%s] %s[%s]: %s\\n" \
-        "$(/bin/date +"${DATE_FORMAT}")" "${PROGNAME}" "${pid}" "${msg}" \
-        >> "${LOGFILE}"
-}
-
-log "START GLOBAL - VERSION=${VERSION} LOCAL_TASKS=${LOCAL_TASKS} SYNC_TASKS=${SYNC_TASKS}"
-
-## Verify other evobackup process and kill if needed
-if [ -e "${PIDFILE}" ]; then
-    pid=$(cat "${PIDFILE}")
-    # Does process still exist ?
-    if kill -0 "${pid}" 2> /dev/null; then
-        # Killing the childs of evobackup.
-        for ppid in $(pgrep -P "${pid}"); do
-            kill -9 "${ppid}";
-        done
-        # Then kill the main PID.
-        kill -9 "${pid}"
-        printf "%s is still running (PID %s). Process has been killed" "$0" "${pid}\\n" >&2
-    else
-        rm -f "${PIDFILE}"
-    fi
-fi
-echo "$$" > "${PIDFILE}"
-# shellcheck disable=SC2064
-trap "rm -f ${PIDFILE}" EXIT
-
-##### LOCAL BACKUP ####################################################
-
-if [ "${LOCAL_TASKS}" = "1" ]; then
+local_tasks() {
     log "START LOCAL_TASKS"
 
     # You can comment or uncomment sections below to customize the backup
@@ -310,7 +212,7 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
     ## RabbitMQ
 
     ## export config
-    #rabbitmqadmin export ${LOCAL_BACKUP_DIR}/rabbitmq.config >> $LOGFILE
+    #rabbitmqadmin export ${LOCAL_BACKUP_DIR}/rabbitmq.config >> "${LOGFILE}"
 
     ## MegaCli config
 
@@ -399,12 +301,8 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
     #getfacl -R /home > ${server_state_dir}/rights-home.txt
 
     log "STOP LOCAL_TASKS"
-fi
-
-##### REMOTE BACKUP ###################################################
-
-
-if [ "${SYNC_TASKS}" = "1" ]; then
+}
+sync_tasks() {
     n=0
     server=""
     if [ "${SERVERS_FALLBACK}" = "1" ]; then
@@ -499,25 +397,142 @@ if [ "${SYNC_TASKS}" = "1" ]; then
             /zzz_evobackup_canary                          \
         -e "${RSH_COMMAND}"                                \
         "root@${SSH_SERVER}:/var/backup/"                  \
-        | tail -30 >> $LOGFILE
+        > "${RSYNC_LOGFILE}"
+
+    # Copy the end of the rsync log in the main log file
+    tail -30 "${RSYNC_LOGFILE}" >> "${LOGFILE}"
 
     log "STOP SYNC_TASKS - server=${server}"
-fi
+}
 
-##### REPORTING #######################################################
+# Call test_server with "HOST:PORT" string
+# It will return with 0 if the server is reachable.
+# It will return with 1 and a message on stderr if not.
+test_server() {
+    item=$1
+    # split HOST and PORT from the input string
+    host=$(echo "${item}" | cut -d':' -f1)
+    port=$(echo "${item}" | cut -d':' -f2)
 
-STOP_EPOCH=$(/bin/date +%s)
+    # Test if the server is accepting connections
+    ssh -q -o "ConnectTimeout ${SSH_CONNECT_TIMEOUT}" "${host}" -p "${port}" -t "exit"
+    # shellcheck disable=SC2181
+    if [ $? = 0 ]; then
+        # SSH connection is OK
+        return 0
+    else
+        # SSH connection failed
+        new_error=$(printf "Failed to connect to \`%s' within %s seconds" "${item}" "${SSH_CONNECT_TIMEOUT}")
+        log "${new_error}"
+        SERVERS_SSH_ERRORS=$(printf "%s\\n%s" "${SERVERS_SSH_ERRORS}" "${new_error}" | sed -e '/^$/d')
 
-if [ "${SYSTEM}" = "openbsd" ]; then
-    start_time=$(/bin/date -f "%s" -j "${START_EPOCH}" +"${DATE_FORMAT}")
-    stop_time=$(/bin/date -f "%s" -j "${STOP_EPOCH}" +"${DATE_FORMAT}")
-else
-    start_time=$(/bin/date --date="@${START_EPOCH}" +"${DATE_FORMAT}")
-    stop_time=$(/bin/date --date="@${STOP_EPOCH}" +"${DATE_FORMAT}")
-fi
-duration=$(( STOP_EPOCH - START_EPOCH ))
+        return 1
+    fi
+}
+# Call pick_server with an optional positive integer to get the nth server in the list.
+pick_server() {
+    increment=${1:-0}
+    list_length=$(echo "${SERVERS}" | wc -w)
 
-log "STOP GLOBAL - start='${start_time}' stop='${stop_time}' duration=${duration}s"
+    if [ "${increment}" -ge "${list_length}" ]; then
+        # We've reached the end of the list
+        new_error="No more server available"
+        log "${new_error}"
+        SERVERS_SSH_ERRORS=$(printf "%s\\n%s" "${SERVERS_SSH_ERRORS}" "${new_error}" | sed -e '/^$/d')
 
-tail -20 "${LOGFILE}" \
-    | mail -s "[info] EvoBackup - Client ${HOSTNAME}" ${MAIL}
+        # Log errors to stderr
+        printf "%s\\n" "${SERVERS_SSH_ERRORS}" >&2
+        return 1
+    fi
+
+    # Extract the day of month, without leading 0 (which would give an octal based number)
+    today=$(/bin/date +%e)
+    # A salt is useful to randomize the starting point in the list
+    # but stay identical each time it's called for a server (based on hostname).
+    salt=$(hostname | cksum | cut -d' ' -f1)
+    # Pick an integer between 0 and the length of the SERVERS list
+    # It changes each day
+    item=$(( (today + salt + increment) % list_length ))
+    # cut starts counting fields at 1, not 0.
+    field=$(( item + 1 ))
+
+    echo "${SERVERS}" | cut -d' ' -f${field}
+}
+log() {
+    msg="${1:-$(cat /dev/stdin)}"
+    pid=$$
+    printf "[%s] %s[%s]: %s\\n" \
+        "$(/bin/date +"${DATE_FORMAT}")" "${PROGNAME}" "${pid}" "${msg}" \
+        >> "${LOGFILE}"
+}
+
+main() {
+    START_EPOCH=$(/bin/date +%s)
+    log "START GLOBAL - VERSION=${VERSION} LOCAL_TASKS=${LOCAL_TASKS} SYNC_TASKS=${SYNC_TASKS}"
+
+    # shellcheck disable=SC2174
+    mkdir -p -m 700 ${LOCAL_BACKUP_DIR}
+
+    ## Force umask
+    umask 077
+
+    ## Initialize variable to store SSH connection errors
+    SERVERS_SSH_ERRORS=""
+
+    ## Verify other evobackup process and kill if needed
+    if [ -e "${PIDFILE}" ]; then
+        pid=$(cat "${PIDFILE}")
+        # Does process still exist ?
+        if kill -0 "${pid}" 2> /dev/null; then
+            # Killing the childs of evobackup.
+            for ppid in $(pgrep -P "${pid}"); do
+                kill -9 "${ppid}";
+            done
+            # Then kill the main PID.
+            kill -9 "${pid}"
+            printf "%s is still running (PID %s). Process has been killed" "$0" "${pid}\\n" >&2
+        else
+            rm -f "${PIDFILE}"
+        fi
+    fi
+    echo "$$" > "${PIDFILE}"
+    # shellcheck disable=SC2064
+    trap "rm -f ${PIDFILE}" EXIT
+
+    if [ "${LOCAL_TASKS}" = "1" ]; then
+        local_tasks
+    fi
+
+    if [ "${SYNC_TASKS}" = "1" ]; then
+        sync_tasks
+    fi
+
+    STOP_EPOCH=$(/bin/date +%s)
+
+    if [ "${SYSTEM}" = "openbsd" ]; then
+        start_time=$(/bin/date -f "%s" -j "${START_EPOCH}" +"${DATE_FORMAT}")
+        stop_time=$(/bin/date -f "%s" -j "${STOP_EPOCH}" +"${DATE_FORMAT}")
+    else
+        start_time=$(/bin/date --date="@${START_EPOCH}" +"${DATE_FORMAT}")
+        stop_time=$(/bin/date --date="@${STOP_EPOCH}" +"${DATE_FORMAT}")
+    fi
+    duration=$(( STOP_EPOCH - START_EPOCH ))
+
+    log "STOP GLOBAL - start='${start_time}' stop='${stop_time}' duration=${duration}s"
+
+    tail -20 "${LOGFILE}" | mail -s "[info] EvoBackup - Client ${HOSTNAME}" ${MAIL}
+}
+
+# set all programs to C language (english)
+export LC_ALL=C
+
+# Error on unassigned variable
+set -u
+
+# Default return-code (0 == succes)
+rc=0
+
+# execute main funciton
+main
+
+exit ${rc}
