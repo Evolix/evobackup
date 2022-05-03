@@ -66,7 +66,7 @@ bkctld (2.6.0-1) unstable; urgency=low
 
 bkctld (2.5.1-1) unstable; urgency=high
 
-  * Upstream release 2.5.1 
+  * Upstream release 2.5.1
 
  -- Jeremy Lecour <jlecour@synopsis.evolix.net>  Wed, 07 Oct 2020 18:35:34 +0200
 
@@ -90,7 +90,7 @@ bkctld (2.4.0-1.1) unstable; urgency=medium
 
 bkctld (2.3.3-1) unstable; urgency=medium
 
-  * Upstream release 2.3.3 
+  * Upstream release 2.3.3
 
  -- Jeremy Lecour <jlecour@evolix.fr>  Thu, 28 May 2020 10:26:53 +0200
 
@@ -120,7 +120,7 @@ bkctld (2.3.0-1) unstable; urgency=low
 
 bkctld (2.2.2-1) unstable; urgency=medium
 
-  * Upstream release 2.2.2 
+  * Upstream release 2.2.2
 
  -- Jeremy Lecour <jlecour@evolix.fr>  Sun, 19 Apr 2020 10:09:29 +0200
 
@@ -168,7 +168,7 @@ bkctld (2.0.0-1) unstable; urgency=low
 
 bkctld (1.7.1-1) unstable; urgency=high
 
-  * btrfs is now in /bin 
+  * btrfs is now in /bin
 
  -- Victor Laborie <vlaborie@evolix.fr>  Tue, 04 Dec 2018 16:15:42 +0100
 
@@ -194,7 +194,7 @@ bkctld (1.6.1-1) unstable; urgency=medium
 
 bkctld (1.6.0-1) unstable; urgency=low
 
-  * Add stats subcommands 
+  * Add stats subcommands
 
  -- Victor Laborie <vlaborie@evolix.fr>  Wed, 13 Jun 2018 15:29:18 +0200
 
@@ -220,7 +220,7 @@ bkctld (1.5.0-1) unstable; urgency=medium
 
   * Refactoring of logging and notification
   * Force variables definition and add a set -u
-  * Reload when update params 
+  * Reload when update params
   * Sanitisation / Refactoring
 
  -- Victor Laborie <vlaborie@evolix.fr>  Thu, 29 Mar 2018 18:16:10 +0200
@@ -294,7 +294,7 @@ bkctld (1.2.3) unstable; urgency=low
 bkctld (1.2.1) unstable; urgency=low
 
   * Add local dir for surcharge default templates files
-  * Add uname in client sample script 
+  * Add uname in client sample script
 
  -- Victor Laborie <vlaborie@evolix.fr>  Fri, 17 Feb 2017 13:29:00 +0100
 
