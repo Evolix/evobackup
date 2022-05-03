@@ -3,7 +3,7 @@ Section: utils
 Priority: optional
 Maintainer: Victor Laborie <vlaborie@evolix.fr>
 Build-Depends: debhelper-compat (= 13), dh-exec
-Standards-Version: 4.0.0
+Standards-Version: 4.5.1
 Rules-Requires-Root: no
 Homepage: https://gitea.evolix.org/evolix/evobackup
 
