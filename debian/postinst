@@ -12,4 +12,6 @@ if [ -e "${legacy_incs_policy_tpl}" ]; then
     mv -f "${legacy_incs_policy_tpl}" "${new_incs_policy_tpl}"
 fi
 
+#DEBHELPER#
+
 exit 0
