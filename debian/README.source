@@ -1,0 +1,2 @@
+# In order to import the last upstream $version, run
+gbp import-orig --uscan
