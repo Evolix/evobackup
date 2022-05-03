@@ -27,7 +27,7 @@ else
         port=$((port+1))
         [ "${port}" -le 1 ] && port=2222
     fi
-    sed -i "s/^Port .*/Port ${port}/" "${jail_sshd_config}"
+    sed --follow-symlinks --in-place "s/^Port .*/Port ${port}/" "${jail_sshd_config}"
 
     notice "Update SSH port \`${port}' for jail \`${jail_name}' : OK"
 

@@ -40,7 +40,7 @@ set_variable() {
     var_value=${3:-}
 
     if grep -qE "^\s*${var_name}=" "${file}"; then
-        sed -i "s|^\s*${var_name}=.*|${var_name}=${var_value}|" "${file}"
+        sed --follow-symlinks --in-place "s|^\s*${var_name}=.*|${var_name}=${var_value}|" "${file}"
     else
         echo "${var_name}=${var_value}" >> "${file}"
     fi
@@ -49,7 +49,7 @@ remove_variable() {
     file=${1:?}
     var_name=${2:?}
 
-    sed -i "s|^\s*${var_name}=.*|d" "${file}"
+    sed --follow-symlinks --in-place "s|^\s*${var_name}=.*|d" "${file}"
 }
 
 is_btrfs() {

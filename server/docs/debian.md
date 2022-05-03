@@ -49,3 +49,6 @@ Launch git-buildpackage :
 ~~~
 gbp buildpackage
 ~~~
+
+The generated build files (including the `.deb`) are located in the `/tmp/bkctld/` directory.
+
