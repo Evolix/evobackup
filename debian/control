@@ -8,8 +8,7 @@ Rules-Requires-Root: no
 
 Package: bkctld
 Architecture: all
-Depends: coreutils,
-         cryptsetup,
+Depends: cryptsetup,
          duc-nox | duc,
          lsb-base,
          lsof,
