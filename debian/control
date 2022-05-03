@@ -5,6 +5,7 @@ Maintainer: Victor Laborie <vlaborie@evolix.fr>
 Build-Depends: debhelper-compat (= 13), dh-exec
 Standards-Version: 4.0.0
 Rules-Requires-Root: no
+Homepage: https://gitea.evolix.org/evolix/evobackup
 
 Package: bkctld
 Architecture: all
