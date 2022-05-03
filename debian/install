@@ -3,5 +3,4 @@ server/bkctld usr/sbin
 server/lib/* usr/lib/bkctld
 server/tpl/* usr/share/bkctld
 server/bkctld.service lib/systemd/system
-client/zzz_evobackup usr/share/doc/bkctld
 server/bash_completion => /usr/share/bash_completion/bkctld
