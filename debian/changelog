@@ -1,3 +1,24 @@
+bkctld (22.04-1) stable; urgency=medium
+
+  * Upstream release 22.04
+
+  [ David Prévot ]
+  * debian/control:
+    + Bump debhelper from deprecated 9 to 13.
+    + Set debhelper-compat version in Build-Depends.
+    + Set Rules-Requires-Root: no.
+    + No need to depend on an essential package
+    + Document Homepage
+    + Update Standards-Version to 4.5.1
+  * debian/copyright:
+    + Use secure copyright file specification URI.
+    + Update
+  * debian/{docs,install}: Install doc as such
+  * debian/postinst: Add #DEBHELPER# token
+  * debian/changelog: Fix bogus mail host
+
+ -- David Prévot <dprevot@evolix.fr>  Tue, 03 May 2022 16:51:53 +0200
+
 bkctld (2.12.0-2) stable; urgency=low
 
   * Package rebuild
