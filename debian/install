@@ -1,7 +1,7 @@
 #!/usr/bin/dh-exec
-bkctld usr/sbin
-lib/* usr/lib/bkctld
-tpl/* usr/share/bkctld
-bkctld.service lib/systemd/system
-zzz_evobackup usr/share/doc/bkctld
-bash_completion => /usr/share/bash_completion/bkctld
+server/bkctld usr/sbin
+server/lib/* usr/lib/bkctld
+server/tpl/* usr/share/bkctld
+server/bkctld.service lib/systemd/system
+client/zzz_evobackup usr/share/doc/bkctld
+server/bash_completion => /usr/share/bash_completion/bkctld

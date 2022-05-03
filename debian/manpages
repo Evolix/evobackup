@@ -1,3 +1,3 @@
-bkctld.8
-bkctld.conf.5
-evobackup-incl.5
+server/bkctld.8
+server/bkctld.conf.5
+server/evobackup-incl.5
