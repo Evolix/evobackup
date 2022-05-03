@@ -27,4 +27,4 @@ status="OFF"
 port=$("${LIBDIR}/bkctld-port" "${jail_name}")
 ip=$("${LIBDIR}/bkctld-ip" "${jail_name}" | xargs | tr -s ' ' ',')
 
-echo "${jail_name} ${status} ${port} ${incs_policy} ${ip}" | awk '{ printf("%- 30s %- 10s %- 10s %- 10s %- 40s\n", $1, $2, $3, $4, $5); }'
+echo "${jail_name} ${status} ${port} ${incs_policy} ${ip}" | awk '{ printf("%- 30s %- 10s %- 10s %- 25s %- 20s\n", $1, $2, $3, $4, $5); }'

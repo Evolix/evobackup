@@ -26,6 +26,9 @@ for jail_name in $("${LIBDIR}/bkctld-list"); do
 
         # read each line in jail configuration
         while read line; do
+            ## TODO
+            # deal with empty lines
+
             # inc date in ISO format
             inc_iso=$(relative_date "${line}")
             # inc date in seconds from epoch

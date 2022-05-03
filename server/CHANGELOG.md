@@ -6,10 +6,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
-### Changed
-
 ### Deprecated
 
 ### Removed
@@ -17,6 +13,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [22.04] - 2022-04-20
+
+### Added
+
+* Run the test suite on Bullseye (ext4/btrfs) in addition of Stretch and Buster (ext4/btrfs)
+* Tell sed to follow symlinks
+* Add a header in `bkctld status` output and improved columns width.
+* bkctld-check-setup: compatibility with minifirewall 22.03+
+
+### Changed
+
+* change versioning pattern
 
 ## [2.12.0] - 2021-11-02
 

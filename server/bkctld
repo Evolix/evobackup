@@ -116,6 +116,7 @@ case "${subcommand}" in
     ;;
     "status")
         jail_name="${2:-}"
+        printf '%-30s %-10s %-10s %-25s %-20s\n' 'JAIL NAME' 'STATUS' 'PORT' 'RETENTION (DAY/MONTH)' 'IP'
         if [ "${jail_name}" = "all" ] || [ -z "${jail_name}" ]; then
             for jail in $("${LIBDIR}/bkctld-list"); do
                 "${LIBDIR}/bkctld-${subcommand}" "${jail}"

@@ -63,8 +63,8 @@ delete_inc_btrfs() {
     inc_path=$(inc_path "${jail_name}" "${inc_name}")
     btrfs_bin=$(command -v btrfs)
 
-    if [ -z ${btrfs_bin} ]; then
-        error "btrfs not found. Please install brtfs-progs."
+    if [ -z ${btrfs_bin} ]; then
+        error "btrfs not found. Please install btrfs-progs."
     fi
 
     if dry_run; then

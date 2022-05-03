@@ -8,7 +8,7 @@ this git repository with git-buildpackage and sbuild.
 Install Debian dependencies :
 
 ~~~
-apt install git-buildpackage sbuild dh-exec
+apt install git-buildpackage sbuild
 ~~~
 
 Add your user to sbuild :
@@ -50,4 +50,5 @@ Launch git-buildpackage :
 gbp buildpackage
 ~~~
 
-To update the debian changelog, use the command `debchange`
+The generated build files (including the `.deb`) are located in the `/tmp/bkctld/` directory.
+

@@ -38,7 +38,7 @@ else
         allow_users="${allow_users} root@${new_ip}"
     done
     if grep -q -E "^AllowUsers" "${jail_sshd_config}"; then
-        sed -i "s~^AllowUsers .*~${allow_users}~" "${jail_sshd_config}"
+        sed --follow-symlinks --in-place "s~^AllowUsers .*~${allow_users}~" "${jail_sshd_config}"
     else
         error "No \`AllowUsers' directive found in \`${jail_sshd_config}'"
     fi
