@@ -12,11 +12,12 @@ if [ -z "${jail_name}" ]; then
     show_help && exit 1
 fi
 jail_path=$(jail_path "${jail_name}")
+incs_path=$(incs_path "${jail_name}")
 
 test -d "${jail_path}" && error "Skip jail \`${jail_name}' : it already exists"
 
-# Create config and jails directory
-mkdir --parents "${CONFDIR}" "${JAILDIR}"
+# Create config, jails and incs directories
+mkdir --parents "${CONFDIR}" "${JAILDIR}" "${INCDIR}"
 
 if is_btrfs "$(dirname "${JAILDIR}")" || is_btrfs "${JAILDIR}"; then
     btrfs_bin=$(command -v btrfs)
@@ -27,6 +28,8 @@ if is_btrfs "$(dirname "${JAILDIR}")" || is_btrfs "${JAILDIR}"; then
 else
     mkdir --parents "${jail_path}"
 fi
+
+mkdir --parents "${incs_path}"
 
 setup_jail_chroot "${jail_name}"
 setup_jail_config "${jail_name}"
