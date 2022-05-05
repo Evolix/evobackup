@@ -47,7 +47,6 @@ PIDFILE="/var/run/${PROGNAME}.pid"
 
 # Customize the log path if you have multiple scripts and with separate logs
 LOGFILE="/var/log/evobackup.log"
-RSYNC_LOGFILE="/var/log/evobackup.rsync.log"
 
 HOSTNAME=$(hostname)
 
@@ -397,10 +396,7 @@ sync_tasks() {
             /zzz_evobackup_canary                          \
         -e "${RSH_COMMAND}"                                \
         "root@${SSH_SERVER}:/var/backup/"                  \
-        > "${RSYNC_LOGFILE}"
-
-    # Copy the end of the rsync log in the main log file
-    tail -30 "${RSYNC_LOGFILE}" >> "${LOGFILE}"
+            | tail -30 > "${LOGFILE}"
 
     log "STOP SYNC_TASKS - server=${server}"
 }
