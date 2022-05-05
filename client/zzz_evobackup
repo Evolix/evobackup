@@ -436,6 +436,8 @@ if [ "${SYNC_TASKS}" = "1" ]; then
 
     log "START SYNC_TASKS - server=${server}"
 
+    update-evobackup-canary --who "${PROGNAME}"
+
     # /!\ DO NOT USE COMMENTS in the rsync command /!\
     # It breaks the command and destroys data, simply remove (or add) lines.
 
@@ -494,6 +496,7 @@ if [ "${SYNC_TASKS}" = "1" ]; then
             /root                                          \
             /var                                           \
             /home                                          \
+            /zzz_evobackup_canary                          \
         -e "${RSH_COMMAND}"                                \
         "root@${SSH_SERVER}:/var/backup/"                  \
         | tail -30 >> $LOGFILE
