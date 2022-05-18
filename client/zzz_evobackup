@@ -367,7 +367,7 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
         fi
     else
         if [ -n "${dump_server_state_bin}" ]; then
-            ${dump_server_state_bin} --all --force --backup-dir "${server_state_dir}"
+            ${dump_server_state_bin} --all --force --dump-dir "${server_state_dir}"
         else
             mkdir -p "${server_state_dir}"
 
