@@ -400,8 +400,9 @@ sync_tasks() {
 
     # ignore check because we want it to split the different arguments to $rep
     # shellcheck disable=SC2086
-    rsync --archive --verbose                              \
-        --stats --human-readable --relative --partial      \
+    rsync --archive                                        \
+        --itemize-changes --stats --human-readable         \
+        --relative --partial                               \
         --delete --delete-excluded --force --ignore-errors \
         --exclude "dev"                                    \
         --exclude "lost+found"                             \
