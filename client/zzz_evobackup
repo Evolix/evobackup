@@ -76,48 +76,90 @@ local_tasks() {
     # rm -rf ${LOCAL_BACKUP_DIR}/mysql
     # rm -rf ${LOCAL_BACKUP_DIR}/mysqlhotcopy
     # rm -rf /home/mysqldump
+    # rm -f ${LOCAL_BACKUP_DIR}/*.err ${LOCAL_BACKUP_DIR}/**/*.err
 
     ## example with global and compressed mysqldump
     # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
-    #  --opt --all-databases --force --events --hex-blob | gzip --best > ${LOCAL_BACKUP_DIR}/mysql.bak.gz
+    #  --opt --all-databases --force --events --hex-blob 2> ${LOCAL_BACKUP_DIR}/mysql.bak.err | gzip --best > ${LOCAL_BACKUP_DIR}/mysql.bak.gz
+    # last_rc=$?
+    # if [ ${last_rc} -ne 0 ]; then
+    #     error "mysqldump (global compressed) returned an error ${last_rc}, check ${LOCAL_BACKUP_DIR}/mysql.bak.err"
+    #     rc=101
+    # fi
 
     ## example with compressed SQL dump (with data) for each databases
     # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysql/
     # for i in $(mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 -e 'show databases' -s --skip-column-names \
     # | egrep -v "^(Database|information_schema|performance_schema|sys)"); do
-    #     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --events --hex-blob $i | gzip --best > ${LOCAL_BACKUP_DIR}/mysql/${i}.sql.gz
+    #     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --events --hex-blob $i 2> ${LOCAL_BACKUP_DIR}/${i}.err | gzip --best > ${LOCAL_BACKUP_DIR}/mysql/${i}.sql.gz
+    #     last_rc=$?
+    #     if [ ${last_rc} -ne 0 ]; then
+    #         error "mysqldump (${i} compressed) returned an error ${last_rc}, check ${LOCAL_BACKUP_DIR}/${i}.err"
+    #         rc=102
+    #     fi
     # done
 
     ## Dump all grants (requires 'percona-toolkit' package)
     # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysql/
-    # pt-show-grants --flush --no-header > ${LOCAL_BACKUP_DIR}/mysql/all_grants.sql
+    # pt-show-grants --flush --no-header 2> /mysql/all_grants.err > ${LOCAL_BACKUP_DIR}/mysql/all_grants.sql
+    # last_rc=$?
+    # if [ ${last_rc} -ne 0 ]; then
+    #     error "pt-show-grants returned an error ${last_rc}, check ${LOCAL_BACKUP_DIR}/mysql/all_grants.err"
+    #     rc=103
+    # fi
 
     # Dump all variables
-    # mysql -A -e"SHOW GLOBAL VARIABLES;" > ${LOCAL_BACKUP_DIR}/MySQLCurrentSettings.txt
+    # mysql -A -e"SHOW GLOBAL VARIABLES;" 2> ${LOCAL_BACKUP_DIR}/MySQLCurrentSettings.err > ${LOCAL_BACKUP_DIR}/MySQLCurrentSettings.txt
+    # last_rc=$?
+    # if [ ${last_rc} -ne 0 ]; then
+    #     error "mysql (variables) returned an error ${last_rc}, check ${LOCAL_BACKUP_DIR}/MySQLCurrentSettings.err"
+    #     rc=104
+    # fi
 
     ## example with SQL dump (schema only, no data) for each databases
     # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysql/
     # for i in $(mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 -e 'show databases' -s --skip-column-names \
     # | egrep -v "^(Database|information_schema|performance_schema|sys)"); do
-    #     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --no-data --databases $i > ${LOCAL_BACKUP_DIR}/mysql/${i}.schema.sql
+    #     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --no-data --databases $i 2> ${LOCAL_BACKUP_DIR}/${i}.schema.err > ${LOCAL_BACKUP_DIR}/mysql/${i}.schema.sql
+    #     last_rc=$?
+    #     if [ ${last_rc} -ne 0 ]; then
+    #         error "mysqldump (${i} schema) returned an error ${last_rc}, check ${LOCAL_BACKUP_DIR}/${i}.schema.err"
+    #         rc=105
+    #     fi
     # done
 
     ## example with *one* uncompressed SQL dump for *one* database (MYBASE)
     # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysql/MYBASE
     # chown -RL mysql ${LOCAL_BACKUP_DIR}/mysql/
     # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -Q \
-    # --opt --events --hex-blob --skip-comments -T ${LOCAL_BACKUP_DIR}/mysql/MYBASE MYBASE
+    # --opt --events --hex-blob --skip-comments -T ${LOCAL_BACKUP_DIR}/mysql/MYBASE MYBASE 2> ${LOCAL_BACKUP_DIR}/mysql/MYBASE.err
+    # last_rc=$?
+    # if [ ${last_rc} -ne 0 ]; then
+    #     error "mysqldump (MYBASE) returned an error ${last_rc}, check ${LOCAL_BACKUP_DIR}/mysql/MYBASE.err"
+    #     rc=106
+    # fi
 
     ## example with two dumps for each table (.sql/.txt) for all databases
     # for i in $(echo SHOW DATABASES | mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
-    # | egrep -v "^(Database|information_schema|performance_schema|sys)" ); \
-    # do mkdir -p -m 700 /home/mysqldump/$i ; chown -RL mysql /home/mysqldump ; \
-    # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 -Q --opt --events --hex-blob --skip-comments \
-    #  --fields-enclosed-by='\"' --fields-terminated-by=',' -T /home/mysqldump/$i $i; done
+    # | egrep -v "^(Database|information_schema|performance_schema|sys)" ); do
+    #     mkdir -p -m 700 /home/mysqldump/$i ; chown -RL mysql /home/mysqldump
+    #     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 -Q --opt --events --hex-blob --skip-comments \
+    #  --fields-enclosed-by='\"' --fields-terminated-by=',' -T /home/mysqldump/$i $i 2> /home/mysqldump/$i.err"
+    #     last_rc=$?
+    #     if [ ${last_rc} -ne 0 ]; then
+    #         error "mysqldump (${i} files) returned an error ${last_rc}, check /home/mysqldump/$i.err"
+    #         rc=107
+    #     fi
+    # done
 
     ## example with mysqlhotcopy
     # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysqlhotcopy/
-    # mysqlhotcopy MYBASE ${LOCAL_BACKUP_DIR}/mysqlhotcopy/
+    # mysqlhotcopy MYBASE ${LOCAL_BACKUP_DIR}/mysqlhotcopy/ 2> ${LOCAL_BACKUP_DIR}/mysqlhotcopy/MYBASE.err
+    # last_rc=$?
+    # if [ ${last_rc} -ne 0 ]; then
+    #     error "mysqlhotcopy returned an error ${last_rc}, check ${LOCAL_BACKUP_DIR}/mysqlhotcopy/MYBASE.err"
+    #     rc=108
+    # fi
 
     ## example for multiples MySQL instances
     # mysqladminpasswd=$(grep -m1 'password = .*' /root/.my.cnf|cut -d" " -f3)
@@ -125,7 +167,12 @@ local_tasks() {
     #     instance=$(echo "$instance"|awk '{ print $3 }')
     #     if [ "$instance" != "3306" ]
     #     then
-    #         mysqldump -P $instance --opt --all-databases --hex-blob -u mysqladmin -p$mysqladminpasswd | gzip --best > ${LOCAL_BACKUP_DIR}/mysql.$instance.bak.gz
+    #         mysqldump -P $instance --opt --all-databases --hex-blob -u mysqladmin -p$mysqladminpasswd 2> ${LOCAL_BACKUP_DIR}/mysql.${instance}.err | gzip --best > ${LOCAL_BACKUP_DIR}/mysql.${instance}.bak.gz
+    #         last_rc=$?
+    #         if [ ${last_rc} -ne 0 ]; then
+    #             error "mysqldump (instance ${instance}) returned an error ${last_rc}, check ${LOCAL_BACKUP_DIR}/mysql.${instance}.err"
+    #             rc=107
+    #         fi
     #     fi
     # done
 
@@ -230,6 +277,11 @@ local_tasks() {
     if [ "${SYSTEM}" = "linux" ]; then
         if [ -n "${dump_server_state_bin}" ]; then
             ${dump_server_state_bin} --all --force --dump-dir "${server_state_dir}"
+            last_rc=$?
+            if [ ${last_rc} -ne 0 ]; then
+                error "dump-server-state returned an error ${last_rc}, check ${server_state_dir}"
+                rc=1
+            fi
         else
             mkdir -p "${server_state_dir}"
 
@@ -269,6 +321,11 @@ local_tasks() {
     else
         if [ -n "${dump_server_state_bin}" ]; then
             ${dump_server_state_bin} --all --force --dump-dir "${server_state_dir}"
+            last_rc=$?
+            if [ ${last_rc} -ne 0 ]; then
+                error "dump-server-state returned an error ${last_rc}, check ${server_state_dir}"
+                rc=1
+            fi
         else
             mkdir -p "${server_state_dir}"
 
@@ -343,7 +400,9 @@ sync_tasks() {
 
     # ignore check because we want it to split the different arguments to $rep
     # shellcheck disable=SC2086
-    rsync -avzh --relative --stats --delete --delete-excluded --force --ignore-errors --partial \
+    rsync --archive --verbose                              \
+        --stats --human-readable --relative --partial      \
+        --delete --delete-excluded --force --ignore-errors \
         --exclude "dev"                                    \
         --exclude "lost+found"                             \
         --exclude ".nfs.*"                                 \
@@ -396,7 +455,13 @@ sync_tasks() {
             /zzz_evobackup_canary                          \
         -e "${RSH_COMMAND}"                                \
         "root@${SSH_SERVER}:/var/backup/"                  \
-            | tail -30 > "${LOGFILE}"
+            | tail -30 >> "${LOGFILE}"
+
+    rsync_rc=$?
+    if [ ${rsync_rc} -ne 0 ]; then
+        error "rsync returned an error ${rsync_rc}, check ${LOGFILE}"
+        rc=201
+    fi
 
     log "STOP SYNC_TASKS - server=${server}"
 }
@@ -461,6 +526,13 @@ log() {
         "$(/bin/date +"${DATE_FORMAT}")" "${PROGNAME}" "${pid}" "${msg}" \
         >> "${LOGFILE}"
 }
+error() {
+    msg="${1:-$(cat /dev/stdin)}"
+    pid=$$
+    printf "[%s] %s[%s]: %s\\n" \
+        "$(/bin/date +"${DATE_FORMAT}")" "${PROGNAME}" "${pid}" "${msg}" \
+        >&2
+}
 
 main() {
     START_EPOCH=$(/bin/date +%s)
@@ -524,6 +596,8 @@ export LC_ALL=C
 
 # Error on unassigned variable
 set -u
+# Fail if a pipeline member returns an error (cf. https://sipb.mit.edu/doc/safe-shell/)
+set -o pipefail
 
 # Default return-code (0 == succes)
 rc=0

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Use --dump-dir instead of --backup-dir to supress dump-server-state warning
+* Do not use rsync compression
 
 ### Deprecated
 
