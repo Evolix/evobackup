@@ -237,14 +237,14 @@ local_tasks() {
     ## Take a snapshot as a backup.
     ## Warning: You need to have a path.repo configured.
     ## See: https://wiki.evolix.org/HowtoElasticsearch#snapshots-et-sauvegardes
-    # curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/snapshot.daily" -o /tmp/es_delete_snapshot.daily.log
-    # curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot.daily?wait_for_completion=true" -o /tmp/es_snapshot.daily.log
+    # curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/snapshot.daily" >> "${LOGFILE}"
+    # curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot.daily?wait_for_completion=true" >> "${LOGFILE}"
     ## Clustered version here
     ## It basically the same thing except that you need to check that NFS is mounted
     # if ss | grep ':nfs' | grep -q 'ip\.add\.res\.s1' && ss | grep ':nfs' | grep -q 'ip\.add\.res\.s2'
     # then
-    #     curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/snapshot.daily" -o /tmp/es_delete_snapshot.daily.log
-    #     curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot.daily?wait_for_completion=true" -o /tmp/es_snapshot.daily.log
+    #     curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/snapshot.daily" >> "${LOGFILE}"
+    #     curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot.daily?wait_for_completion=true" >> "${LOGFILE}"
     # else
     #     echo 'Cannot make a snapshot of elasticsearch, at least one node is not mounting the repository.'
     # fi
@@ -253,7 +253,7 @@ local_tasks() {
     #     curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/${snapshot}" | grep -v -Fx '{"acknowledged":true}'
     # done
     # date=$(/bin/date +%F)
-    # curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot_${date}?wait_for_completion=true" -o /tmp/es_snapshot_${date}.log
+    # curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot_${date}?wait_for_completion=true" >> "${LOGFILE}"
 
     ## RabbitMQ
 
