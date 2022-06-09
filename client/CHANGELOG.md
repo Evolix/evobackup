@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Use --dump-dir instead of --backup-dir to supress dump-server-state warning
 * Do not use rsync compression
 * Replace rsync option --verbose by --itemize-changes
+# update-evobackup-canary : do not use GNU date, for it to be compatible with OpenBSD
 
 ### Deprecated
 
