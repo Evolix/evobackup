@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Script Evobackup client
 # See https://gitea.evolix.org/evolix/evobackup
