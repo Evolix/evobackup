@@ -101,7 +101,7 @@ local_tasks() {
 
     ## Dump all grants (requires 'percona-toolkit' package)
     # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysql/
-    # pt-show-grants --flush --no-header 2> /mysql/all_grants.err > ${LOCAL_BACKUP_DIR}/mysql/all_grants.sql
+    # pt-show-grants --flush --no-header 2> ${LOCAL_BACKUP_DIR}/mysql/all_grants.err > ${LOCAL_BACKUP_DIR}/mysql/all_grants.sql
     # last_rc=$?
     # if [ ${last_rc} -ne 0 ]; then
     #     error "pt-show-grants returned an error ${last_rc}, check ${LOCAL_BACKUP_DIR}/mysql/all_grants.err"
