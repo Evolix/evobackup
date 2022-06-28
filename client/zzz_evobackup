@@ -1,26 +1,24 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Script Evobackup client
 # See https://gitea.evolix.org/evolix/evobackup
 #
-# Author: Gregory Colpart <reg@evolix.fr>
-# Contributors:
-# Romain Dessort <rdessort@evolix.fr>
-# Benoît Série <bserie@evolix.fr>
-# Tristan Pilat <tpilat@evolix.fr>
-# Victor Laborie <vlaborie@evolix.fr>
-# Jérémy Lecour <jlecour@evolix.fr>
+# Authors: Evolix <info@evolix.fr>,
+#          Gregory Colpart <reg@evolix.fr>,
+#          Romain Dessort <rdessort@evolix.fr>,
+#          Benoit Série <bserie@evolix.fr>,
+#          Tristan Pilat <tpilat@evolix.fr>,
+#          Victor Laborie <vlaborie@evolix.fr>,
+#          Jérémy Lecour <jlecour@evolix.fr>
+#          and others.
 #
 # Licence: AGPLv3
 #
 # /!\ DON'T FORGET TO SET "MAIL" and "SERVERS" VARIABLES
 
-# Fail on unassigned variables
-set -u
-
 ##### Configuration ###################################################
 
-VERSION="22.03"
+VERSION="22.05"
 
 # email adress for notifications
 MAIL=jdoe@example.com
@@ -28,7 +26,10 @@ MAIL=jdoe@example.com
 # list of hosts (hostname or IP) and SSH port for Rsync
 SERVERS="node0.backup.example.com:2XXX node1.backup.example.com:2XXX"
 
-# Should we fallback on servers when the first is unreachable ?
+# explicit PATH
+PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/sbin:/usr/local/bin
+
+# Should we fallback on other servers when the first one is unreachable?
 SERVERS_FALLBACK=${SERVERS_FALLBACK:-1}
 
 # timeout (in seconds) for SSH connections
@@ -47,118 +48,18 @@ PIDFILE="/var/run/${PROGNAME}.pid"
 # Customize the log path if you have multiple scripts and with separate logs
 LOGFILE="/var/log/evobackup.log"
 
-# Enable/Disable tasks
-LOCAL_TASKS=${LOCAL_TASKS:-1}
-SYNC_TASKS=${SYNC_TASKS:-1}
-
 HOSTNAME=$(hostname)
+
+DATE_FORMAT="%Y-%m-%d %H:%M:%S"
+
+# Enable/disable local tasks (default: enabled)
+: "${LOCAL_TASKS:=1}"
+# Enable/disable sync tasks (default: enabled)
+: "${SYNC_TASKS:=1}"
 
 ##### SETUP AND FUNCTIONS #############################################
 
-START_EPOCH=$(/bin/date +%s)
-DATE_FORMAT="%Y-%m-%d %H:%M:%S"
-
-# shellcheck disable=SC2174
-mkdir -p -m 700 ${LOCAL_BACKUP_DIR}
-
-PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/sbin:/usr/local/bin
-
-## lang = C for english outputs
-export LANGUAGE=C
-export LANG=C
-
-## Force umask
-umask 077
-
-## Initialize variable to store SSH connection errors
-SERVERS_SSH_ERRORS=""
-
-# Call test_server with "HOST:PORT" string
-# It will return with 0 if the server is reachable.
-# It will return with 1 and a message on stderr if not.
-test_server() {
-    item=$1
-    # split HOST and PORT from the input string
-    host=$(echo "${item}" | cut -d':' -f1)
-    port=$(echo "${item}" | cut -d':' -f2)
-
-    # Test if the server is accepting connections
-    ssh -q -o "ConnectTimeout ${SSH_CONNECT_TIMEOUT}" "${host}" -p "${port}" -t "exit"
-    # shellcheck disable=SC2181
-    if [ $? = 0 ]; then
-        # SSH connection is OK
-        return 0
-    else
-        # SSH connection failed
-        new_error=$(printf "Failed to connect to \`%s' within %s seconds" "${item}" "${SSH_CONNECT_TIMEOUT}")
-        log "${new_error}"
-        SERVERS_SSH_ERRORS=$(printf "%s\\n%s" "${SERVERS_SSH_ERRORS}" "${new_error}" | sed -e '/^$/d')
-
-        return 1
-    fi
-}
-# Call pick_server with an optional positive integer to get the nth server in the list.
-pick_server() {
-    increment=${1:-0}
-    list_length=$(echo "${SERVERS}" | wc -w)
-
-    if [ "${increment}" -ge "${list_length}" ]; then
-        # We've reached the end of the list
-        new_error="No more server available"
-        log "${new_error}"
-        SERVERS_SSH_ERRORS=$(printf "%s\\n%s" "${SERVERS_SSH_ERRORS}" "${new_error}" | sed -e '/^$/d')
-
-        # Log errors to stderr
-        printf "%s\\n" "${SERVERS_SSH_ERRORS}" >&2
-        return 1
-    fi
-
-    # Extract the day of month, without leading 0 (which would give an octal based number)
-    today=$(/bin/date +%e)
-    # A salt is useful to randomize the starting point in the list
-    # but stay identical each time it's called for a server (based on hostname).
-    salt=$(hostname | cksum | cut -d' ' -f1)
-    # Pick an integer between 0 and the length of the SERVERS list
-    # It changes each day
-    item=$(( (today + salt + increment) % list_length ))
-    # cut starts counting fields at 1, not 0.
-    field=$(( item + 1 ))
-
-    echo "${SERVERS}" | cut -d' ' -f${field}
-}
-log() {
-    msg="${1:-$(cat /dev/stdin)}"
-    pid=$$
-    printf "[%s] %s[%s]: %s\\n" \
-        "$(/bin/date +"${DATE_FORMAT}")" "${PROGNAME}" "${pid}" "${msg}" \
-        >> "${LOGFILE}"
-}
-
-log "START GLOBAL - VERSION=${VERSION} LOCAL_TASKS=${LOCAL_TASKS} SYNC_TASKS=${SYNC_TASKS}"
-
-## Verify other evobackup process and kill if needed
-if [ -e "${PIDFILE}" ]; then
-    pid=$(cat "${PIDFILE}")
-    # Does process still exist ?
-    if kill -0 "${pid}" 2> /dev/null; then
-        # Killing the childs of evobackup.
-        for ppid in $(pgrep -P "${pid}"); do
-            kill -9 "${ppid}";
-        done
-        # Then kill the main PID.
-        kill -9 "${pid}"
-        printf "%s is still running (PID %s). Process has been killed" "$0" "${pid}\\n" >&2
-    else
-        rm -f "${PIDFILE}"
-    fi
-fi
-echo "$$" > "${PIDFILE}"
-# shellcheck disable=SC2064
-trap "rm -f ${PIDFILE}" EXIT
-
-##### LOCAL BACKUP ####################################################
-
-if [ "${LOCAL_TASKS}" = "1" ]; then
+local_tasks() {
     log "START LOCAL_TASKS"
 
     # You can comment or uncomment sections below to customize the backup
@@ -175,48 +76,90 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
     # rm -rf ${LOCAL_BACKUP_DIR}/mysql
     # rm -rf ${LOCAL_BACKUP_DIR}/mysqlhotcopy
     # rm -rf /home/mysqldump
+    # rm -f ${LOCAL_BACKUP_DIR}/*.err ${LOCAL_BACKUP_DIR}/**/*.err
 
     ## example with global and compressed mysqldump
     # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
-    #  --opt --all-databases --force --events --hex-blob | gzip --best > ${LOCAL_BACKUP_DIR}/mysql.bak.gz
+    #  --opt --all-databases --force --events --hex-blob 2> ${LOCAL_BACKUP_DIR}/mysql.bak.err | gzip --best > ${LOCAL_BACKUP_DIR}/mysql.bak.gz
+    # last_rc=$?
+    # if [ ${last_rc} -ne 0 ]; then
+    #     error "mysqldump (global compressed) returned an error ${last_rc}, check ${LOCAL_BACKUP_DIR}/mysql.bak.err"
+    #     rc=101
+    # fi
 
     ## example with compressed SQL dump (with data) for each databases
     # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysql/
     # for i in $(mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 -e 'show databases' -s --skip-column-names \
     # | egrep -v "^(Database|information_schema|performance_schema|sys)"); do
-    #     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --events --hex-blob $i | gzip --best > ${LOCAL_BACKUP_DIR}/mysql/${i}.sql.gz
+    #     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --events --hex-blob $i 2> ${LOCAL_BACKUP_DIR}/${i}.err | gzip --best > ${LOCAL_BACKUP_DIR}/mysql/${i}.sql.gz
+    #     last_rc=$?
+    #     if [ ${last_rc} -ne 0 ]; then
+    #         error "mysqldump (${i} compressed) returned an error ${last_rc}, check ${LOCAL_BACKUP_DIR}/${i}.err"
+    #         rc=102
+    #     fi
     # done
 
     ## Dump all grants (requires 'percona-toolkit' package)
     # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysql/
-    # pt-show-grants --flush --no-header > ${LOCAL_BACKUP_DIR}/mysql/all_grants.sql
+    # pt-show-grants --flush --no-header 2> ${LOCAL_BACKUP_DIR}/mysql/all_grants.err > ${LOCAL_BACKUP_DIR}/mysql/all_grants.sql
+    # last_rc=$?
+    # if [ ${last_rc} -ne 0 ]; then
+    #     error "pt-show-grants returned an error ${last_rc}, check ${LOCAL_BACKUP_DIR}/mysql/all_grants.err"
+    #     rc=103
+    # fi
 
     # Dump all variables
-    # mysql -A -e"SHOW GLOBAL VARIABLES;" > ${LOCAL_BACKUP_DIR}/MySQLCurrentSettings.txt
+    # mysql -A -e"SHOW GLOBAL VARIABLES;" 2> ${LOCAL_BACKUP_DIR}/MySQLCurrentSettings.err > ${LOCAL_BACKUP_DIR}/MySQLCurrentSettings.txt
+    # last_rc=$?
+    # if [ ${last_rc} -ne 0 ]; then
+    #     error "mysql (variables) returned an error ${last_rc}, check ${LOCAL_BACKUP_DIR}/MySQLCurrentSettings.err"
+    #     rc=104
+    # fi
 
     ## example with SQL dump (schema only, no data) for each databases
     # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysql/
     # for i in $(mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 -e 'show databases' -s --skip-column-names \
     # | egrep -v "^(Database|information_schema|performance_schema|sys)"); do
-    #     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --no-data --databases $i > ${LOCAL_BACKUP_DIR}/mysql/${i}.schema.sql
+    #     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --no-data --databases $i 2> ${LOCAL_BACKUP_DIR}/${i}.schema.err > ${LOCAL_BACKUP_DIR}/mysql/${i}.schema.sql
+    #     last_rc=$?
+    #     if [ ${last_rc} -ne 0 ]; then
+    #         error "mysqldump (${i} schema) returned an error ${last_rc}, check ${LOCAL_BACKUP_DIR}/${i}.schema.err"
+    #         rc=105
+    #     fi
     # done
 
     ## example with *one* uncompressed SQL dump for *one* database (MYBASE)
     # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysql/MYBASE
     # chown -RL mysql ${LOCAL_BACKUP_DIR}/mysql/
     # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -Q \
-    # --opt --events --hex-blob --skip-comments -T ${LOCAL_BACKUP_DIR}/mysql/MYBASE MYBASE
+    # --opt --events --hex-blob --skip-comments -T ${LOCAL_BACKUP_DIR}/mysql/MYBASE MYBASE 2> ${LOCAL_BACKUP_DIR}/mysql/MYBASE.err
+    # last_rc=$?
+    # if [ ${last_rc} -ne 0 ]; then
+    #     error "mysqldump (MYBASE) returned an error ${last_rc}, check ${LOCAL_BACKUP_DIR}/mysql/MYBASE.err"
+    #     rc=106
+    # fi
 
     ## example with two dumps for each table (.sql/.txt) for all databases
     # for i in $(echo SHOW DATABASES | mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
-    # | egrep -v "^(Database|information_schema|performance_schema|sys)" ); \
-    # do mkdir -p -m 700 /home/mysqldump/$i ; chown -RL mysql /home/mysqldump ; \
-    # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 -Q --opt --events --hex-blob --skip-comments \
-    #  --fields-enclosed-by='\"' --fields-terminated-by=',' -T /home/mysqldump/$i $i; done
+    # | egrep -v "^(Database|information_schema|performance_schema|sys)" ); do
+    #     mkdir -p -m 700 /home/mysqldump/$i ; chown -RL mysql /home/mysqldump
+    #     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 -Q --opt --events --hex-blob --skip-comments \
+    #  --fields-enclosed-by='\"' --fields-terminated-by=',' -T /home/mysqldump/$i $i 2> /home/mysqldump/$i.err"
+    #     last_rc=$?
+    #     if [ ${last_rc} -ne 0 ]; then
+    #         error "mysqldump (${i} files) returned an error ${last_rc}, check /home/mysqldump/$i.err"
+    #         rc=107
+    #     fi
+    # done
 
     ## example with mysqlhotcopy
     # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysqlhotcopy/
-    # mysqlhotcopy MYBASE ${LOCAL_BACKUP_DIR}/mysqlhotcopy/
+    # mysqlhotcopy MYBASE ${LOCAL_BACKUP_DIR}/mysqlhotcopy/ 2> ${LOCAL_BACKUP_DIR}/mysqlhotcopy/MYBASE.err
+    # last_rc=$?
+    # if [ ${last_rc} -ne 0 ]; then
+    #     error "mysqlhotcopy returned an error ${last_rc}, check ${LOCAL_BACKUP_DIR}/mysqlhotcopy/MYBASE.err"
+    #     rc=108
+    # fi
 
     ## example for multiples MySQL instances
     # mysqladminpasswd=$(grep -m1 'password = .*' /root/.my.cnf|cut -d" " -f3)
@@ -224,7 +167,12 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
     #     instance=$(echo "$instance"|awk '{ print $3 }')
     #     if [ "$instance" != "3306" ]
     #     then
-    #         mysqldump -P $instance --opt --all-databases --hex-blob -u mysqladmin -p$mysqladminpasswd | gzip --best > ${LOCAL_BACKUP_DIR}/mysql.$instance.bak.gz
+    #         mysqldump -P $instance --opt --all-databases --hex-blob -u mysqladmin -p$mysqladminpasswd 2> ${LOCAL_BACKUP_DIR}/mysql.${instance}.err | gzip --best > ${LOCAL_BACKUP_DIR}/mysql.${instance}.bak.gz
+    #         last_rc=$?
+    #         if [ ${last_rc} -ne 0 ]; then
+    #             error "mysqldump (instance ${instance}) returned an error ${last_rc}, check ${LOCAL_BACKUP_DIR}/mysql.${instance}.err"
+    #             rc=107
+    #         fi
     #     fi
     # done
 
@@ -289,14 +237,14 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
     ## Take a snapshot as a backup.
     ## Warning: You need to have a path.repo configured.
     ## See: https://wiki.evolix.org/HowtoElasticsearch#snapshots-et-sauvegardes
-    # curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/snapshot.daily" -o /tmp/es_delete_snapshot.daily.log
-    # curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot.daily?wait_for_completion=true" -o /tmp/es_snapshot.daily.log
+    # curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/snapshot.daily" >> "${LOGFILE}"
+    # curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot.daily?wait_for_completion=true" >> "${LOGFILE}"
     ## Clustered version here
     ## It basically the same thing except that you need to check that NFS is mounted
     # if ss | grep ':nfs' | grep -q 'ip\.add\.res\.s1' && ss | grep ':nfs' | grep -q 'ip\.add\.res\.s2'
     # then
-    #     curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/snapshot.daily" -o /tmp/es_delete_snapshot.daily.log
-    #     curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot.daily?wait_for_completion=true" -o /tmp/es_snapshot.daily.log
+    #     curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/snapshot.daily" >> "${LOGFILE}"
+    #     curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot.daily?wait_for_completion=true" >> "${LOGFILE}"
     # else
     #     echo 'Cannot make a snapshot of elasticsearch, at least one node is not mounting the repository.'
     # fi
@@ -305,12 +253,12 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
     #     curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/${snapshot}" | grep -v -Fx '{"acknowledged":true}'
     # done
     # date=$(/bin/date +%F)
-    # curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot_${date}?wait_for_completion=true" -o /tmp/es_snapshot_${date}.log
+    # curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot_${date}?wait_for_completion=true" >> "${LOGFILE}"
 
     ## RabbitMQ
 
     ## export config
-    #rabbitmqadmin export ${LOCAL_BACKUP_DIR}/rabbitmq.config >> $LOGFILE
+    #rabbitmqadmin export ${LOCAL_BACKUP_DIR}/rabbitmq.config >> "${LOGFILE}"
 
     ## MegaCli config
 
@@ -329,6 +277,11 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
     if [ "${SYSTEM}" = "linux" ]; then
         if [ -n "${dump_server_state_bin}" ]; then
             ${dump_server_state_bin} --all --force --dump-dir "${server_state_dir}"
+            last_rc=$?
+            if [ ${last_rc} -ne 0 ]; then
+                error "dump-server-state returned an error ${last_rc}, check ${server_state_dir}"
+                rc=1
+            fi
         else
             mkdir -p "${server_state_dir}"
 
@@ -367,7 +320,12 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
         fi
     else
         if [ -n "${dump_server_state_bin}" ]; then
-            ${dump_server_state_bin} --all --force --backup-dir "${server_state_dir}"
+            ${dump_server_state_bin} --all --force --dump-dir "${server_state_dir}"
+            last_rc=$?
+            if [ ${last_rc} -ne 0 ]; then
+                error "dump-server-state returned an error ${last_rc}, check ${server_state_dir}"
+                rc=1
+            fi
         else
             mkdir -p "${server_state_dir}"
 
@@ -399,12 +357,8 @@ if [ "${LOCAL_TASKS}" = "1" ]; then
     #getfacl -R /home > ${server_state_dir}/rights-home.txt
 
     log "STOP LOCAL_TASKS"
-fi
-
-##### REMOTE BACKUP ###################################################
-
-
-if [ "${SYNC_TASKS}" = "1" ]; then
+}
+sync_tasks() {
     n=0
     server=""
     if [ "${SERVERS_FALLBACK}" = "1" ]; then
@@ -436,6 +390,8 @@ if [ "${SYNC_TASKS}" = "1" ]; then
 
     log "START SYNC_TASKS - server=${server}"
 
+    update-evobackup-canary --who "${PROGNAME}"
+
     # /!\ DO NOT USE COMMENTS in the rsync command /!\
     # It breaks the command and destroys data, simply remove (or add) lines.
 
@@ -444,7 +400,10 @@ if [ "${SYNC_TASKS}" = "1" ]; then
 
     # ignore check because we want it to split the different arguments to $rep
     # shellcheck disable=SC2086
-    rsync -avzh --relative --stats --delete --delete-excluded --force --ignore-errors --partial \
+    rsync --archive                                        \
+        --itemize-changes --stats --human-readable         \
+        --relative --partial                               \
+        --delete --delete-excluded --force --ignore-errors \
         --exclude "dev"                                    \
         --exclude "lost+found"                             \
         --exclude ".nfs.*"                                 \
@@ -494,27 +453,157 @@ if [ "${SYNC_TASKS}" = "1" ]; then
             /root                                          \
             /var                                           \
             /home                                          \
+            /zzz_evobackup_canary                          \
         -e "${RSH_COMMAND}"                                \
         "root@${SSH_SERVER}:/var/backup/"                  \
-        | tail -30 >> $LOGFILE
+            | tail -30 >> "${LOGFILE}"
+
+    rsync_rc=$?
+    if [ ${rsync_rc} -ne 0 ]; then
+        error "rsync returned an error ${rsync_rc}, check ${LOGFILE}"
+        rc=201
+    fi
 
     log "STOP SYNC_TASKS - server=${server}"
-fi
+}
 
-##### REPORTING #######################################################
+# Call test_server with "HOST:PORT" string
+# It will return with 0 if the server is reachable.
+# It will return with 1 and a message on stderr if not.
+test_server() {
+    item=$1
+    # split HOST and PORT from the input string
+    host=$(echo "${item}" | cut -d':' -f1)
+    port=$(echo "${item}" | cut -d':' -f2)
 
-STOP_EPOCH=$(/bin/date +%s)
+    # Test if the server is accepting connections
+    ssh -q -o "ConnectTimeout ${SSH_CONNECT_TIMEOUT}" "${host}" -p "${port}" -t "exit"
+    # shellcheck disable=SC2181
+    if [ $? = 0 ]; then
+        # SSH connection is OK
+        return 0
+    else
+        # SSH connection failed
+        new_error=$(printf "Failed to connect to \`%s' within %s seconds" "${item}" "${SSH_CONNECT_TIMEOUT}")
+        log "${new_error}"
+        SERVERS_SSH_ERRORS=$(printf "%s\\n%s" "${SERVERS_SSH_ERRORS}" "${new_error}" | sed -e '/^$/d')
 
-if [ "${SYSTEM}" = "openbsd" ]; then
-    start_time=$(/bin/date -f "%s" -j "${START_EPOCH}" +"${DATE_FORMAT}")
-    stop_time=$(/bin/date -f "%s" -j "${STOP_EPOCH}" +"${DATE_FORMAT}")
-else
-    start_time=$(/bin/date --date="@${START_EPOCH}" +"${DATE_FORMAT}")
-    stop_time=$(/bin/date --date="@${STOP_EPOCH}" +"${DATE_FORMAT}")
-fi
-duration=$(( STOP_EPOCH - START_EPOCH ))
+        return 1
+    fi
+}
+# Call pick_server with an optional positive integer to get the nth server in the list.
+pick_server() {
+    increment=${1:-0}
+    list_length=$(echo "${SERVERS}" | wc -w)
 
-log "STOP GLOBAL - start='${start_time}' stop='${stop_time}' duration=${duration}s"
+    if [ "${increment}" -ge "${list_length}" ]; then
+        # We've reached the end of the list
+        new_error="No more server available"
+        log "${new_error}"
+        SERVERS_SSH_ERRORS=$(printf "%s\\n%s" "${SERVERS_SSH_ERRORS}" "${new_error}" | sed -e '/^$/d')
 
-tail -20 "${LOGFILE}" \
-    | mail -s "[info] EvoBackup - Client ${HOSTNAME}" ${MAIL}
+        # Log errors to stderr
+        printf "%s\\n" "${SERVERS_SSH_ERRORS}" >&2
+        return 1
+    fi
+
+    # Extract the day of month, without leading 0 (which would give an octal based number)
+    today=$(/bin/date +%e)
+    # A salt is useful to randomize the starting point in the list
+    # but stay identical each time it's called for a server (based on hostname).
+    salt=$(hostname | cksum | cut -d' ' -f1)
+    # Pick an integer between 0 and the length of the SERVERS list
+    # It changes each day
+    item=$(( (today + salt + increment) % list_length ))
+    # cut starts counting fields at 1, not 0.
+    field=$(( item + 1 ))
+
+    echo "${SERVERS}" | cut -d' ' -f${field}
+}
+log() {
+    msg="${1:-$(cat /dev/stdin)}"
+    pid=$$
+    printf "[%s] %s[%s]: %s\\n" \
+        "$(/bin/date +"${DATE_FORMAT}")" "${PROGNAME}" "${pid}" "${msg}" \
+        >> "${LOGFILE}"
+}
+error() {
+    msg="${1:-$(cat /dev/stdin)}"
+    pid=$$
+    printf "[%s] %s[%s]: %s\\n" \
+        "$(/bin/date +"${DATE_FORMAT}")" "${PROGNAME}" "${pid}" "${msg}" \
+        >&2
+}
+
+main() {
+    START_EPOCH=$(/bin/date +%s)
+    log "START GLOBAL - VERSION=${VERSION} LOCAL_TASKS=${LOCAL_TASKS} SYNC_TASKS=${SYNC_TASKS}"
+
+    # shellcheck disable=SC2174
+    mkdir -p -m 700 ${LOCAL_BACKUP_DIR}
+
+    ## Force umask
+    umask 077
+
+    ## Initialize variable to store SSH connection errors
+    SERVERS_SSH_ERRORS=""
+
+    ## Verify other evobackup process and kill if needed
+    if [ -e "${PIDFILE}" ]; then
+        pid=$(cat "${PIDFILE}")
+        # Does process still exist ?
+        if kill -0 "${pid}" 2> /dev/null; then
+            # Killing the childs of evobackup.
+            for ppid in $(pgrep -P "${pid}"); do
+                kill -9 "${ppid}";
+            done
+            # Then kill the main PID.
+            kill -9 "${pid}"
+            printf "%s is still running (PID %s). Process has been killed" "$0" "${pid}\\n" >&2
+        else
+            rm -f "${PIDFILE}"
+        fi
+    fi
+    echo "$$" > "${PIDFILE}"
+    # shellcheck disable=SC2064
+    trap "rm -f ${PIDFILE}" EXIT
+
+    if [ "${LOCAL_TASKS}" = "1" ]; then
+        local_tasks
+    fi
+
+    if [ "${SYNC_TASKS}" = "1" ]; then
+        sync_tasks
+    fi
+
+    STOP_EPOCH=$(/bin/date +%s)
+
+    if [ "${SYSTEM}" = "openbsd" ]; then
+        start_time=$(/bin/date -f "%s" -j "${START_EPOCH}" +"${DATE_FORMAT}")
+        stop_time=$(/bin/date -f "%s" -j "${STOP_EPOCH}" +"${DATE_FORMAT}")
+    else
+        start_time=$(/bin/date --date="@${START_EPOCH}" +"${DATE_FORMAT}")
+        stop_time=$(/bin/date --date="@${STOP_EPOCH}" +"${DATE_FORMAT}")
+    fi
+    duration=$(( STOP_EPOCH - START_EPOCH ))
+
+    log "STOP GLOBAL - start='${start_time}' stop='${stop_time}' duration=${duration}s"
+
+    tail -20 "${LOGFILE}" | mail -s "[info] EvoBackup - Client ${HOSTNAME}" ${MAIL}
+}
+
+# set all programs to C language (english)
+export LC_ALL=C
+
+# Error on unassigned variable
+set -u
+# Fail if a pipeline member returns an error (cf. https://sipb.mit.edu/doc/safe-shell/)
+set -o pipefail
+
+# Default return-code (0 == succes)
+rc=0
+
+# execute main funciton
+main
+
+exit ${rc}
