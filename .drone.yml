@@ -2,6 +2,11 @@ kind: pipeline
 name: default
 
 steps:
+- name: fetch
+  image: alpine/git
+  commands:
+  - git fetch --tags
+
 - name: build debian package
   image: evolix/gbp:latest
   branches:
