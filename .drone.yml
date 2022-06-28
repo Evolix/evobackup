@@ -8,7 +8,7 @@ steps:
   - git fetch --tags
 
 - name: build debian package
-  image: evolix/gbp:latest
+  image: evolix/gbp:bullseye
   branches:
   - debian
   commands:
