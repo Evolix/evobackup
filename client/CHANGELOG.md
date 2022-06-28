@@ -10,10 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* Use --dump-dir instead of --backup-dir to supress dump-server-state warning
+* Use --dump-dir instead of --backup-dir to suppress dump-server-state warning
 * Do not use rsync compression
 * Replace rsync option --verbose by --itemize-changes
-# update-evobackup-canary : do not use GNU date, for it to be compatible with OpenBSD
+* Add canary to zzz_evobackup
+* update-evobackup-canary: do not use GNU date, for it to be compatible with OpenBSD
+* Add AGPL License and README
+* Script now depends on Bash
 
 ### Deprecated
 
