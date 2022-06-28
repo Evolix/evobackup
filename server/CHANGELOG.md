@@ -8,8 +8,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* bkctld-init: create "incs/\<jail\>" directory for jails
-
 ### Changed
 
 ### Deprecated
@@ -18,8 +16,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+### Security
+
+## [22.06] - 2022-06-28
+
+### Added
+
+* bkctld-init: create "incs/\<jail\>" directory for jails
+
+### Fixed
+
 * shell syntax error when ${btrfs_bin} variable is empty
 * read_variable + read_numerical_variable: keep the last found value only
+* Debian 8 findmnt(8) support
 
 ### Security
 
