@@ -9,6 +9,11 @@ load test_helper
     run test -e "${CONFDIR}/${JAILNAME}.d/incs_policy"
     [ "${status}" -eq 0 ]
 }
+@test "Inc directory after jail init" {
+    # An incs_policy file should exist
+    run test -d "${INCDIR}/${JAILNAME}"
+    [ "${status}" -eq 0 ]
+}
 
 @test "Normal inc creation" {
     /usr/lib/bkctld/bkctld-inc

@@ -144,7 +144,7 @@ OUT
 @test "Check setup WARNING if firewall rules are not sourced" {
     /usr/lib/bkctld/bkctld-start ${JAILNAME}
 
-    mkdir /etc/minifirewall.d/
+    mkdir --parents /etc/minifirewall.d/
     firewall_rules_file="/etc/minifirewall.d/bkctld"
     set_variable "/etc/default/bkctld" "FIREWALL_RULES" "${firewall_rules_file}"
     echo "" > "${firewall_rules_file}"
@@ -159,7 +159,7 @@ OUT
 @test "Check setup OK if firewall rules are sourced" {
     /usr/lib/bkctld/bkctld-start ${JAILNAME}
 
-    mkdir /etc/minifirewall.d/
+    mkdir --parents /etc/minifirewall.d/
     firewall_rules_file="/etc/minifirewall.d/bkctld"
     set_variable "/etc/default/bkctld" "FIREWALL_RULES" "${firewall_rules_file}"
     echo "" > "${firewall_rules_file}"
