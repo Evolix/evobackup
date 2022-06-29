@@ -5,7 +5,7 @@ pipeline {
             agent {
                 docker {
                     image 'evolix/gbp:bullseye'
-                    args '-u root --privileged -v /tmp:/tmp'
+                    args '-u root --privileged'
                 }
             }
             when {
@@ -29,8 +29,8 @@ pipeline {
             steps {
                 script {
                     sh 'echo Dummy line to remove once something actually happens.'
-                 /* No crendentials yet
-                    sh 'rsync -avP /tmp/bkctld/ droneci@pub.evolix.net:/home/droneci/bkctld/'
+                 /* No crendentials yet.
+                    sh 'rsync -avP bkctld* droneci@pub.evolix.net:/home/droneci/bkctld/'
                   */
                 }
             }
