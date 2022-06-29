@@ -15,9 +15,6 @@ steps:
   - mk-build-deps --install --remove debian/control
   - git clean --force
   - gbp buildpackage -us -uc
-  volumes:
-  - name: tmp
-    path: /tmp
   when:
     branch:
     - debian
@@ -31,16 +28,8 @@ steps:
     key:
       from_secret: drone_private_key
     target: /home/droneci/bkctld/
-    source: /tmp/bkctld/
+    source: ../bkctld*
     delete: true
-  volumes:
-  - name: tmp
-    path: /tmp
   when:
     branch:
     - debian
-
-volumes:
-- name: tmp
-  host:
-    path: /tmp
