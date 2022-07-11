@@ -14,7 +14,7 @@ pipeline {
             steps {
                 script {
                     sh 'mk-build-deps --install --remove debian/control'
-                    sh 'rm -rf {source,*.gz,*.bz2,*.xz,*.deb,*.dsc,*.changes,*.buildinfo,lintian.txt}'
+                    sh 'rm -rf {source,*.gz,*.bz2,*.xz,*.deb,*.dsc,*.changes,*.buildinfo,lintian.txt,.git}'
                     sh "gbp clone --debian-branch=$GIT_BRANCH $GIT_URL source"
                     sh 'cd source && git checkout $GIT_BRANCH && gbp buildpackage -us -uc'
                 }
