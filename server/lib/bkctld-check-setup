@@ -29,7 +29,7 @@ fi
 # Check if the firewall file is sourced
 
 minifirewall_config=/etc/default/minifirewall
-minifirewall_version=$(/etc/init.d/minifirewall status | head -1 | cut -d ' ' -f 3)
+minifirewall_version=$(grep -E -o "^VERSION=(\S+)" /etc/init.d/minifirewall | head -1 | cut -d '=' -f 2 | tr -d "'" | tr -d '"')
 
 if [ -n "${FIREWALL_RULES}" ] \
 && [ -r "${FIREWALL_RULES}" ] \

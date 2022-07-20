@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* check-setup: get minifirewall version from internal variable (there is no other backward compatible way)
+
 ### Deprecated
 
 ### Removed
