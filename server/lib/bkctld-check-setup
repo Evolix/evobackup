@@ -16,7 +16,7 @@ output=""
 
 # Verify backup partition is mounted and writable
 
-findmnt -O rw --target "${BACKUP_PARTITION}" > /dev/null
+findmnt -O rw --mountpoint "${BACKUP_PARTITION}" > /dev/null
 if [ "$?" -ne 0 ]; then
     nb_crit=$((nb_crit + 1))
     output="${output}CRITICAL - Backup disk \`/backup' is not mounted (or read-only) !\n"
