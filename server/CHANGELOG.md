@@ -10,8 +10,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* check-setup: get minifirewall version from internal variable (there is no other backward compatible way)
-
 ### Deprecated
 
 ### Removed
@@ -19,6 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [22.07] - 2022-07-20
+
+### Changed
+
+* check-setup: check minifirewall version only if minifirewall is present
+* check-setup: get minifirewall version from internal variable (there is no other backward compatible way)
+* check-setup: use findmnt with mountpoint instead of target
 
 ## [22.06] - 2022-06-28
 
