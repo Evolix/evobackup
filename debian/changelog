@@ -1,3 +1,16 @@
+bkctld (22.07-1) stable; urgency=medium
+
+  [ David Prevot ]
+  * Drop link to internal doc
+  * CI: Drop .git directory that was not present during first build
+
+  [ Jeremy Lecour ]
+  * Update debian/control for new maintainer and uploaders
+  * server: release 22.07
+  * Use upstream tarball instead of http checkout
+
+ -- Jeremy Lecour <jlecour@evolix.fr>  Fri, 22 Jul 2022 13:37:22 +0200
+
 bkctld (22.06-1) stable; urgency=medium
 
   * Server: release 22.06
