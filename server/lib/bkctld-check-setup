@@ -16,7 +16,7 @@ output=""
 
 # Verify backup partition is mounted and writable
 
-findmnt -O rw --target "${BACKUP_PARTITION}" > /dev/null
+findmnt -O rw --mountpoint "${BACKUP_PARTITION}" > /dev/null
 if [ "$?" -ne 0 ]; then
     nb_crit=$((nb_crit + 1))
     output="${output}CRITICAL - Backup disk \`/backup' is not mounted (or read-only) !\n"
@@ -29,11 +29,12 @@ fi
 # Check if the firewall file is sourced
 
 minifirewall_config=/etc/default/minifirewall
-minifirewall_version=$(/etc/init.d/minifirewall status | head -1 | cut -d ' ' -f 3)
 
 if [ -n "${FIREWALL_RULES}" ] \
 && [ -r "${FIREWALL_RULES}" ] \
 && [ -f "${minifirewall_config}" ]; then
+    minifirewall_version=$(grep -E -o "^VERSION=(\S+)" /etc/init.d/minifirewall | head -1 | cut -d '=' -f 2 | tr -d "'" | tr -d '"')
+
     if [ -n "${minifirewall_version}" ] && dpkg --compare-versions "${minifirewall_version}" ge "22.03"; then
         # Minifirewall 22.03+ includes files automatically
         nb_ok=$((nb_ok + 1))
