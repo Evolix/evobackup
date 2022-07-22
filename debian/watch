@@ -1,5 +1,4 @@
 version=4
-options=uversionmangle=s/-?([^\d.]+)/~$1/i;tr/A-Z/a-z/,\
-mode=git,gitmode=full,gitexport=all \
-https://gitea.evolix.org/evolix/evobackup \
-refs/tags(?:/server|/bkctld)?/v?(\d.+)
+options=uversionmangle=s/-?([^\d.]+)/~$1/i;tr/A-Z/a-z/ \
+https://gitea.evolix.org/evolix/evobackup/tags \
+.*/(\d.+)\.tar\.gz
