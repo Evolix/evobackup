@@ -1,0 +1,25 @@
+#!/bin/bash
+#
+#
+
+case $1 in
+   config)
+        cat <<'UNLIKELY_EOF'
+graph_title bkctld incs
+graph_vlabel Number of incs
+graph_args --lower-limit 0
+
+graph_scale no
+graph_category bkctld
+graph_info The total number of available incs on the server
+
+incs.info Number of backup incs available
+incs.label incs available
+
+UNLIKELY_EOF
+        exit 0;;
+esac
+
+printf "incs.value "
+ls -ld /backup/incs/*/* | wc -l
+
