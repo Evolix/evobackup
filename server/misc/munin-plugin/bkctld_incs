@@ -14,7 +14,7 @@ graph_category bkctld
 graph_info The total number of available incs on the server
 
 incs.info Number of backup incs available
-incs.label incs available
+incs.label Incs available
 
 UNLIKELY_EOF
         exit 0;;

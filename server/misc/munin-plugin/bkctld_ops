@@ -1,0 +1,34 @@
+#!/bin/bash
+#
+#
+
+case $1 in
+   config)
+        cat <<'UNLIKELY_EOF'
+graph_title bkctld operations running
+graph_vlabel Number of bkctld operations curently running
+graph_args --lower-limit 0
+
+graph_scale no
+graph_category bkctld
+graph_info The total number of bkctld operations curently running (being an bkctld inc or rm)
+
+bkctld_rm.info bkctld rm running
+bkctld_rm.label Number of delete operation currently running
+
+bkctld_inc.info bkctld inc running
+bkctld_inc.label Number of inc operation currently running
+
+
+UNLIKELY_EOF
+        exit 0;;
+esac
+
+bkctld_rm=$(ps aux | grep "bkctld-rm" | grep -v grep | wc -l)
+bkctld_inc=$(ps aux | grep "bkctld-inc" | grep -v grep | wc -l)
+
+printf "bkctld_rm.value %s\n" $bkctld_rm
+printf "bkctld_inc.value %s\n" $bkctld_inc
+
+
+
