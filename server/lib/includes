@@ -445,7 +445,7 @@ read_variable() {
 
     pattern="^\s*${var_name}=.+"
 
-    grep --extended-regexp --only-matching "${pattern}" "${file}" | tail -1 | cut -d= -f2
+    grep --extended-regexp --only-matching "${pattern}" "${file}" | tail -1 | cut -d= -f2 | head -1
 }
 
 read_numerical_variable() {
@@ -454,5 +454,5 @@ read_numerical_variable() {
 
     pattern="^\s*${var_name}=-?[0-9]+"
 
-    grep --extended-regexp --only-matching "${pattern}" "${file}" | tail -1 | cut -d= -f2
+    grep --extended-regexp --only-matching "${pattern}" "${file}" | tail -1 | cut -d= -f2 | head -1
 }
