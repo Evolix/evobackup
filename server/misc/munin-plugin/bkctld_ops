@@ -13,11 +13,13 @@ graph_scale no
 graph_category bkctld
 graph_info The total number of bkctld operations curently running (being an bkctld inc or rm)
 
-bkctld_rm.info bkctld rm running
-bkctld_rm.label Number of delete operation currently running
-
 bkctld_inc.info bkctld inc running
 bkctld_inc.label Number of inc operation currently running
+bkctld_inc.draw AREA
+
+bkctld_rm.info bkctld rm running
+bkctld_rm.label Number of delete operation currently running
+bkctld_rm.draw STACK
 
 
 UNLIKELY_EOF
