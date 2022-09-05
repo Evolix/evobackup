@@ -2,15 +2,7 @@
 
 ## Install from package
 
-A Debian package is available in the Evolix repository
-
-~~~
-echo "deb http://pub.evolix.net/ stretch" >> /etc/apt/sources.list
-apt update
-apt install bkctld
-~~~
-
-Then edit `/etc/default/bkctld`
+The install documentation is [here](https://intra.evolix.net/OutilsInternes/bkctld)
 
 ## Instal from sources
 
