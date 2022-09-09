@@ -16,6 +16,9 @@ graph_info The total number of available incs on the server
 incs.info Number of backup incs available
 incs.label Incs available
 
+incs_expected.info Number of backup incs expected by config
+incs_expected.label Incs expected by config
+
 UNLIKELY_EOF
         exit 0;;
 esac
@@ -23,3 +26,5 @@ esac
 printf "incs.value "
 ls -ld /backup/incs/*/* | wc -l
 
+printf "incs_expected.value "
+cat /etc/evobackup/*.d/incs_policy /etc/evobackup/* 2>/dev/null | wc -l
