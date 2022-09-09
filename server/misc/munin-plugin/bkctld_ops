@@ -29,6 +29,14 @@ esac
 bkctld_rm=$(ps aux | grep "bkctld-rm" | grep -v grep | wc -l)
 bkctld_inc=$(ps aux | grep "bkctld-inc" | grep -v grep | wc -l)
 
+# Normalize values; We can't have more than one inc or more than one rm
+if [[ $bkctld_rm -gt 1 ]]; then
+        bkctld_rm=1
+fi
+if [[ $bkctld_inc -gt 1 ]]; then
+        bkctld_inc=1
+fi
+
 printf "bkctld_rm.value %s\n" $bkctld_rm
 printf "bkctld_inc.value %s\n" $bkctld_inc
 
