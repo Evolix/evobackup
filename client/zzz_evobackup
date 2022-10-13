@@ -182,9 +182,11 @@ local_tasks() {
     # rm -rf ${LOCAL_BACKUP_DIR}/pg.*.gz
     # rm -rf ${LOCAL_BACKUP_DIR}/pg-backup.tar
     # rm -rf ${LOCAL_BACKUP_DIR}/postgresql/*
+
     ## example with pg_dumpall (warning: you need space in ~postgres)
     # su - postgres -c "pg_dumpall > ~/pg.dump.bak"
     # mv ~postgres/pg.dump.bak ${LOCAL_BACKUP_DIR}/
+
     ## another method with gzip directly piped
     # cd /var/lib/postgresql
     # sudo -u postgres pg_dumpall | gzip > ${LOCAL_BACKUP_DIR}/pg.dump.bak.gz
@@ -265,10 +267,19 @@ local_tasks() {
     #megacli -CfgSave -f ${LOCAL_BACKUP_DIR}/megacli_conf.dump -a0 >/dev/null
 
     ## Dump network routes with mtr and traceroute (warning: could be long with aggressive firewalls)
-    for addr in 8.8.8.8 www.evolix.fr travaux.evolix.net; do
-        mtr -r ${addr} > ${LOCAL_BACKUP_DIR}/mtr-${addr}
-        traceroute -n ${addr} > ${LOCAL_BACKUP_DIR}/traceroute-${addr} 2>&1
-    done
+    network_targets="8.8.8.8 www.evolix.fr travaux.evolix.net"
+    mtr_bin=$(command -v mtr)
+    if [ -n "${mtr_bin}" ]; then
+        for addr in ${network_targets}; do
+            ${mtr_bin} -r ${addr} > ${LOCAL_BACKUP_DIR}/mtr-${addr}
+        done
+    fi
+    traceroute_bin=$(command -v traceroute)
+    if [ -n "${traceroute_bin}" ]; then
+        for addr in ${network_targets}; do
+            ${traceroute_bin} -n ${addr} > ${LOCAL_BACKUP_DIR}/traceroute-${addr} 2>&1
+        done
+    fi
 
     server_state_dir="${LOCAL_BACKUP_DIR}/server-state"
 
@@ -598,8 +609,6 @@ export LC_ALL=C
 
 # Error on unassigned variable
 set -u
-# Fail if a pipeline member returns an error (cf. https://sipb.mit.edu/doc/safe-shell/)
-set -o pipefail
 
 # Default return-code (0 == succes)
 rc=0
