@@ -403,11 +403,17 @@ sync_tasks() {
 
     update-evobackup-canary --who "${PROGNAME}"
 
-    # /!\ DO NOT USE COMMENTS in the rsync command /!\
-    # It breaks the command and destroys data, simply remove (or add) lines.
-
     # Remote shell command
     RSH_COMMAND="ssh -p ${SSH_PORT} -o 'ConnectTimeout ${SSH_CONNECT_TIMEOUT}'"
+
+    ###################################################################
+    # /!\ WARNING /!\ WARNING /!\ WARNING /!\ WARNING /!\ WARNING /!\ #
+    ###################################################################
+    # DO NOT USE COMMENTS in rsync lines                              #
+    # DO ADD WHITESPACES AFTER \ in rsync lines                       #
+    # It breaks the command and destroys data                         #
+    # => Only remove (or add) lines.                                  #
+    ###################################################################
 
     # ignore check because we want it to split the different arguments to $rep
     # shellcheck disable=SC2086
