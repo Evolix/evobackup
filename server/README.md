@@ -49,6 +49,12 @@ You can deploy test environments with Vagrant :
 vagrant up
 ~~~
 
+To destroy Vagrant VMs :
+
+~~~
+vagrant destroy
+~~~
+
 ### Deployment
 
 Run `vagrant rsync-auto` in a terminal for automatic synchronization of

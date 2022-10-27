@@ -53,6 +53,9 @@ while :; do
         -f|--force)
             export FORCE=1
             ;;
+        --no-header)
+            export HEADER=0
+            ;;
         *)
             # Default case: If no more options then break out of the loop.
             break
@@ -116,7 +119,9 @@ case "${subcommand}" in
     ;;
     "status")
         jail_name="${2:-}"
-        printf '%-30s %-10s %-10s %-25s %-20s\n' 'JAIL NAME' 'STATUS' 'PORT' 'RETENTION (DAY/MONTH)' 'IP'
+        if [ "${HEADER}" = "1" ]; then
+            printf '%-30s %-10s %-10s %-25s %-20s\n' 'JAIL NAME' 'STATUS' 'PORT' 'RETENTION (DAY/MONTH)' 'IP'
+        fi
         if [ "${jail_name}" = "all" ] || [ -z "${jail_name}" ]; then
             for jail in $("${LIBDIR}/bkctld-list"); do
                 "${LIBDIR}/bkctld-${subcommand}" "${jail}"

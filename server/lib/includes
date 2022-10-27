@@ -29,6 +29,7 @@ CRITICAL="${CRITICAL:-48}"
 WARNING="${WARNING:-24}"
 DUC=$(command -v duc-nox || command -v duc)
 FORCE="${FORCE:-0}"
+HEADER="${HEADER:-1}"
 
 show_version() {
     cat <<END
