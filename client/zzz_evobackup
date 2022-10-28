@@ -410,7 +410,7 @@ sync_tasks() {
     # /!\ WARNING /!\ WARNING /!\ WARNING /!\ WARNING /!\ WARNING /!\ #
     ###################################################################
     # DO NOT USE COMMENTS in rsync lines                              #
-    # DO ADD WHITESPACES AFTER \ in rsync lines                       #
+    # DO NOT ADD WHITESPACES AFTER \ in rsync lines                   #
     # It breaks the command and destroys data                         #
     # => Only remove (or add) lines.                                  #
     ###################################################################
