@@ -73,26 +73,28 @@ RSYNC_INCLUDES="
 # Excluded paths can be customized
 # Empty lines, and lines beginning with # or ; are ignored
 RSYNC_EXCLUDES="
-dev
-lost+found
-.nfs.*
+/dev
+/proc
+/run
+/sys
+/tmp
 /usr/doc
 /usr/obj
 /usr/share/doc
 /usr/src
 /var/apt
 /var/cache
+/var/db/munin/*.tmp
 /var/lib/amavis/amavisd.sock
 /var/lib/amavis/tmp
 /var/lib/clamav/*.tmp
 /var/lib/elasticsearch
 /var/lib/metche
-/var/lib/munin/*tmp*
-/var/db/munin/*.tmp
 /var/lib/mongodb
+/var/lib/munin/*tmp*
 /var/lib/mysql
-/var/lib/php5
 /var/lib/php/sessions
+/var/lib/php5
 /var/lib/postgres
 /var/lib/postgresql
 /var/lib/sympa
@@ -103,6 +105,8 @@ lost+found
 /var/spool/squid
 /var/state
 /var/tmp
+lost+found
+.nfs.*
 lxc/*/rootfs/tmp
 lxc/*/rootfs/usr/doc
 lxc/*/rootfs/usr/obj
@@ -113,7 +117,6 @@ lxc/*/rootfs/var/cache
 lxc/*/rootfs/var/lib/php5
 lxc/*/rootfs/var/lib/php/sessions
 lxc/*/rootfs/var/lock
-lxc/*/rootfs/var/log
 lxc/*/rootfs/var/run
 lxc/*/rootfs/var/state
 lxc/*/rootfs/var/tmp
