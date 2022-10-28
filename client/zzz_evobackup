@@ -371,6 +371,58 @@ local_tasks() {
 
     log "STOP LOCAL_TASKS"
 }
+build_rsync_cmd() {
+    ###################################################################
+    # /!\ WARNING /!\ WARNING /!\ WARNING /!\ WARNING /!\ WARNING /!\ #
+    ###################################################################
+    # DO NOT USE COMMENTS in rsync lines                              #
+    # DO NOT ADD WHITESPACES AFTER \ in rsync lines                   #
+    # It breaks the command and destroys data                         #
+    # You should not modify this, unless you are really REALLY sure   #
+    ###################################################################
+
+    # Rsync command
+    cmd="$(command -v rsync)"
+
+    # Rsync main options
+    cmd="${cmd} --archive"
+    cmd="${cmd} --itemize-changes"
+    cmd="${cmd} --quiet"
+    cmd="${cmd} --stats"
+    cmd="${cmd} --human-readable"
+    cmd="${cmd} --relative"
+    cmd="${cmd} --partial"
+    cmd="${cmd} --delete"
+    cmd="${cmd} --delete-excluded"
+    cmd="${cmd} --force"
+    cmd="${cmd} --ignore-errors"
+    cmd="${cmd} --log-file=${RSYNC_LOGFILE}"
+    cmd="${cmd} --rsh='ssh -p ${SSH_PORT} -o \"ConnectTimeout ${SSH_CONNECT_TIMEOUT}\"'"
+
+    # Rsync excludes
+    while read line ; do
+        # Ignore lines containing # or ; (anywhere)
+        exclude=$(echo "${line}" | grep --invert-match --extended-regexp "[;#]")
+        if [ -n "${exclude}" ]; then
+            cmd="${cmd} --exclude ${exclude}"
+        fi
+    done < "${excludes_file}"
+
+    # Rsync local sources
+    cmd="${cmd} ${default_includes}"     # Default includes are platform specific
+    while read line ; do
+        # Ignore blank lines, and lines beginning with # or ;
+        include=$(echo "${line}" | grep --extended-regexp "^[^;#]+")
+        if [ -n "${include}" ]; then
+            cmd="${cmd} ${include}"
+        fi
+    done < "${includes_file}"
+
+    # Rsync remote destination
+    cmd="${cmd} root@${SSH_SERVER}:/var/backup/"
+
+    echo "${cmd}"
+}
 sync_tasks() {
     n=0
     server=""
@@ -404,10 +456,11 @@ sync_tasks() {
         default_includes="/bsd /bin /sbin /usr"
     fi
 
-    # Create a temp file for excludes
+    # Create a temp file for excludes and includes
     excludes_file="$(mktemp "${PROGNAME}.excludes.XXXXXX")"
-    # … and add it to the list of files to delete at exit
-    temp_files="${temp_files} ${excludes_file}"
+    includes_file="$(mktemp "${PROGNAME}.includes.XXXXXX")"
+    # … and add them to the list of files to delete at exit
+    temp_files="${temp_files} ${excludes_file} ${includes_file}"
 
     # Excluded paths can be customized
     cat >> "${excludes_file}" <<END_OF_EXCLUDES
@@ -458,54 +511,14 @@ lxc/*/rootfs/var/tmp
 /home/mysqltmp
 END_OF_EXCLUDES
 
-    ###################################################################
-    # /!\ WARNING /!\ WARNING /!\ WARNING /!\ WARNING /!\ WARNING /!\ #
-    ###################################################################
-    # DO NOT USE COMMENTS in rsync lines                              #
-    # DO NOT ADD WHITESPACES AFTER \ in rsync lines                   #
-    # It breaks the command and destroys data                         #
-    # You should not modify this, unless you are really REALLY sure   #
-    ###################################################################
-
-    # Rsync command
-    rsync_cmd="$(command -v rsync)"
-
-    # Rsync main options
-    rsync_cmd="${rsync_cmd} --archive"
-    rsync_cmd="${rsync_cmd} --itemize-changes"
-    rsync_cmd="${rsync_cmd} --quiet"
-    rsync_cmd="${rsync_cmd} --stats"
-    rsync_cmd="${rsync_cmd} --human-readable"
-    rsync_cmd="${rsync_cmd} --relative"
-    rsync_cmd="${rsync_cmd} --partial"
-    rsync_cmd="${rsync_cmd} --delete"
-    rsync_cmd="${rsync_cmd} --delete-excluded"
-    rsync_cmd="${rsync_cmd} --force"
-    rsync_cmd="${rsync_cmd} --ignore-errors"
-    rsync_cmd="${rsync_cmd} --log-file=${RSYNC_LOGFILE}"
-    rsync_cmd="${rsync_cmd} --rsh='ssh -p ${SSH_PORT} -o \"ConnectTimeout ${SSH_CONNECT_TIMEOUT}\"'"
-
-    # Rsync excludes
-    while read line ; do
-        # Ignore blank lines, and lines beginning with # or ;
-        exclude=$(echo "${line}" | grep --extended-regexp "^[^;#]+")
-        if [ -n "${exclude}" ]; then
-            rsync_cmd="${rsync_cmd} --exclude ${exclude}"
-        fi
-    done < "${excludes_file}"
-
-    # Rsync local sources
-    rsync_cmd="${rsync_cmd} ${default_includes}"     # Default includes are platform specific
-    rsync_cmd="${rsync_cmd} /etc"
-    rsync_cmd="${rsync_cmd} /root"
-    rsync_cmd="${rsync_cmd} /var"
-    rsync_cmd="${rsync_cmd} /home"                   # Consider removing /home for a system-only backup
-    rsync_cmd="${rsync_cmd} /zzz_evobackup_canary"   # keep the canary file!
-
-    # Rsync remote destination
-    rsync_cmd="${rsync_cmd} root@${SSH_SERVER}:/var/backup/"
-
-    log "SYNC_TASKS - Rsync command : ${rsync_cmd}"
+    cat >> "${includes_file}" <<END_OF_INCLUDES
+; this line is ignored
+/etc
+/root
+/var
+/home
+/zzz_evobackup_canary
+END_OF_INCLUDES
 
     # reset Rsync log file
     if [ -n "$(command -v truncate)" ]; then 
@@ -514,7 +527,13 @@ END_OF_EXCLUDES
         printf "" > "${RSYNC_LOGFILE}"
     fi
 
-    # execute Rsync command
+    # Build the final Rsync command
+    rsync_cmd=$(build_rsync_cmd)
+
+    # … log it
+    log "SYNC_TASKS - Rsync command : ${rsync_cmd}"
+
+    # … execute it
     eval "${rsync_cmd}"
 
     rsync_rc=$?
