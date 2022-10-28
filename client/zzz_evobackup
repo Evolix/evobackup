@@ -405,7 +405,7 @@ sync_tasks() {
     fi
 
     # Create a temp file for excludes
-    excludes_file="$(mktemp --suffix=.excludes "${PROGNAME}.XXXXXX")"
+    excludes_file="$(mktemp "${PROGNAME}.excludes.XXXXXX")"
     # … and add it to the list of files to delete at exit
     temp_files="${temp_files} ${excludes_file}"
 
@@ -482,9 +482,17 @@ END_OF_EXCLUDES
     rsync_cmd="${rsync_cmd} --delete-excluded"
     rsync_cmd="${rsync_cmd} --force"
     rsync_cmd="${rsync_cmd} --ignore-errors"
-    rsync_cmd="${rsync_cmd} --exclude-from=${excludes_file}"
     rsync_cmd="${rsync_cmd} --log-file=${RSYNC_LOGFILE}"
     rsync_cmd="${rsync_cmd} --rsh='ssh -p ${SSH_PORT} -o \"ConnectTimeout ${SSH_CONNECT_TIMEOUT}\"'"
+
+    # Rsync excludes
+    while read line ; do
+        # Ignore blank lines, and lines beginning with # or ;
+        exclude=$(echo "${line}" | grep --extended-regexp "^[^;#]+")
+        if [ -n "${exclude}" ]; then
+            rsync_cmd="${rsync_cmd} --exclude ${exclude}"
+        fi
+    done < "${excludes_file}"
 
     # Rsync local sources
     rsync_cmd="${rsync_cmd} ${default_includes}"     # Default includes are platform specific
@@ -497,17 +505,10 @@ END_OF_EXCLUDES
     # Rsync remote destination
     rsync_cmd="${rsync_cmd} root@${SSH_SERVER}:/var/backup/"
 
-    # log excludes, on one line, to keep a reference
-    excludes_log="SYNC_TASKS - Rsync excludes :"
-    while read line; do
-        excludes_log="${excludes_log} ${line}"
-    done < "${excludes_file}"
-    log "${excludes_log}"
-
     log "SYNC_TASKS - Rsync command : ${rsync_cmd}"
 
     # reset Rsync log file
-    if command -v truncate; then 
+    if [ -n "$(command -v truncate)" ]; then 
         truncate -s 0 "${RSYNC_LOGFILE}"
     else
         printf "" > "${RSYNC_LOGFILE}"
