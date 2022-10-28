@@ -60,7 +60,68 @@ DATE_FORMAT="%Y-%m-%d %H:%M:%S"
 # Enable/disable sync tasks (default: enabled)
 : "${SYNC_TASKS:=1}"
 
-##### SETUP AND FUNCTIONS #############################################
+# Source paths can be customized
+# Empty lines, and lines containing # or ; are ignored
+RSYNC_INCLUDES="
+/etc
+/root
+/var
+/home
+/zzz_evobackup_canary
+"
+
+# Excluded paths can be customized
+# Empty lines, and lines beginning with # or ; are ignored
+RSYNC_EXCLUDES="
+dev
+lost+found
+.nfs.*
+/usr/doc
+/usr/obj
+/usr/share/doc
+/usr/src
+/var/apt
+/var/cache
+/var/lib/amavis/amavisd.sock
+/var/lib/amavis/tmp
+/var/lib/clamav/*.tmp
+/var/lib/elasticsearch
+/var/lib/metche
+/var/lib/munin/*tmp*
+/var/db/munin/*.tmp
+/var/lib/mongodb
+/var/lib/mysql
+/var/lib/php5
+/var/lib/php/sessions
+/var/lib/postgres
+/var/lib/postgresql
+/var/lib/sympa
+/var/lock
+/var/run
+/var/spool/postfix
+/var/spool/smtpd
+/var/spool/squid
+/var/state
+/var/tmp
+lxc/*/rootfs/tmp
+lxc/*/rootfs/usr/doc
+lxc/*/rootfs/usr/obj
+lxc/*/rootfs/usr/share/doc
+lxc/*/rootfs/usr/src
+lxc/*/rootfs/var/apt
+lxc/*/rootfs/var/cache
+lxc/*/rootfs/var/lib/php5
+lxc/*/rootfs/var/lib/php/sessions
+lxc/*/rootfs/var/lock
+lxc/*/rootfs/var/log
+lxc/*/rootfs/var/run
+lxc/*/rootfs/var/state
+lxc/*/rootfs/var/tmp
+/home/mysqltmp
+"
+
+
+##### FUNCTIONS #######################################################
 
 local_tasks() {
     log "START LOCAL_TASKS"
@@ -381,6 +442,17 @@ build_rsync_cmd() {
     # You should not modify this, unless you are really REALLY sure   #
     ###################################################################
 
+    # Create a temp file for excludes and includes
+    includes_file="$(mktemp "${PROGNAME}.includes.XXXXXX")"
+    excludes_file="$(mktemp "${PROGNAME}.excludes.XXXXXX")"
+    # … and add them to the list of files to delete at exit
+    temp_files="${temp_files} ${includes_file} ${excludes_file}"
+
+    # Store includes/excludes in files
+    # without blank lines of comments (# or ;)
+    echo "${RSYNC_INCLUDES}" | sed -e 's/\s*\(#\|;\).*//; /^\s*$/d' > "${includes_file}"
+    echo "${RSYNC_EXCLUDES}" | sed -e 's/\s*\(#\|;\).*//; /^\s*$/d' > "${excludes_file}"
+
     # Rsync command
     cmd="$(command -v rsync)"
 
@@ -401,26 +473,19 @@ build_rsync_cmd() {
 
     # Rsync excludes
     while read line ; do
-        # Ignore lines containing # or ; (anywhere)
-        exclude=$(echo "${line}" | grep --invert-match --extended-regexp "[;#]")
-        if [ -n "${exclude}" ]; then
-            cmd="${cmd} --exclude ${exclude}"
-        fi
+        cmd="${cmd} --exclude ${line}"
     done < "${excludes_file}"
 
     # Rsync local sources
-    cmd="${cmd} ${default_includes}"     # Default includes are platform specific
+    cmd="${cmd} ${default_includes}"
     while read line ; do
-        # Ignore blank lines, and lines beginning with # or ;
-        include=$(echo "${line}" | grep --extended-regexp "^[^;#]+")
-        if [ -n "${include}" ]; then
-            cmd="${cmd} ${include}"
-        fi
+        cmd="${cmd} ${line}"
     done < "${includes_file}"
 
     # Rsync remote destination
     cmd="${cmd} root@${SSH_SERVER}:/var/backup/"
 
+    # output final command
     echo "${cmd}"
 }
 sync_tasks() {
@@ -456,70 +521,6 @@ sync_tasks() {
         default_includes="/bsd /bin /sbin /usr"
     fi
 
-    # Create a temp file for excludes and includes
-    excludes_file="$(mktemp "${PROGNAME}.excludes.XXXXXX")"
-    includes_file="$(mktemp "${PROGNAME}.includes.XXXXXX")"
-    # … and add them to the list of files to delete at exit
-    temp_files="${temp_files} ${excludes_file} ${includes_file}"
-
-    # Excluded paths can be customized
-    cat >> "${excludes_file}" <<END_OF_EXCLUDES
-dev
-lost+found
-.nfs.*
-/usr/doc
-/usr/obj
-/usr/share/doc
-/usr/src
-/var/apt
-/var/cache
-/var/lib/amavis/amavisd.sock
-/var/lib/amavis/tmp
-/var/lib/clamav/*.tmp
-/var/lib/elasticsearch
-/var/lib/metche
-/var/lib/munin/*tmp*
-/var/db/munin/*.tmp
-/var/lib/mongodb
-/var/lib/mysql
-/var/lib/php5
-/var/lib/php/sessions
-/var/lib/postgres
-/var/lib/postgresql
-/var/lib/sympa
-/var/lock
-/var/run
-/var/spool/postfix
-/var/spool/smtpd
-/var/spool/squid
-/var/state
-/var/tmp
-lxc/*/rootfs/tmp
-lxc/*/rootfs/usr/doc
-lxc/*/rootfs/usr/obj
-lxc/*/rootfs/usr/share/doc
-lxc/*/rootfs/usr/src
-lxc/*/rootfs/var/apt
-lxc/*/rootfs/var/cache
-lxc/*/rootfs/var/lib/php5
-lxc/*/rootfs/var/lib/php/sessions
-lxc/*/rootfs/var/lock
-lxc/*/rootfs/var/log
-lxc/*/rootfs/var/run
-lxc/*/rootfs/var/state
-lxc/*/rootfs/var/tmp
-/home/mysqltmp
-END_OF_EXCLUDES
-
-    cat >> "${includes_file}" <<END_OF_INCLUDES
-; this line is ignored
-/etc
-/root
-/var
-/home
-/zzz_evobackup_canary
-END_OF_INCLUDES
-
     # reset Rsync log file
     if [ -n "$(command -v truncate)" ]; then 
         truncate -s 0 "${RSYNC_LOGFILE}"
@@ -541,8 +542,6 @@ END_OF_INCLUDES
         error "rsync returned an error ${rsync_rc}, check ${LOGFILE}"
         rc=201
     fi
-
-    ###################################################################
 
     # Copy last lines of rsync log to the main log
     tail -n 30 "${RSYNC_LOGFILE}" >> "${LOGFILE}"
