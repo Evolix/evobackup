@@ -271,13 +271,13 @@ local_tasks() {
     mtr_bin=$(command -v mtr)
     if [ -n "${mtr_bin}" ]; then
         for addr in ${network_targets}; do
-            ${mtr_bin} -r ${addr} > ${LOCAL_BACKUP_DIR}/mtr-${addr}
+            ${mtr_bin} -r "${addr}" > "${LOCAL_BACKUP_DIR}/mtr-${addr}"
         done
     fi
     traceroute_bin=$(command -v traceroute)
     if [ -n "${traceroute_bin}" ]; then
         for addr in ${network_targets}; do
-            ${traceroute_bin} -n ${addr} > ${LOCAL_BACKUP_DIR}/traceroute-${addr} 2>&1
+            ${traceroute_bin} -n "${addr}" > "${LOCAL_BACKUP_DIR}/traceroute-${addr}" 2>&1
         done
     fi
 
