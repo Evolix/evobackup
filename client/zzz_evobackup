@@ -48,6 +48,9 @@ PIDFILE="/var/run/${PROGNAME}.pid"
 # Customize the log path if you have multiple scripts and with separate logs
 LOGFILE="/var/log/evobackup.log"
 
+# Full Rsync log file, reset each time
+RSYNC_LOGFILE="/var/log/${PROGNAME}.rsync.log"
+
 HOSTNAME=$(hostname)
 
 DATE_FORMAT="%Y-%m-%d %H:%M:%S"
@@ -392,18 +395,68 @@ sync_tasks() {
     SSH_SERVER=$(echo "${server}" | cut -d':' -f1)
     SSH_PORT=$(echo "${server}" | cut -d':' -f2)
 
-    if [ "${SYSTEM}" = "linux" ]; then
-        rep="/bin /boot /lib /opt /sbin /usr"
-    else
-        rep="/bsd /bin /sbin /usr"
-    fi
-
     log "START SYNC_TASKS - server=${server}"
 
-    update-evobackup-canary --who "${PROGNAME}"
+    # default paths, depending on system
+    if [ "${SYSTEM}" = "linux" ]; then
+        default_includes="/bin /boot /lib /opt /sbin /usr"
+    else
+        default_includes="/bsd /bin /sbin /usr"
+    fi
 
-    # Remote shell command
-    RSH_COMMAND="ssh -p ${SSH_PORT} -o 'ConnectTimeout ${SSH_CONNECT_TIMEOUT}'"
+    # Create a temp file for excludes
+    excludes_file="$(mktemp --suffix=.excludes "${PROGNAME}.XXXXXX")"
+    # … and add it to the list of files to delete at exit
+    temp_files="${temp_files} ${excludes_file}"
+
+    # Excluded paths can be customized
+    cat >> "${excludes_file}" <<END_OF_EXCLUDES
+dev
+lost+found
+.nfs.*
+/usr/doc
+/usr/obj
+/usr/share/doc
+/usr/src
+/var/apt
+/var/cache
+/var/lib/amavis/amavisd.sock
+/var/lib/amavis/tmp
+/var/lib/clamav/*.tmp
+/var/lib/elasticsearch
+/var/lib/metche
+/var/lib/munin/*tmp*
+/var/db/munin/*.tmp
+/var/lib/mongodb
+/var/lib/mysql
+/var/lib/php5
+/var/lib/php/sessions
+/var/lib/postgres
+/var/lib/postgresql
+/var/lib/sympa
+/var/lock
+/var/run
+/var/spool/postfix
+/var/spool/smtpd
+/var/spool/squid
+/var/state
+/var/tmp
+lxc/*/rootfs/tmp
+lxc/*/rootfs/usr/doc
+lxc/*/rootfs/usr/obj
+lxc/*/rootfs/usr/share/doc
+lxc/*/rootfs/usr/src
+lxc/*/rootfs/var/apt
+lxc/*/rootfs/var/cache
+lxc/*/rootfs/var/lib/php5
+lxc/*/rootfs/var/lib/php/sessions
+lxc/*/rootfs/var/lock
+lxc/*/rootfs/var/log
+lxc/*/rootfs/var/run
+lxc/*/rootfs/var/state
+lxc/*/rootfs/var/tmp
+/home/mysqltmp
+END_OF_EXCLUDES
 
     ###################################################################
     # /!\ WARNING /!\ WARNING /!\ WARNING /!\ WARNING /!\ WARNING /!\ #
@@ -411,75 +464,68 @@ sync_tasks() {
     # DO NOT USE COMMENTS in rsync lines                              #
     # DO NOT ADD WHITESPACES AFTER \ in rsync lines                   #
     # It breaks the command and destroys data                         #
-    # => Only remove (or add) lines.                                  #
+    # You should not modify this, unless you are really REALLY sure   #
     ###################################################################
 
-    # ignore check because we want it to split the different arguments to $rep
-    # shellcheck disable=SC2086
-    rsync --archive                                        \
-        --itemize-changes --stats --human-readable         \
-        --relative --partial                               \
-        --delete --delete-excluded --force --ignore-errors \
-        --exclude "dev"                                    \
-        --exclude "lost+found"                             \
-        --exclude ".nfs.*"                                 \
-        --exclude "/usr/doc"                               \
-        --exclude "/usr/obj"                               \
-        --exclude "/usr/share/doc"                         \
-        --exclude "/usr/src"                               \
-        --exclude "/var/apt"                               \
-        --exclude "/var/cache"                             \
-        --exclude "/var/lib/amavis/amavisd.sock"           \
-        --exclude "/var/lib/amavis/tmp"                    \
-        --exclude "/var/lib/clamav/*.tmp"                  \
-        --exclude "/var/lib/elasticsearch"                 \
-        --exclude "/var/lib/metche"                        \
-        --exclude "/var/lib/munin/*tmp*"                   \
-        --exclude "/var/db/munin/*.tmp"                    \
-        --exclude "/var/lib/mongodb"                       \
-        --exclude "/var/lib/mysql"                         \
-        --exclude "/var/lib/php5"                          \
-        --exclude "/var/lib/php/sessions"                  \
-        --exclude "/var/lib/postgres"                      \
-        --exclude "/var/lib/postgresql"                    \
-        --exclude "/var/lib/sympa"                         \
-        --exclude "/var/lock"                              \
-        --exclude "/var/run"                               \
-        --exclude "/var/spool/postfix"                     \
-        --exclude "/var/spool/smtpd"                       \
-        --exclude "/var/spool/squid"                       \
-        --exclude "/var/state"                             \
-        --exclude "/var/tmp"                               \
-        --exclude "lxc/*/rootfs/tmp"                       \
-        --exclude "lxc/*/rootfs/usr/doc"                   \
-        --exclude "lxc/*/rootfs/usr/obj"                   \
-        --exclude "lxc/*/rootfs/usr/share/doc"             \
-        --exclude "lxc/*/rootfs/usr/src"                   \
-        --exclude "lxc/*/rootfs/var/apt"                   \
-        --exclude "lxc/*/rootfs/var/cache"                 \
-        --exclude "lxc/*/rootfs/var/lib/php5"              \
-        --exclude "lxc/*/rootfs/var/lib/php/sessions"      \
-        --exclude "lxc/*/rootfs/var/lock"                  \
-        --exclude "lxc/*/rootfs/var/log"                   \
-        --exclude "lxc/*/rootfs/var/run"                   \
-        --exclude "lxc/*/rootfs/var/state"                 \
-        --exclude "lxc/*/rootfs/var/tmp"                   \
-        --exclude "/home/mysqltmp"                         \
-            ${rep}                                         \
-            /etc                                           \
-            /root                                          \
-            /var                                           \
-            /home                                          \
-            /zzz_evobackup_canary                          \
-        -e "${RSH_COMMAND}"                                \
-        "root@${SSH_SERVER}:/var/backup/"                  \
-            | tail -30 >> "${LOGFILE}"
+    # Rsync command
+    rsync_cmd="$(command -v rsync)"
+
+    # Rsync main options
+    rsync_cmd="${rsync_cmd} --archive"
+    rsync_cmd="${rsync_cmd} --itemize-changes"
+    rsync_cmd="${rsync_cmd} --quiet"
+    rsync_cmd="${rsync_cmd} --stats"
+    rsync_cmd="${rsync_cmd} --human-readable"
+    rsync_cmd="${rsync_cmd} --relative"
+    rsync_cmd="${rsync_cmd} --partial"
+    rsync_cmd="${rsync_cmd} --delete"
+    rsync_cmd="${rsync_cmd} --delete-excluded"
+    rsync_cmd="${rsync_cmd} --force"
+    rsync_cmd="${rsync_cmd} --ignore-errors"
+    rsync_cmd="${rsync_cmd} --exclude-from=${excludes_file}"
+    rsync_cmd="${rsync_cmd} --log-file=${RSYNC_LOGFILE}"
+    rsync_cmd="${rsync_cmd} --rsh='ssh -p ${SSH_PORT} -o \"ConnectTimeout ${SSH_CONNECT_TIMEOUT}\"'"
+
+    # Rsync local sources
+    rsync_cmd="${rsync_cmd} ${default_includes}"     # Default includes are platform specific
+    rsync_cmd="${rsync_cmd} /etc"
+    rsync_cmd="${rsync_cmd} /root"
+    rsync_cmd="${rsync_cmd} /var"
+    rsync_cmd="${rsync_cmd} /home"                   # Consider removing /home for a system-only backup
+    rsync_cmd="${rsync_cmd} /zzz_evobackup_canary"   # keep the canary file!
+
+    # Rsync remote destination
+    rsync_cmd="${rsync_cmd} root@${SSH_SERVER}:/var/backup/"
+
+    # log excludes, on one line, to keep a reference
+    excludes_log="SYNC_TASKS - Rsync excludes :"
+    while read line; do
+        excludes_log="${excludes_log} ${line}"
+    done < "${excludes_file}"
+    log "${excludes_log}"
+
+    log "SYNC_TASKS - Rsync command : ${rsync_cmd}"
+
+    # reset Rsync log file
+    if command -v truncate; then 
+        truncate -s 0 "${RSYNC_LOGFILE}"
+    else
+        printf "" > "${RSYNC_LOGFILE}"
+    fi
+
+    # execute Rsync command
+    eval "${rsync_cmd}"
 
     rsync_rc=$?
     if [ ${rsync_rc} -ne 0 ]; then
         error "rsync returned an error ${rsync_rc}, check ${LOGFILE}"
         rc=201
     fi
+
+    ###################################################################
+
+    # Copy last lines of rsync log to the main log
+    tail -n 30 "${RSYNC_LOGFILE}" >> "${LOGFILE}"
 
     log "STOP SYNC_TASKS - server=${server}"
 }
@@ -582,8 +628,16 @@ main() {
         fi
     fi
     echo "$$" > "${PIDFILE}"
+
+    # Initialize a list of files to delete at exit
+    # Any file added to the list will also be deleted at exit
+    temp_files="${PIDFILE}"
+
     # shellcheck disable=SC2064
-    trap "rm -f ${PIDFILE}" EXIT
+    trap "rm -f ${temp_files}" EXIT
+
+    # Update canary to keep track of each run
+    update-evobackup-canary --who "${PROGNAME}"
 
     if [ "${LOCAL_TASKS}" = "1" ]; then
         local_tasks
