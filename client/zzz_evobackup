@@ -201,9 +201,10 @@ local_tasks() {
     ## example with compressed PostgreSQL dump for each databases
     # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/postgresql
     # chown postgres:postgres ${LOCAL_BACKUP_DIR}/postgresql
+    # cd /var/lib/postgresql
     # dbs=$(sudo -u postgres psql -U postgres -lt | awk -F\| '{print $1}' |grep -v template*)
-    # 
     # for databases in $dbs ; do sudo -u postgres /usr/bin/pg_dump --create -s -U postgres -d $databases | gzip --best -c > ${LOCAL_BACKUP_DIR}/postgresql/$databases.sql.gz ; done
+    # cd - > /dev/null
 
     ## MongoDB
 
