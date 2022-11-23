@@ -20,22 +20,24 @@ EOF
 
 printf "Last update of index file : "
 stat --format=%Y "${INDEX_DIR}/.lastrun.duc" | xargs -i -n1 date -R -d "@{}"
-echo "<jail> <size> <incs> <lastconn>" | awk '{ printf("%- 30s %- 10s %- 10s %- 15s\n", $1, $2, $3, $4); }'
 
 duc_output=$(mktemp)
 stat_output=$(mktemp)
 incs_output=$(mktemp)
+jail_patterns_list=$(mktemp)
 
 # shellcheck disable=SC2064
-trap "rm ${duc_output} ${incs_output} ${stat_output}" 0
+trap "rm ${duc_output} ${incs_output} ${stat_output} ${jail_patterns_list}" 0
 
-"${DUC}" ls -d "${IDX_FILE}" "${JAILDIR}" > "${duc_output}"
+"${DUC}" ls --database "${IDX_FILE}" "${JAILDIR}" > "${duc_output}"
 
-awk '{ print $2 }' "${duc_output}" | while read jail_name; do
+jails_list | sed -e "s/^\(.*\)$/\\\\b\1\\\\b/" > "${jail_patterns_list}"
+
+grep -f "${jail_patterns_list}" "${duc_output}" | awk '{ print $2 }' | while read jail_name; do
     jail_path=$(jail_path "${jail_name}")
     stat --format=%Y "${jail_path}/var/log/lastlog" | xargs -i -n1 date -d "@{}" "+%d-%m-%Y" >> "${stat_output}"
 
-    incs_policy_file=$(current_jail_incs_policy_file ${jail_name})
+    incs_policy_file=$(current_jail_incs_policy_file "${jail_name}")
     incs_policy="0"
     if [ -r "${incs_policy_file}" ]; then
         days=$(grep "^\+" "${incs_policy_file}" | grep --count "day")
@@ -45,4 +47,7 @@ awk '{ print $2 }' "${duc_output}" | while read jail_name; do
     echo "${incs_policy}" >> "${incs_output}"
 done
 
-paste "${duc_output}" "${incs_output}" "${stat_output}" | awk '{ printf("%- 30s %- 10s %- 10s %- 15s\n", $2, $1, $3, $4); }'
+(
+    echo "<jail> <size> <incs> <lastconn>"
+    paste "${duc_output}" "${incs_output}" "${stat_output}" | awk '{ printf("%s %s %s %s\n", $2, $1, $3, $4); }'
+) | column -t
