@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* check-canary: new subcommand to check canary files and content
+
 ### Changed
 
 ### Deprecated

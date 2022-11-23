@@ -1,0 +1,59 @@
+#!/bin/sh
+#
+# Description: check canary file
+# Usage: check-canary [<jailname>|all]
+#
+
+# shellcheck source=./includes
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
+
+return=0
+nb_crit=0
+nb_warn=0
+nb_ok=0
+nb_unkn=0
+output=""
+
+date=$(date +"%Y-%m-%d")
+
+# Check each jail status
+
+check_jail() {
+    jail_name=$1
+
+    jail_path=$(jail_path "${jail_name}")
+    canary_absolute_file="${jail_path}/var/backup/${CANARY_RELATIVE_FILE}"
+
+    if [ -f "${canary_absolute_file}" ]; then
+        if grep --quiet --fixed-string "${date}" "${canary_absolute_file}"; then
+            nb_ok=$((nb_ok + 1))
+            output="${output}OK - ${jail_name} - entries found for ${date} in ${CANARY_RELATIVE_FILE} file\n"
+        else
+            nb_crit=$((nb_crit + 1))
+            output="${output}CRITICAL - ${jail_name} - No entry for ${date} in ${CANARY_RELATIVE_FILE} file\n"
+            [ "${return}" -le 2 ] && return=2
+        fi
+    else
+        nb_crit=$((nb_crit + 1))
+        output="${output}CRITICAL - ${jail_name} - missing ${CANARY_RELATIVE_FILE} file\n"
+        [ "${return}" -le 2 ] && return=2
+    fi
+}
+
+for jail_name in $(jails_list); do
+    check_jail "${jail_name}"
+done
+
+[ "${return}" -ge 0 ] && header="OK"
+[ "${return}" -ge 1 ] && header="WARNING"
+[ "${return}" -ge 2 ] && header="CRITICAL"
+[ "${return}" -ge 3 ] && header="UNKNOWN"
+
+printf "%s - %s UNK / %s CRIT / %s WARN / %s OK\n\n" "${header}" "${nb_unkn}" "${nb_crit}" "${nb_warn}" "${nb_ok}"
+
+printf "${output}" | grep -E "^UNKNOWN"
+printf "${output}" | grep -E "^CRITICAL"
+printf "${output}" | grep -E "^WARNING"
+printf "${output}" | grep -E "^OK"
+
+exit "${return}"
