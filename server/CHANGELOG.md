@@ -18,6 +18,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [22.11] - 2022-11-28
+
+### Added
+
+* check-canary: new subcommand to check canary files and content
+
+### Changed
+
+* stats: filter active jails and columnize the output
+
 ## [22.07] - 2022-07-20
 
 ### Changed

@@ -182,9 +182,11 @@ local_tasks() {
     # rm -rf ${LOCAL_BACKUP_DIR}/pg.*.gz
     # rm -rf ${LOCAL_BACKUP_DIR}/pg-backup.tar
     # rm -rf ${LOCAL_BACKUP_DIR}/postgresql/*
+
     ## example with pg_dumpall (warning: you need space in ~postgres)
     # su - postgres -c "pg_dumpall > ~/pg.dump.bak"
     # mv ~postgres/pg.dump.bak ${LOCAL_BACKUP_DIR}/
+
     ## another method with gzip directly piped
     # cd /var/lib/postgresql
     # sudo -u postgres pg_dumpall | gzip > ${LOCAL_BACKUP_DIR}/pg.dump.bak.gz
@@ -199,9 +201,10 @@ local_tasks() {
     ## example with compressed PostgreSQL dump for each databases
     # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/postgresql
     # chown postgres:postgres ${LOCAL_BACKUP_DIR}/postgresql
+    # cd /var/lib/postgresql
     # dbs=$(sudo -u postgres psql -U postgres -lt | awk -F\| '{print $1}' |grep -v template*)
-    # 
     # for databases in $dbs ; do sudo -u postgres /usr/bin/pg_dump --create -s -U postgres -d $databases | gzip --best -c > ${LOCAL_BACKUP_DIR}/postgresql/$databases.sql.gz ; done
+    # cd - > /dev/null
 
     ## MongoDB
 
@@ -265,10 +268,19 @@ local_tasks() {
     #megacli -CfgSave -f ${LOCAL_BACKUP_DIR}/megacli_conf.dump -a0 >/dev/null
 
     ## Dump network routes with mtr and traceroute (warning: could be long with aggressive firewalls)
-    for addr in 8.8.8.8 www.evolix.fr travaux.evolix.net; do
-        mtr -r ${addr} > ${LOCAL_BACKUP_DIR}/mtr-${addr}
-        traceroute -n ${addr} > ${LOCAL_BACKUP_DIR}/traceroute-${addr} 2>&1
-    done
+    network_targets="8.8.8.8 www.evolix.fr travaux.evolix.net"
+    mtr_bin=$(command -v mtr)
+    if [ -n "${mtr_bin}" ]; then
+        for addr in ${network_targets}; do
+            ${mtr_bin} -r "${addr}" > "${LOCAL_BACKUP_DIR}/mtr-${addr}"
+        done
+    fi
+    traceroute_bin=$(command -v traceroute)
+    if [ -n "${traceroute_bin}" ]; then
+        for addr in ${network_targets}; do
+            ${traceroute_bin} -n "${addr}" > "${LOCAL_BACKUP_DIR}/traceroute-${addr}" 2>&1
+        done
+    fi
 
     server_state_dir="${LOCAL_BACKUP_DIR}/server-state"
 
@@ -392,11 +404,17 @@ sync_tasks() {
 
     update-evobackup-canary --who "${PROGNAME}"
 
-    # /!\ DO NOT USE COMMENTS in the rsync command /!\
-    # It breaks the command and destroys data, simply remove (or add) lines.
-
     # Remote shell command
     RSH_COMMAND="ssh -p ${SSH_PORT} -o 'ConnectTimeout ${SSH_CONNECT_TIMEOUT}'"
+
+    ###################################################################
+    # /!\ WARNING /!\ WARNING /!\ WARNING /!\ WARNING /!\ WARNING /!\ #
+    ###################################################################
+    # DO NOT USE COMMENTS in rsync lines                              #
+    # DO NOT ADD WHITESPACES AFTER \ in rsync lines                   #
+    # It breaks the command and destroys data                         #
+    # => Only remove (or add) lines.                                  #
+    ###################################################################
 
     # ignore check because we want it to split the different arguments to $rep
     # shellcheck disable=SC2086
@@ -420,6 +438,7 @@ sync_tasks() {
         --exclude "/var/lib/metche"                        \
         --exclude "/var/lib/munin/*tmp*"                   \
         --exclude "/var/db/munin/*.tmp"                    \
+        --exclude "/var/lib/mongodb"                       \
         --exclude "/var/lib/mysql"                         \
         --exclude "/var/lib/php5"                          \
         --exclude "/var/lib/php/sessions"                  \
@@ -597,8 +616,6 @@ export LC_ALL=C
 
 # Error on unassigned variable
 set -u
-# Fail if a pipeline member returns an error (cf. https://sipb.mit.edu/doc/safe-shell/)
-set -o pipefail
 
 # Default return-code (0 == succes)
 rc=0
