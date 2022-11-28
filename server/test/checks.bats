@@ -252,3 +252,25 @@ OUT
     assert_failure
 }
 # TODO: write many more tests for bkctld-check-incs
+
+@test "Check-canary fails if a canary file doesn't exist" {
+    run /usr/lib/bkctld/bkctld-check-canary "${JAILNAME}"
+    assert_equal "$status" "2"
+    assert_line "CRITICAL - ${JAILNAME} - missing /zzz_evobackup_canary file"
+}
+
+@test "Check-canary fails if a canary is missing today's entries" {
+    today="$(date +%Y-%m-%d)"
+    touch "${JAILPATH}/var/backup/zzz_evobackup_canary"
+
+    run /usr/lib/bkctld/bkctld-check-canary "${JAILNAME}"
+    assert_equal "$status" "2"
+    assert_line "CRITICAL - ${JAILNAME} - No entry for ${today} in /zzz_evobackup_canary file"
+}
+
+@test "Check-canary succeeds if a canary has today's entries" {
+    echo "$(date "+%FT%T%z") bats-test" >> "${JAILPATH}/var/backup/zzz_evobackup_canary"
+
+    run /usr/lib/bkctld/bkctld-check-canary "${JAILNAME}"
+    assert_success
+}
