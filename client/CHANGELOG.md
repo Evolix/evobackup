@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * update-evobackup-canary: do not use GNU date, for it to be compatible with OpenBSD
 * Add AGPL License and README
 * Script now depends on Bash
+* tolerate absence of mtr or traceroute
 
 ### Deprecated
 

@@ -6,7 +6,7 @@
 
 [ -f /etc/default/bkctld ] && . /etc/default/bkctld
 
-VERSION="22.07"
+VERSION="22.11"
 
 LIBDIR=${LIBDIR:-/usr/lib/bkctld}
 CONFDIR="${CONFDIR:-/etc/evobackup}"
@@ -20,6 +20,7 @@ LOCKDIR="${LOCKDIR:-/run/lock/bkctld}"
 ARCHIVESDIR="${ARCHIVESDIR:-${BACKUP_PARTITION}/archives}"
 INDEX_DIR="${INDEX_DIR:-${BACKUP_PARTITION}/index}"
 IDX_FILE="${IDX_FILE:-${INDEX_DIR}/bkctld-jails.idx}"
+CANARY_RELATIVE_FILE="${CANARY_RELATIVE_FILE:-/zzz_evobackup_canary}"
 SSHD_PID="${SSHD_PID:-/run/sshd.pid}"
 SSHD_CONFIG="${SSHD_CONFIG:-/etc/ssh/sshd_config}"
 AUTHORIZED_KEYS="${AUTHORIZED_KEYS:-/root/.ssh/authorized_keys}"
@@ -29,6 +30,7 @@ CRITICAL="${CRITICAL:-48}"
 WARNING="${WARNING:-24}"
 DUC=$(command -v duc-nox || command -v duc)
 FORCE="${FORCE:-0}"
+HEADER="${HEADER:-1}"
 
 show_version() {
     cat <<END
@@ -60,6 +62,13 @@ EOF
     done
 
     printf "\n"
+}
+
+is_quiet() {
+    test ${QUIET} -eq 1
+}
+is_verbose() {
+    test ${VERBOSE} -eq 1
 }
 
 log_date() {

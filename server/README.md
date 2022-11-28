@@ -39,7 +39,7 @@ This architecture is as secure as SSH, Rsync, chroot and iptables are.
 
 ## Install
 
-See the [installation guide](docs/install.md) for instructions.
+See the [installation guide](https://intra.evolix.net/OutilsInternes/bkctld) for instructions.
 
 ## Testing
 
@@ -47,6 +47,12 @@ You can deploy test environments with Vagrant :
 
 ~~~
 vagrant up
+~~~
+
+To destroy Vagrant VMs :
+
+~~~
+vagrant destroy
 ~~~
 
 ### Deployment
