@@ -304,7 +304,7 @@ local_tasks() {
             ps auwwx > ${server_state_dir}/ps.txt
 
             ## Dump network connections with ss
-            ss -taupen > ${server_state_dir}/netstat.txt
+            ss -taupen 2>/dev/null > ${server_state_dir}/netstat.txt
 
             ## List Debian packages
             dpkg -l > ${server_state_dir}/packages
