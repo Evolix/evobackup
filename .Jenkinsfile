@@ -9,7 +9,7 @@ pipeline {
                 script {
                     sh 'gbp buildpackage'
                 }
-                archiveArtifacts allowEmptyArchive: true, artifacts: '*.gz,*.bz2,*.xz,*.deb,*.dsc,*.changes,*.buildinfo,lintian.txt'
+                archiveArtifacts allowEmptyArchive: true, artifacts: 'build-area/*.gz,build-area/*.bz2,build-area/*.xz,build-area/*.deb,build-area/*.dsc,build-area/*.changes,build-area/*.buildinfo,build-area/*.build,build-area/lintian.txt'
             }
         }
 
