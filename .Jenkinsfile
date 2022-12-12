@@ -19,10 +19,7 @@ pipeline {
             }
             steps {
                 script {
-                    sh 'echo Dummy line to remove once something actually happens.'
-                 /* No crendentials yet.
-                    sh 'rsync -avP bkctld* droneci@pub.evolix.net:/home/droneci/bkctld/'
-                  */
+                    sh 'rsync -avP build-area/bkctld* pub.evolix.org:/srv/upload/'
                 }
             }
         }
