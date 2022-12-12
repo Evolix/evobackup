@@ -1,1 +1,2 @@
 tar-ignore = ".vagrant/"
+tar-ignore = "build-area"
