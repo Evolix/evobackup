@@ -76,7 +76,7 @@ local_tasks() {
     # rm -rf ${LOCAL_BACKUP_DIR}/mysql
     # rm -rf ${LOCAL_BACKUP_DIR}/mysqlhotcopy
     # rm -rf /home/mysqldump
-    # rm -f ${LOCAL_BACKUP_DIR}/*.err ${LOCAL_BACKUP_DIR}/**/*.err
+    # find ${LOCAL_BACKUP_DIR}/ -type f -name '*.err' -delete
 
     ## example with global and compressed mysqldump
     # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
