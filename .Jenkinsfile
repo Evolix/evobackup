@@ -19,7 +19,7 @@ pipeline {
             }
             steps {
                 script {
-                    sh 'rsync -avP build-area/bkctld* pub.evolix.org:/srv/upload/'
+                    sh 'rsync -avP build-area/bkctld*{deb,changes} pub.evolix.org:/srv/upload/'
                 }
             }
         }
