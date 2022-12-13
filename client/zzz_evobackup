@@ -229,7 +229,7 @@ local_tasks() {
     # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/redis/
     # cp /var/lib/redis/dump.rdb ${LOCAL_BACKUP_DIR}/redis/
     ## for multiple instances :
-    # for instance in $(ls -d /var/lib/redis-*); do
+    # for instance in $(ls -d /var/lib/redis-* 2> /dev/null); do
     #     name=$(basename $instance)
     #     mkdir -p ${LOCAL_BACKUP_DIR}/${name}
     #     cp -a ${instance}/dump.rdb ${LOCAL_BACKUP_DIR}/${name}
