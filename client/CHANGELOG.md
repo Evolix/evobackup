@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Script now depends on Bash
 * tolerate absence of mtr or traceroute
 * Only one loop for all Redis instances
+* remodel how we build the rsync command
 
 ### Deprecated
 
