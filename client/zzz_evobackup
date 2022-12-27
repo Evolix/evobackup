@@ -224,15 +224,13 @@ local_tasks() {
     ## Purge previous dumps
     # rm -rf ${LOCAL_BACKUP_DIR}/redis/
     # rm -rf ${LOCAL_BACKUP_DIR}/redis-*
-    ## example with copy .rdb file
-    ## for the default instance :
-    # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/redis/
-    # cp /var/lib/redis/dump.rdb ${LOCAL_BACKUP_DIR}/redis/
-    ## for multiple instances :
-    # for instance in $(ls -d /var/lib/redis-* 2> /dev/null); do
-    #     name=$(basename $instance)
-    #     mkdir -p ${LOCAL_BACKUP_DIR}/${name}
-    #     cp -a ${instance}/dump.rdb ${LOCAL_BACKUP_DIR}/${name}
+    ## Copy dump.rdb file for each found instance
+    # for instance in $(find /var/lib/ -mindepth 1 -maxdepth 1 -type d -name 'redis*'); do
+    #     if [ -f "${instance}/dump.rdb" ]; then
+    #         name=$(basename $instance)
+    #         mkdir -p ${LOCAL_BACKUP_DIR}/${name}
+    #         cp -a "${instance}/dump.rdb" "${LOCAL_BACKUP_DIR}/${name}"
+    #     fi
     # done
 
     ## ElasticSearch
