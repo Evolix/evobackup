@@ -495,7 +495,7 @@ sync_tasks() {
     rsync_main_cmd=$(build_rsync_main_cmd)
 
     # … log it
-    log "SYNC_TASKS - Rsync command : ${rsync_main_cmd}"
+    log "SYNC_TASKS - Rsync main command : ${rsync_main_cmd}"
 
     # … execute it
     eval "${rsync_main_cmd}"
