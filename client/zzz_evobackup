@@ -18,7 +18,7 @@
 
 ##### Configuration ###################################################
 
-VERSION="22.05"
+VERSION="22.12"
 
 # email adress for notifications
 MAIL=jdoe@example.com

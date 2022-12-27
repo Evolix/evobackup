@@ -10,6 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [22.12]
+### Changed
+
 * Use --dump-dir instead of --backup-dir to suppress dump-server-state warning
 * Do not use rsync compression
 * Replace rsync option --verbose by --itemize-changes
@@ -23,8 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * use sub shells instead of moving around
 * Separate Rsync for the canary file if the main Rsync has finished without errors
 
-### Deprecated
-
 ### Removed
 
 * No more fallback if dump-server-state is missing
@@ -32,8 +41,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 * Make start_time and stop_time compatible with OpenBSD
-
-### Security
 
 ## [22.03]
 
