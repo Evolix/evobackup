@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * tolerate absence of mtr or traceroute
 * Only one loop for all Redis instances
 * remodel how we build the rsync command
+* use sub shells instead of moving around
 
 ### Deprecated
 
