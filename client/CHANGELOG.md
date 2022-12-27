@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Only one loop for all Redis instances
 * remodel how we build the rsync command
 * use sub shells instead of moving around
+* Separate Rsync for the canary file if the main Rsync has finished without errors
 
 ### Deprecated
 

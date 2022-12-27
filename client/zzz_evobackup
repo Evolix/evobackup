@@ -60,6 +60,8 @@ DATE_FORMAT="%Y-%m-%d %H:%M:%S"
 # Enable/disable sync tasks (default: enabled)
 : "${SYNC_TASKS:=1}"
 
+CANARY_FILE="/zzz_evobackup_canary"
+
 # Source paths can be customized
 # Empty lines, and lines containing # or ; are ignored
 RSYNC_INCLUDES="
@@ -67,7 +69,6 @@ RSYNC_INCLUDES="
 /root
 /var
 /home
-/zzz_evobackup_canary
 "
 
 # Excluded paths can be customized
@@ -381,7 +382,7 @@ local_tasks() {
 
     log "STOP LOCAL_TASKS"
 }
-build_rsync_cmd() {
+build_rsync_main_cmd() {
     ###################################################################
     # /!\ WARNING /!\ WARNING /!\ WARNING /!\ WARNING /!\ WARNING /!\ #
     ###################################################################
@@ -437,6 +438,19 @@ build_rsync_cmd() {
     # output final command
     echo "${cmd}"
 }
+build_rsync_canary_cmd() {
+    # Rsync command
+    cmd="$(command -v rsync)"
+    # Rsync options
+    cmd="${cmd} --rsh='ssh -p ${SSH_PORT} -o \"ConnectTimeout ${SSH_CONNECT_TIMEOUT}\"'"
+    # Rsync local source
+    cmd="${cmd} ${CANARY_FILE}"
+    # Rsync remote destination
+    cmd="${cmd} root@${SSH_SERVER}:/var/backup/"
+
+    # output final command
+    echo "${cmd}"
+}
 sync_tasks() {
     n=0
     server=""
@@ -478,22 +492,32 @@ sync_tasks() {
     fi
 
     # Build the final Rsync command
-    rsync_cmd=$(build_rsync_cmd)
+    rsync_main_cmd=$(build_rsync_main_cmd)
 
     # … log it
-    log "SYNC_TASKS - Rsync command : ${rsync_cmd}"
+    log "SYNC_TASKS - Rsync command : ${rsync_main_cmd}"
 
     # … execute it
-    eval "${rsync_cmd}"
+    eval "${rsync_main_cmd}"
 
-    rsync_rc=$?
-    if [ ${rsync_rc} -ne 0 ]; then
-        error "rsync returned an error ${rsync_rc}, check ${LOGFILE}"
-        rc=201
-    fi
+    rsync_main_rc=$?
 
     # Copy last lines of rsync log to the main log
     tail -n 30 "${RSYNC_LOGFILE}" >> "${LOGFILE}"
+
+    if [ ${rsync_main_rc} -ne 0 ]; then
+        error "rsync returned an error ${rsync_main_rc}, check ${LOGFILE}"
+        rc=201
+    else
+        # Build the canary Rsync command
+        rsync_canary_cmd=$(build_rsync_canary_cmd)
+
+        # … log it
+        log "SYNC_TASKS - Rsync canary command : ${rsync_canary_cmd}"
+
+        # … execute it
+        eval "${rsync_canary_cmd}"
+    fi
 
     log "STOP SYNC_TASKS - server=${server}"
 }
