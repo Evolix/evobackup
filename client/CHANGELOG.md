@@ -26,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+* No more fallback if dump-server-state is missing
+
 ### Fixed
 
 * Make start_time and stop_time compatible with OpenBSD

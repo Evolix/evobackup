@@ -352,53 +352,11 @@ local_tasks() {
     server_state_dir="${LOCAL_BACKUP_DIR}/server-state"
 
     dump_server_state_bin=$(command -v dump-server-state)
-
-    if [ "${SYSTEM}" = "linux" ]; then
-        if [ -n "${dump_server_state_bin}" ]; then
-            ${dump_server_state_bin} --all --force --dump-dir "${server_state_dir}"
-            last_rc=$?
-            if [ ${last_rc} -ne 0 ]; then
-                error "dump-server-state returned an error ${last_rc}, check ${server_state_dir}"
-                rc=1
-            fi
-        else
-            mkdir -p "${server_state_dir}"
-
-            ## Dump system and kernel versions
-            uname -a > ${server_state_dir}/uname.txt
-
-            ## Dump process with ps
-            ps auwwx > ${server_state_dir}/ps.txt
-
-            ## Dump network connections with ss
-            ss -taupen 2>/dev/null > ${server_state_dir}/netstat.txt
-
-            ## List Debian packages
-            dpkg -l > ${server_state_dir}/packages
-            dpkg --get-selections > ${server_state_dir}/packages.getselections
-            apt-cache dumpavail > ${server_state_dir}/packages.available
-
-            ## Dump iptables
-            if [ -x /sbin/iptables ]; then
-                { /sbin/iptables -L -n -v; /sbin/iptables -t filter -L -n -v; } > ${server_state_dir}/iptables.txt
-            fi
-
-            ## Dump findmnt(8) output
-            FINDMNT_BIN=$(command -v findmnt)
-            if [ -x "${FINDMNT_BIN}" ]; then
-                ${FINDMNT_BIN} > ${server_state_dir}/findmnt.txt
-            fi
-
-            ## Dump MBR / table partitions
-            disks=$(lsblk -l | grep disk | grep -v -E '(drbd|fd[0-9]+)' | awk '{print $1}')
-            for disk in ${disks}; do
-                dd if="/dev/${disk}" of="${server_state_dir}/MBR-${disk}" bs=512 count=1 2>&1 | grep -Ev "(records in|records out|512 bytes)"
-                fdisk -l "/dev/${disk}" > "${server_state_dir}/partitions-${disk}" 2>&1
-            done
-            cat ${server_state_dir}/partitions-* > ${server_state_dir}/partitions
-        fi
+    if [ -z "${dump_server_state_bin}" ]; then
+        error "dump-server-state is missing"
+        rc=1
     else
-        if [ -n "${dump_server_state_bin}" ]; then
+        if [ "${SYSTEM}" = "linux" ]; then
             ${dump_server_state_bin} --all --force --dump-dir "${server_state_dir}"
             last_rc=$?
             if [ ${last_rc} -ne 0 ]; then
@@ -406,26 +364,12 @@ local_tasks() {
                 rc=1
             fi
         else
-            mkdir -p "${server_state_dir}"
-
-            ## Dump system and kernel versions
-            uname -a > ${server_state_dir}/uname
-
-            ## Dump process with ps
-            ps auwwx > ${server_state_dir}/ps.out
-
-            ## Dump network connections with fstat
-            fstat | head -1 > ${server_state_dir}/netstat.out
-            fstat | grep internet >> ${server_state_dir}/netstat.out
-
-            ## List OpenBSD packages
-            pkg_info -m > ${server_state_dir}/packages
-
-            ## Dump MBR / table partitions
-            disklabel sd0 > ${server_state_dir}/partitions
-
-            ## Dump pf infos
-            pfctl -sa > ${server_state_dir}/pfctl-sa.txt
+            ${dump_server_state_bin} --all --force --dump-dir "${server_state_dir}"
+            last_rc=$?
+            if [ ${last_rc} -ne 0 ]; then
+                error "dump-server-state returned an error ${last_rc}, check ${server_state_dir}"
+                rc=1
+            fi
         fi
     fi
 
