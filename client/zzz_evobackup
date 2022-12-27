@@ -328,11 +328,11 @@ local_tasks() {
     ## RabbitMQ
 
     ## export config
-    #rabbitmqadmin export ${LOCAL_BACKUP_DIR}/rabbitmq.config >> "${LOGFILE}"
+    # rabbitmqadmin export ${LOCAL_BACKUP_DIR}/rabbitmq.config >> "${LOGFILE}"
 
     ## MegaCli config
 
-    #megacli -CfgSave -f ${LOCAL_BACKUP_DIR}/megacli_conf.dump -a0 >/dev/null
+    # megacli -CfgSave -f ${LOCAL_BACKUP_DIR}/megacli_conf.dump -a0 >/dev/null
 
     ## Dump network routes with mtr and traceroute (warning: could be long with aggressive firewalls)
     network_targets="8.8.8.8 www.evolix.fr travaux.evolix.net"
@@ -430,10 +430,10 @@ local_tasks() {
     fi
 
     ## Dump rights
-    #getfacl -R /var  > ${server_state_dir}/rights-var.txt
-    #getfacl -R /etc  > ${server_state_dir}/rights-etc.txt
-    #getfacl -R /usr  > ${server_state_dir}/rights-usr.txt
-    #getfacl -R /home > ${server_state_dir}/rights-home.txt
+    # getfacl -R /var  > ${server_state_dir}/rights-var.txt
+    # getfacl -R /etc  > ${server_state_dir}/rights-etc.txt
+    # getfacl -R /usr  > ${server_state_dir}/rights-usr.txt
+    # getfacl -R /home > ${server_state_dir}/rights-home.txt
 
     log "STOP LOCAL_TASKS"
 }
