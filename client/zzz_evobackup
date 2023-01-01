@@ -127,230 +127,262 @@ lxc/*/rootfs/var/tmp
 
 ##### FUNCTIONS #######################################################
 
-local_tasks() {
-    log "START LOCAL_TASKS"
+mysql_list_databases() {
+    port=${1:-"3306"}
 
-    # You can comment or uncomment sections below to customize the backup
-
+    mysql --defaults-extra-file=/etc/mysql/debian.cnf -P ${port} -e 'show databases' -s --skip-column-names | grep --extended-regexp --invert-match "^(Database|information_schema|performance_schema|sys)"
+}
+# shellcheck disable=SC2317
+dump_ldap() {
     ## OpenLDAP : example with slapcat
-    # slapcat -n 0 -l ${LOCAL_BACKUP_DIR}/config.ldap.bak
-    # slapcat -n 1 -l ${LOCAL_BACKUP_DIR}/data.ldap.bak
-    # slapcat -l ${LOCAL_BACKUP_DIR}/ldap.bak
+    dump_dir="${LOCAL_BACKUP_DIR}/ldap/"
+    rm -rf "${dump_dir}"
+    mkdir -p -m 700 "${dump_dir}"
 
-    ## MySQL
+    slapcat -n 0 -l "${dump_dir}/config.bak"
+    slapcat -n 1 -l "${dump_dir}/data.bak"
+    slapcat      -l "${dump_dir}/ldap.bak"
+}
+# shellcheck disable=SC2317
+dump_mysql_global() {
+    dump_dir="${LOCAL_BACKUP_DIR}/mysql-global/"
+    rm -rf "${dump_dir}"
+    mkdir -p -m 700 "${dump_dir}"
 
-    ## Purge previous dumps
-    # rm -f  ${LOCAL_BACKUP_DIR}/mysql.*.gz
-    # rm -rf ${LOCAL_BACKUP_DIR}/mysql
-    # rm -rf ${LOCAL_BACKUP_DIR}/mysqlhotcopy
-    # rm -rf /home/mysqldump
-    # find ${LOCAL_BACKUP_DIR}/ -type f -name '*.err' -delete
+    mysqldump --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 --opt --all-databases --force --events --hex-blob 2> "${dump_dir}/mysql.bak.err" | gzip --best > "${dump_dir}/mysql.bak.gz"
 
-    ## example with global and compressed mysqldump
-    # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
-    #  --opt --all-databases --force --events --hex-blob 2> ${LOCAL_BACKUP_DIR}/mysql.bak.err | gzip --best > ${LOCAL_BACKUP_DIR}/mysql.bak.gz
-    # last_rc=$?
-    # if [ ${last_rc} -ne 0 ]; then
-    #     error "mysqldump (global compressed) returned an error ${last_rc}, check ${LOCAL_BACKUP_DIR}/mysql.bak.err"
-    #     rc=101
-    # fi
+    last_rc=$?
+    if [ ${last_rc} -ne 0 ]; then
+        error "mysqldump (global compressed) returned an error ${last_rc}, check ${dump_dir}/mysql.bak.err"
+        rc=101
+    else
+        rm -f "${dump_dir}/mysql.bak.err"
+    fi
+}
+# shellcheck disable=SC2317
+dump_mysql_per_base() {
+    dump_dir="${LOCAL_BACKUP_DIR}/mysql-per-base/"
+    rm -rf "${dump_dir}"
+    mkdir -p -m 700 "${dump_dir}"
 
-    ## example with compressed SQL dump (with data) for each databases
-    # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysql/
-    # for i in $(mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 -e 'show databases' -s --skip-column-names \
-    # | grep --extended-regexp --invert-match "^(Database|information_schema|performance_schema|sys)"); do
-    #     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --events --hex-blob $i 2> ${LOCAL_BACKUP_DIR}/${i}.err | gzip --best > ${LOCAL_BACKUP_DIR}/mysql/${i}.sql.gz
-    #     last_rc=$?
-    #     if [ ${last_rc} -ne 0 ]; then
-    #         error "mysqldump (${i} compressed) returned an error ${last_rc}, check ${LOCAL_BACKUP_DIR}/${i}.err"
-    #         rc=102
-    #     fi
-    # done
+    for i in $(mysql_list_databases 3306); do
+        mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --events --hex-blob $i 2> "${dump_dir}/${i}.err" | gzip --best > "${dump_dir}/${i}.sql.gz"
+
+        last_rc=$?
+        if [ ${last_rc} -ne 0 ]; then
+            error "mysqldump (${i} compressed) returned an error ${last_rc}, check ${dump_dir}/${i}.err"
+            rc=102
+        else
+            rm -f "${dump_dir}/${i}.err"
+        fi
+    done
+}
+# shellcheck disable=SC2317
+dump_mysql_meta() {
+    dump_dir="${LOCAL_BACKUP_DIR}/mysql-meta/"
+    rm -rf "${dump_dir}"
+    mkdir -p -m 700 "${dump_dir}"
 
     ## Dump all grants (requires 'percona-toolkit' package)
-    # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysql/
-    # pt-show-grants --flush --no-header 2> ${LOCAL_BACKUP_DIR}/mysql/all_grants.err > ${LOCAL_BACKUP_DIR}/mysql/all_grants.sql
-    # last_rc=$?
-    # if [ ${last_rc} -ne 0 ]; then
-    #     error "pt-show-grants returned an error ${last_rc}, check ${LOCAL_BACKUP_DIR}/mysql/all_grants.err"
-    #     rc=103
-    # fi
+    pt-show-grants --flush --no-header 2> "${dump_dir}/all_grants.err" > "${dump_dir}/all_grants.sql"
 
-    # Dump all variables
-    # mysql -A -e"SHOW GLOBAL VARIABLES;" 2> ${LOCAL_BACKUP_DIR}/MySQLCurrentSettings.err > ${LOCAL_BACKUP_DIR}/MySQLCurrentSettings.txt
-    # last_rc=$?
-    # if [ ${last_rc} -ne 0 ]; then
-    #     error "mysql (variables) returned an error ${last_rc}, check ${LOCAL_BACKUP_DIR}/MySQLCurrentSettings.err"
-    #     rc=104
-    # fi
+    last_rc=$?
+    if [ ${last_rc} -ne 0 ]; then
+        error "pt-show-grants returned an error ${last_rc}, check ${dump_dir}/all_grants.err"
+        rc=103
+    else
+        rm -f "${dump_dir}/all_grants.err"
+    fi
 
-    ## example with SQL dump (schema only, no data) for each databases
-    # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysql/
-    # for i in $(mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 -e 'show databases' -s --skip-column-names \
-    # | grep --extended-regexp --invert-match "^(Database|information_schema|performance_schema|sys)"); do
-    #     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --no-data --databases $i 2> ${LOCAL_BACKUP_DIR}/${i}.schema.err > ${LOCAL_BACKUP_DIR}/mysql/${i}.schema.sql
-    #     last_rc=$?
-    #     if [ ${last_rc} -ne 0 ]; then
-    #         error "mysqldump (${i} schema) returned an error ${last_rc}, check ${LOCAL_BACKUP_DIR}/${i}.schema.err"
-    #         rc=105
-    #     fi
-    # done
+    ## Dump all variables
+    mysql -A -e"SHOW GLOBAL VARIABLES;" 2> "${dump_dir}/variables.err" > "${dump_dir}/variables.txt"
 
-    ## example with *one* uncompressed SQL dump for *one* database (MYBASE)
-    # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysql/MYBASE
-    # chown -RL mysql ${LOCAL_BACKUP_DIR}/mysql/
-    # mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -Q \
-    # --opt --events --hex-blob --skip-comments -T ${LOCAL_BACKUP_DIR}/mysql/MYBASE MYBASE 2> ${LOCAL_BACKUP_DIR}/mysql/MYBASE.err
-    # last_rc=$?
-    # if [ ${last_rc} -ne 0 ]; then
-    #     error "mysqldump (MYBASE) returned an error ${last_rc}, check ${LOCAL_BACKUP_DIR}/mysql/MYBASE.err"
-    #     rc=106
-    # fi
+    last_rc=$?
+    if [ ${last_rc} -ne 0 ]; then
+        error "mysql (variables) returned an error ${last_rc}, check ${dump_dir}/variables.err"
+        rc=104
+    else
+        rm -f "${dump_dir}/variables.err"
+    fi
 
-    ## example with two dumps for each table (.sql/.txt) for all databases
-    # for i in $(echo SHOW DATABASES | mysql --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 \
-    # | grep --extended-regexp --invert-match "^(Database|information_schema|performance_schema|sys)" ); do
-    #     mkdir -p -m 700 /home/mysqldump/$i ; chown -RL mysql /home/mysqldump
-    #     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 -Q --opt --events --hex-blob --skip-comments \
-    #  --fields-enclosed-by='\"' --fields-terminated-by=',' -T /home/mysqldump/$i $i 2> /home/mysqldump/$i.err"
-    #     last_rc=$?
-    #     if [ ${last_rc} -ne 0 ]; then
-    #         error "mysqldump (${i} files) returned an error ${last_rc}, check /home/mysqldump/$i.err"
-    #         rc=107
-    #     fi
-    # done
+    ## Schema only (no data) for each databases
+    for i in $(mysql_list_databases 3306); do
+        mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --no-data --databases $i 2> "${dump_dir}/${i}.schema.err" > "${dump_dir}/${i}.schema.sql"
 
-    ## example with mysqlhotcopy
-    # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mysqlhotcopy/
-    # mysqlhotcopy MYBASE ${LOCAL_BACKUP_DIR}/mysqlhotcopy/ 2> ${LOCAL_BACKUP_DIR}/mysqlhotcopy/MYBASE.err
-    # last_rc=$?
-    # if [ ${last_rc} -ne 0 ]; then
-    #     error "mysqlhotcopy returned an error ${last_rc}, check ${LOCAL_BACKUP_DIR}/mysqlhotcopy/MYBASE.err"
-    #     rc=108
-    # fi
+        last_rc=$?
+        if [ ${last_rc} -ne 0 ]; then
+            error "mysqldump (${i} schema) returned an error ${last_rc}, check ${dump_dir}/${i}.schema.err"
+            rc=105
+        else
+            rm -f "${dump_dir}/${i}.schema.err"
+        fi
+    done
+}
+# shellcheck disable=SC2317
+dump_mysql_tabs() {
+    for i in $(mysql_list_databases 3306); do
+        dump_dir="${LOCAL_BACKUP_DIR}/mysql-tabs/$i"
+        rm -rf "${dump_dir}"
+        mkdir -p -m 700 "${dump_dir}"
+        chown -RL mysql "${dump_dir}"
 
-    ## example for multiples MySQL instances
-    # mysqladminpasswd=$(grep -m1 'password = .*' /root/.my.cnf|cut -d" " -f3)
-    # grep --extended-regexp "^port\s*=\s*\d*" /etc/mysql/my.cnf | while read instance; do
-    #     instance=$(echo "$instance"|awk '{ print $3 }')
-    #     if [ "$instance" != "3306" ]
-    #     then
-    #         mysqldump -P $instance --opt --all-databases --hex-blob -u mysqladmin -p$mysqladminpasswd 2> ${LOCAL_BACKUP_DIR}/mysql.${instance}.err | gzip --best > ${LOCAL_BACKUP_DIR}/mysql.${instance}.bak.gz
-    #         last_rc=$?
-    #         if [ ${last_rc} -ne 0 ]; then
-    #             error "mysqldump (instance ${instance}) returned an error ${last_rc}, check ${LOCAL_BACKUP_DIR}/mysql.${instance}.err"
-    #             rc=107
-    #         fi
-    #     fi
-    # done
+        mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 -Q --opt --events --hex-blob --skip-comments --fields-enclosed-by='\"' --fields-terminated-by=',' -T "${dump_dir}" $i 2> "${dump_dir}.err"
+ 
+        last_rc=$?
+        if [ ${last_rc} -ne 0 ]; then
+            error "mysqldump (${i} files) returned an error ${last_rc}, check ${dump_dir}.err"
+            rc=107
+        else
+            rm -f "${dump_dir}.err"
+        fi
+    done
+}
+# shellcheck disable=SC2317
+dump_mysql_hotcopy() {
+    dump_dir="${LOCAL_BACKUP_DIR}/mysql-hotcopy/"
+    rm -rf "${dump_dir}"
+    mkdir -p -m 700 "${dump_dir}"
 
-    ## PostgreSQL
+    mysqlhotcopy MYBASE "${dump_dir}/" 2> "${dump_dir}/MYBASE.err"
 
-    ## Purge previous dumps
-    # rm -rf ${LOCAL_BACKUP_DIR}/pg.*.gz
-    # rm -rf ${LOCAL_BACKUP_DIR}/pg-backup.tar
-    # rm -rf ${LOCAL_BACKUP_DIR}/postgresql/*
+    last_rc=$?
+    if [ ${last_rc} -ne 0 ]; then
+        error "mysqlhotcopy returned an error ${last_rc}, check ${dump_dir}/MYBASE.err"
+        rc=108
+    else
+        rm -f "${dump_dir}/MYBASE.err"
+    fi
+}
+# shellcheck disable=SC2317
+dump_mysql_instances() {
+    dump_dir="${LOCAL_BACKUP_DIR}/mysql-instances/"
+    rm -rf "${dump_dir}"
+    mkdir -p -m 700 "${dump_dir}"
 
-    ## example with pg_dumpall (warning: you need space in ~postgres)
-    # su - postgres -c "pg_dumpall > ~/pg.dump.bak"
-    # mv ~postgres/pg.dump.bak ${LOCAL_BACKUP_DIR}/
+    mysqladminpasswd=$(grep -m1 'password = .*' /root/.my.cnf|cut -d" " -f3)
+
+    grep --extended-regexp "^port\s*=\s*\d*" /etc/mysql/my.cnf | while read instance; do
+        instance=$(echo "$instance"|awk '{ print $3 }')
+        if [ "$instance" != "3306" ]; then
+            mysqldump -P ${instance} --opt --all-databases --hex-blob -u mysqladmin -p${mysqladminpasswd} 2> "${dump_dir}/${instance}.err" | gzip --best > "${dump_dir}/${instance}.bak.gz"
+
+            last_rc=$?
+            if [ ${last_rc} -ne 0 ]; then
+                error "mysqldump (instance ${instance}) returned an error ${last_rc}, check ${dump_dir}/${instance}.err"
+                rc=107
+            else
+                rm -f "${dump_dir}/${instance}.err"
+            fi
+        fi
+    done
+}
+# shellcheck disable=SC2317
+dump_postgresql_global() {
+    dump_dir="${LOCAL_BACKUP_DIR}/postgresql-global/"
+    rm -rf "${dump_dir}"
+    mkdir -p -m 700 "${dump_dir}"
+
+    ## example with pg_dumpall
+    # WARNING: you need space in ~postgres
+    su - postgres -c "pg_dumpall > ~/pg.dump.bak"
+    mv ~postgres/pg.dump.bak "${dump_dir}/"
 
     ## another method with gzip directly piped
     # (
     #    cd /var/lib/postgresql;
-    #    sudo -u postgres pg_dumpall | gzip > ${LOCAL_BACKUP_DIR}/pg.dump.bak.gz
+    #    sudo -u postgres pg_dumpall | gzip > ${dump_dir}/pg.dump.bak.gz
     # )
+
+}
+# shellcheck disable=SC2317
+dump_postgresql_per_base() {
+    dump_dir="${LOCAL_BACKUP_DIR}/postgresql-per-base/"
+    rm -rf "${dump_dir}"
+    mkdir -p -m 700 "${dump_dir}"
+
+    (
+       cd /var/lib/postgresql
+       databases=$(sudo -u postgres psql -U postgres -lt | awk -F\| '{print $1}' | grep -v template*)
+       for database in ${databases} ; do
+          sudo -u postgres /usr/bin/pg_dump --create -s -U postgres -d ${database} | gzip --best -c > ${dump_dir}/$databases.sql.gz
+       done
+    )
+}
+# shellcheck disable=SC2317
+dump_postgresql_filtered() {
+    dump_dir="${LOCAL_BACKUP_DIR}/postgresql-filtered/"
+    rm -rf "${dump_dir}"
+    mkdir -p -m 700 "${dump_dir}"
 
     ## example with all tables from MYBASE excepts TABLE1 and TABLE2
-    # pg_dump -p 5432 -h 127.0.0.1 -U USER --clean -F t --inserts -f ${LOCAL_BACKUP_DIR}/pg-backup.tar -t 'TABLE1' -t 'TABLE2' MYBASE
+    # pg_dump -p 5432 -h 127.0.0.1 -U USER --clean -F t --inserts -f "${dump_dir}/pg-backup.tar" -t 'TABLE1' -t 'TABLE2' MYBASE
 
     ## example with only TABLE1 and TABLE2 from MYBASE
-    # pg_dump -p 5432 -h 127.0.0.1 -U USER --clean -F t --inserts -f ${LOCAL_BACKUP_DIR}/pg-backup.tar -T 'TABLE1' -T 'TABLE2' MYBASE
+    # pg_dump -p 5432 -h 127.0.0.1 -U USER --clean -F t --inserts -f "${dump_dir}/pg-backup.tar" -T 'TABLE1' -T 'TABLE2' MYBASE
+}
+# shellcheck disable=SC2317
+dump_redis() {
+    for instance in $(find /var/lib/ -mindepth 1 -maxdepth 1 -type d -name 'redis*'); do
+        name=$(basename "${instance}")
+        dump_dir="${LOCAL_BACKUP_DIR}/${name}/"
+        rm -rf "${dump_dir}"
 
-    ## example with compressed PostgreSQL dump for each databases
-    # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/postgresql
-    # chown postgres:postgres ${LOCAL_BACKUP_DIR}/postgresql
-    # (
-    #    cd /var/lib/postgresql
-    #    dbs=$(sudo -u postgres psql -U postgres -lt | awk -F\| '{print $1}' |grep -v template*)
-    #    for databases in $dbs ; do sudo -u postgres /usr/bin/pg_dump --create -s -U postgres -d $databases | gzip --best -c > ${LOCAL_BACKUP_DIR}/postgresql/$databases.sql.gz ; done
-    # )
-
-    ## MongoDB
-
+        if [ -f "${instance}/dump.rdb" ]; then
+            mkdir -p -m 700 "${dump_dir}"
+            cp -a "${instance}/dump.rdb" "${dump_dir}/"
+        fi
+    done
+}
+# shellcheck disable=SC2317
+dump_mongodb() {
     ## don't forget to create use with read-only access
     ## > use admin
     ## > db.createUser( { user: "mongobackup", pwd: "PASS", roles: [ "backup", ] } )
-    ## Purge previous dumps
-    # rm -rf ${LOCAL_BACKUP_DIR}/mongodump/
-    # mkdir -p -m 700 ${LOCAL_BACKUP_DIR}/mongodump/
-    # mongodump --quiet -u mongobackup -pPASS -o ${LOCAL_BACKUP_DIR}/mongodump/
-    # if [ $? -ne 0 ]; then
-    #   echo "Error with mongodump!"
-    # fi
 
-    ## Redis
+    dump_dir="${LOCAL_BACKUP_DIR}/mongodump/"
+    rm -rf "${dump_dir}"
+    mkdir -p -m 700 "${dump_dir}"
+    mongo_user=""
+    mongo_password=""
 
-    ## Purge previous dumps
-    # rm -rf ${LOCAL_BACKUP_DIR}/redis/
-    # rm -rf ${LOCAL_BACKUP_DIR}/redis-*
-    ## Copy dump.rdb file for each found instance
-    # for instance in $(find /var/lib/ -mindepth 1 -maxdepth 1 -type d -name 'redis*'); do
-    #     if [ -f "${instance}/dump.rdb" ]; then
-    #         name=$(basename $instance)
-    #         mkdir -p ${LOCAL_BACKUP_DIR}/${name}
-    #         cp -a "${instance}/dump.rdb" "${LOCAL_BACKUP_DIR}/${name}"
-    #     fi
-    # done
+    mongodump --quiet -u ${mongo_user} -p${mongo_password} -o "${dump_dir}/"
 
-    ## ElasticSearch
+    if [ $? -ne 0 ]; then
+      echo "Error with mongodump!"
+    fi
+}
+# shellcheck disable=SC2317
+dump_megacli_config() {
+    megacli -CfgSave -f "${LOCAL_BACKUP_DIR}/megacli_conf.dump" -a0 >/dev/null
+}
+# shellcheck disable=SC2317
+dump_traceroute() {
+    dump_dir="${LOCAL_BACKUP_DIR}/traceroute/"
+    rm -rf "${dump_dir}"
+    mkdir -p -m 700 "${dump_dir}"
 
-    ## Take a snapshot as a backup.
-    ## Warning: You need to have a path.repo configured.
-    ## See: https://wiki.evolix.org/HowtoElasticsearch#snapshots-et-sauvegardes
-    # curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/snapshot.daily" >> "${LOGFILE}"
-    # curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot.daily?wait_for_completion=true" >> "${LOGFILE}"
-    ## Clustered version here
-    ## It basically the same thing except that you need to check that NFS is mounted
-    # if ss | grep ':nfs' | grep -q 'ip\.add\.res\.s1' && ss | grep ':nfs' | grep -q 'ip\.add\.res\.s2'
-    # then
-    #     curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/snapshot.daily" >> "${LOGFILE}"
-    #     curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot.daily?wait_for_completion=true" >> "${LOGFILE}"
-    # else
-    #     echo 'Cannot make a snapshot of elasticsearch, at least one node is not mounting the repository.'
-    # fi
-    ## If you need to keep older snapshot, for example the last 10 daily snapshots, replace the XDELETE and XPUT lines by :
-    # for snapshot in $(curl -s -XGET "localhost:9200/_snapshot/snaprepo/_all?pretty=true" | grep -Eo 'snapshot_[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -n -10); do
-    #     curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/${snapshot}" | grep -v -Fx '{"acknowledged":true}'
-    # done
-    # date=$(/bin/date +%F)
-    # curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot_${date}?wait_for_completion=true" >> "${LOGFILE}"
-
-    ## RabbitMQ
-
-    ## export config
-    # rabbitmqadmin export ${LOCAL_BACKUP_DIR}/rabbitmq.config >> "${LOGFILE}"
-
-    ## MegaCli config
-
-    # megacli -CfgSave -f ${LOCAL_BACKUP_DIR}/megacli_conf.dump -a0 >/dev/null
-
-    ## Dump network routes with mtr and traceroute (warning: could be long with aggressive firewalls)
     network_targets="8.8.8.8 www.evolix.fr travaux.evolix.net"
+
     mtr_bin=$(command -v mtr)
-    if [ -n "${mtr_bin}" ]; then
+    if [ -n "${network_targets}" ] && [ -n "${mtr_bin}" ]; then
         for addr in ${network_targets}; do
-            ${mtr_bin} -r "${addr}" > "${LOCAL_BACKUP_DIR}/mtr-${addr}"
-        done
-    fi
-    traceroute_bin=$(command -v traceroute)
-    if [ -n "${traceroute_bin}" ]; then
-        for addr in ${network_targets}; do
-            ${traceroute_bin} -n "${addr}" > "${LOCAL_BACKUP_DIR}/traceroute-${addr}" 2>&1
+            ${mtr_bin} -r "${addr}" > "${dump_dir}/mtr-${addr}"
         done
     fi
 
-    server_state_dir="${LOCAL_BACKUP_DIR}/server-state"
+    traceroute_bin=$(command -v traceroute)
+    if [ -n "${network_targets}" ] && [ -n "${traceroute_bin}" ]; then
+        for addr in ${network_targets}; do
+            ${traceroute_bin} -n "${addr}" > "${dump_dir}/traceroute-${addr}" 2>&1
+        done
+    fi
+}
+# shellcheck disable=SC2317
+dump_server_state() {
+    dump_dir="${LOCAL_BACKUP_DIR}/server-state"
+    rm -rf "${dump_dir}"
+    # Do not create the directory
+    # mkdir -p -m 700 "${dump_dir}"
 
     dump_server_state_bin=$(command -v dump-server-state)
     if [ -z "${dump_server_state_bin}" ]; then
@@ -358,27 +390,126 @@ local_tasks() {
         rc=1
     else
         if [ "${SYSTEM}" = "linux" ]; then
-            ${dump_server_state_bin} --all --force --dump-dir "${server_state_dir}"
+            ${dump_server_state_bin} --all --dump-dir "${dump_dir}"
             last_rc=$?
             if [ ${last_rc} -ne 0 ]; then
-                error "dump-server-state returned an error ${last_rc}, check ${server_state_dir}"
+                error "dump-server-state returned an error ${last_rc}, check ${dump_dir}"
                 rc=1
             fi
         else
-            ${dump_server_state_bin} --all --force --dump-dir "${server_state_dir}"
+            ${dump_server_state_bin} --all --dump-dir "${dump_dir}"
             last_rc=$?
             if [ ${last_rc} -ne 0 ]; then
-                error "dump-server-state returned an error ${last_rc}, check ${server_state_dir}"
+                error "dump-server-state returned an error ${last_rc}, check ${dump_dir}"
                 rc=1
             fi
         fi
     fi
+}
+# shellcheck disable=SC2317
+dump_rabbitmq() {
+    dump_dir="${LOCAL_BACKUP_DIR}/rabbitmq/"
+    rm -rf "${dump_dir}"
+    mkdir -p -m 700 "${dump_dir}"
 
-    ## Dump rights
-    # getfacl -R /var  > ${server_state_dir}/rights-var.txt
-    # getfacl -R /etc  > ${server_state_dir}/rights-etc.txt
-    # getfacl -R /usr  > ${server_state_dir}/rights-usr.txt
-    # getfacl -R /home > ${server_state_dir}/rights-home.txt
+    rabbitmqadmin export "${dump_dir}/config" >> "${LOGFILE}"
+}
+# shellcheck disable=SC2317
+dump_facl() {
+    dump_dir="${LOCAL_BACKUP_DIR}/facl/"
+    rm -rf "${dump_dir}"
+    mkdir -p -m 700 "${dump_dir}"
+
+    getfacl -R /etc  > "${dump_dir}/etc.txt"
+    getfacl -R /home > "${dump_dir}/home.txt"
+    getfacl -R /usr  > "${dump_dir}/usr.txt"
+    getfacl -R /var  > "${dump_dir}/var.txt"
+}
+# shellcheck disable=SC2317
+dump_elasticsearch_snapshot() {
+    ## Take a snapshot as a backup.
+    ## Warning: You need to have a path.repo configured.
+    ## See: https://wiki.evolix.org/HowtoElasticsearch#snapshots-et-sauvegardes
+
+    curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/snapshot.daily" >> "${LOGFILE}"
+    curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot.daily?wait_for_completion=true" >> "${LOGFILE}"
+
+    # Clustered version here
+    # It basically the same thing except that you need to check that NFS is mounted
+    # if ss | grep ':nfs' | grep -q 'ip\.add\.res\.s1' && ss | grep ':nfs' | grep -q 'ip\.add\.res\.s2'
+    # then
+    #     curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/snapshot.daily" >> "${LOGFILE}"
+    #     curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot.daily?wait_for_completion=true" >> "${LOGFILE}"
+    # else
+    #     echo 'Cannot make a snapshot of elasticsearch, at least one node is not mounting the repository.'
+    # fi
+
+    ## If you need to keep older snapshot, for example the last 10 daily snapshots, replace the XDELETE and XPUT lines by :
+    # for snapshot in $(curl -s -XGET "localhost:9200/_snapshot/snaprepo/_all?pretty=true" | grep -Eo 'snapshot_[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -n -10); do
+    #     curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/${snapshot}" | grep -v -Fx '{"acknowledged":true}'
+    # done
+    # date=$(/bin/date +%F)
+    # curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot_${date}?wait_for_completion=true" >> "${LOGFILE}"
+}
+
+local_tasks() {
+    log "START LOCAL_TASKS"
+
+    # Remove previous error files
+    find "${LOCAL_BACKUP_DIR}/" -type f -name '*.err' -delete
+
+    # You can comment or uncomment sections below to customize the backup
+
+    ## OpenLDAP
+    # dump_ldap
+
+    ## MySQL
+
+    ### example with global and compressed mysqldump
+    # dump_mysql_global
+    ### example with compressed SQL dump (with data) for each databases
+    # dump_mysql_per_base
+    ### meta-data (grants, variables, schema…)
+    # dump_mysql_meta
+    ### example with two dumps for each table (.sql/.txt) for all databases
+    # dump_mysql_tabs
+    ### example with mysqlhotcopy
+    # dump_mysql_hotcopy
+    ### example for multiples MySQL instances
+    # dump_mysql_instances
+
+    ## PostgreSQL
+
+    ### example with global dump
+    # dump_postgresql_global
+    ### example with filtered tables ("only" or "except")
+    # dump_postgresql_filtered
+    ### example with compressed PostgreSQL dump for each databases
+    # dump_postgresql_per_base
+
+    ## MongoDB
+    # dump_mongodb
+
+    ## Redis
+    # dump_redis
+
+    ## ElasticSearch
+    # dump_elasticsearch_snapshot
+
+    ## RabbitMQ config
+    # dump_rabbitmq
+
+    ## MegaCli config
+    # dump_megacli_config
+
+    ## Dump network routes with mtr and traceroute (warning: could be long with aggressive firewalls)
+    dump_traceroute
+
+    ## Dump various information about server state
+    dump_server_state
+
+    ## Dump file access control lists
+    # dump_facl
 
     log "STOP LOCAL_TASKS"
 }
@@ -658,8 +789,12 @@ main() {
 # set all programs to C language (english)
 export LC_ALL=C
 
-# Error on unassigned variable
+# If expansion is attempted on an unset variable or parameter, the shell prints an
+# error message, and, if not interactive, exits with a non-zero status.
 set -u
+# The pipeline's return status is the value of the last (rightmost) command
+# to exit with a non-zero status, or zero if all commands exit successfully.
+set -o pipefail
 
 # Default return-code (0 == succes)
 rc=0
