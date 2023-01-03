@@ -987,7 +987,7 @@ E_NOSRVAVAIL=21 # No server is available
 E_SYNCFAILED=20 # Faild sync task
 E_DUMPFAILED=10 # Faild dump task
 
-# execute main funciton
+# execute main function
 main
 
 exit ${rc}
