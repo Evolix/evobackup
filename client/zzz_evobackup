@@ -124,7 +124,6 @@ lxc/*/rootfs/var/tmp
 /home/mysqltmp
 "
 
-
 ##### FUNCTIONS #######################################################
 
 # shellcheck disable=SC2317
@@ -164,7 +163,7 @@ dump_mysql_global() {
     # shellcheck disable=SC2086
     if [ ${last_rc} -ne 0 ]; then
         error "mysqldump to ${dump_file} returned an error ${last_rc}, check ${error_file}"
-        rc=100
+        rc=${E_DUMPFAILED}
     else
         rm -f "${error_file}"
     fi
@@ -188,7 +187,7 @@ dump_mysql_per_base() {
         # shellcheck disable=SC2086
         if [ ${last_rc} -ne 0 ]; then
             error "mysqldump to ${dump_file} returned an error ${last_rc}, check ${error_file}"
-            rc=100
+            rc=${E_DUMPFAILED}
         else
             rm -f "${error_file}"
         fi
@@ -212,7 +211,7 @@ dump_mysql_meta() {
     # shellcheck disable=SC2086
     if [ ${last_rc} -ne 0 ]; then
         error "pt-show-grants to ${dump_file} returned an error ${last_rc}, check ${error_file}"
-        rc=100
+        rc=${E_DUMPFAILED}
     else
         rm -f "${error_file}"
     fi
@@ -229,7 +228,7 @@ dump_mysql_meta() {
     # shellcheck disable=SC2086
     if [ ${last_rc} -ne 0 ]; then
         error "mysql 'show variables' returned an error ${last_rc}, check ${error_file}"
-        rc=100
+        rc=${E_DUMPFAILED}
     else
         rm -f "${error_file}"
     fi
@@ -248,7 +247,7 @@ dump_mysql_meta() {
         # shellcheck disable=SC2086
         if [ ${last_rc} -ne 0 ]; then
             error "mysqldump to ${dump_file} returned an error ${last_rc}, check ${error_file}"
-            rc=100
+            rc=${E_DUMPFAILED}
         else
             rm -f "${error_file}"
         fi
@@ -273,7 +272,7 @@ dump_mysql_tabs() {
         # shellcheck disable=SC2086
         if [ ${last_rc} -ne 0 ]; then
             error "mysqldump to ${dump_dir} returned an error ${last_rc}, check ${error_file}"
-            rc=100
+            rc=${E_DUMPFAILED}
         else
             rm -f "${error_file}"
         fi
@@ -298,7 +297,7 @@ dump_mysql_hotcopy() {
         # shellcheck disable=SC2086
         if [ ${last_rc} -ne 0 ]; then
             error "mysqlhotcopy to ${dump_dir} returned an error ${last_rc}, check ${error_file}"
-            rc=100
+            rc=${E_DUMPFAILED}
         else
             rm -f "${error_file}"
         fi
@@ -326,7 +325,7 @@ dump_mysql_instances() {
         # shellcheck disable=SC2086
         if [ ${last_rc} -ne 0 ]; then
             error "mysqldump to ${dump_file} returned an error ${last_rc}, check ${error_file}"
-            rc=100
+            rc=${E_DUMPFAILED}
         else
             rm -f "${error_file}"
         fi
@@ -349,7 +348,7 @@ dump_postgresql_global() {
     # shellcheck disable=SC2086
     if [ ${last_rc} -ne 0 ]; then
         error "pg_dumpall to ${dump_file} returned an error ${last_rc}, check ${error_file}"
-        rc=100
+        rc=${E_DUMPFAILED}
     else
         rm -f "${error_file}"
     fi
@@ -386,7 +385,7 @@ dump_postgresql_per_base() {
             # shellcheck disable=SC2086
             if [ ${last_rc} -ne 0 ]; then
                 error "pg_dump to ${dump_file} returned an error ${last_rc}, check ${error_file}"
-                rc=100
+                rc=${E_DUMPFAILED}
             else
                 rm -f "${error_file}"
             fi
@@ -414,7 +413,7 @@ dump_postgresql_filtered() {
     # shellcheck disable=SC2086
     if [ ${last_rc} -ne 0 ]; then
         error "pg_dump to ${dump_file} returned an error ${last_rc}, check ${error_file}"
-        rc=100
+        rc=${E_DUMPFAILED}
     else
         rm -f "${error_file}"
     fi
@@ -437,7 +436,7 @@ dump_redis() {
             # shellcheck disable=SC2086
             if [ ${last_rc} -ne 0 ]; then
                 error "cp ${instance}/dump.rdb to ${dump_dir} returned an error ${last_rc}, check ${error_file}"
-                rc=100
+                rc=${E_DUMPFAILED}
             else
                 rm -f "${error_file}"
             fi
@@ -467,7 +466,7 @@ dump_mongodb() {
     # shellcheck disable=SC2086
     if [ ${last_rc} -ne 0 ]; then
         error "mongodump to ${dump_dir} returned an error ${last_rc}, check ${error_file}"
-        rc=100
+        rc=${E_DUMPFAILED}
     else
         rm -f "${error_file}"
     fi
@@ -489,7 +488,7 @@ dump_megacli_config() {
     # shellcheck disable=SC2086
     if [ ${last_rc} -ne 0 ]; then
         error "megacli to ${dump_file} returned an error ${last_rc}, check ${error_file}"
-        rc=100
+        rc=${E_DUMPFAILED}
     else
         rm -f "${error_file}"
     fi
@@ -547,7 +546,7 @@ dump_server_state() {
             # shellcheck disable=SC2086
             if [ ${last_rc} -ne 0 ]; then
                 error "dump-server-state returned an error ${last_rc}, check ${dump_dir}"
-                rc=100
+                rc=${E_DUMPFAILED}
             fi
         else
             ${dump_server_state_bin} --all --dump-dir "${dump_dir}"
@@ -555,7 +554,7 @@ dump_server_state() {
             # shellcheck disable=SC2086
             if [ ${last_rc} -ne 0 ]; then
                 error "dump-server-state returned an error ${last_rc}, check ${dump_dir}"
-                rc=100
+                rc=${E_DUMPFAILED}
             fi
         fi
     fi
@@ -577,7 +576,7 @@ dump_rabbitmq() {
     # shellcheck disable=SC2086
     if [ ${last_rc} -ne 0 ]; then
         error "pg_dump to ${dump_file} returned an error ${last_rc}, check ${error_file}"
-        rc=100
+        rc=${E_DUMPFAILED}
     else
         rm -f "${error_file}"
     fi
@@ -773,7 +772,7 @@ sync_tasks() {
         # We try to find a suitable server
         while :; do
             server=$(pick_server "${n}")
-            test $? = 0 || exit 2
+            test $? = 0 || exit ${E_NOSRVAVAIL}
 
             if test_server "${server}"; then
                 break
@@ -822,7 +821,7 @@ sync_tasks() {
 
     if [ ${rsync_main_rc} -ne 0 ]; then
         error "rsync returned an error ${rsync_main_rc}, check ${LOGFILE}"
-        rc=201
+        rc=${E_SYNCFAILED}
     else
         # Build the canary Rsync command
         rsync_canary_cmd=$(build_rsync_canary_cmd)
@@ -982,6 +981,11 @@ set -o pipefail
 
 # Default return-code (0 == succes)
 rc=0
+
+### Possible error codes
+E_NOSRVAVAIL=21 # No server is available
+E_SYNCFAILED=20 # Faild sync task
+E_DUMPFAILED=10 # Faild dump task
 
 # execute main funciton
 main
