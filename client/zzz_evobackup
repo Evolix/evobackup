@@ -760,7 +760,7 @@ main() {
     trap "rm -f ${temp_files}" EXIT
 
     # Update canary to keep track of each run
-    update-evobackup-canary --who "${PROGNAME}"
+    update-evobackup-canary --who "${PROGNAME}" --file "${CANARY_FILE}"
 
     if [ "${LOCAL_TASKS}" = "1" ]; then
         local_tasks
