@@ -127,10 +127,11 @@ lxc/*/rootfs/var/tmp
 
 ##### FUNCTIONS #######################################################
 
+# shellcheck disable=SC2317
 mysql_list_databases() {
     port=${1:-"3306"}
 
-    mysql --defaults-extra-file=/etc/mysql/debian.cnf -P ${port} -e 'show databases' -s --skip-column-names | grep --extended-regexp --invert-match "^(Database|information_schema|performance_schema|sys)"
+    mysql --defaults-extra-file=/etc/mysql/debian.cnf -P "${port}" -e 'show databases' -s --skip-column-names | grep --extended-regexp --invert-match "^(Database|information_schema|performance_schema|sys)"
 }
 # shellcheck disable=SC2317
 dump_ldap() {
@@ -139,9 +140,13 @@ dump_ldap() {
     rm -rf "${dump_dir}"
     mkdir -p -m 700 "${dump_dir}"
 
+    log "LOCAL_TASKS - start dump_ldap to ${dump_dir}"
+
     slapcat -n 0 -l "${dump_dir}/config.bak"
     slapcat -n 1 -l "${dump_dir}/data.bak"
     slapcat      -l "${dump_dir}/ldap.bak"
+
+    log "LOCAL_TASKS - stop dump_ldap"
 }
 # shellcheck disable=SC2317
 dump_mysql_global() {
@@ -149,15 +154,21 @@ dump_mysql_global() {
     rm -rf "${dump_dir}"
     mkdir -p -m 700 "${dump_dir}"
 
-    mysqldump --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 --opt --all-databases --force --events --hex-blob 2> "${dump_dir}/mysql.bak.err" | gzip --best > "${dump_dir}/mysql.bak.gz"
+    error_file="${dump_dir}/mysql.bak.err"
+    dump_file="${dump_dir}/mysql.bak.err"
+    log "LOCAL_TASKS - start ${dump_file}"
+
+    mysqldump --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 --opt --all-databases --force --events --hex-blob 2> "${error_file}" | gzip --best > "${dump_file}"
 
     last_rc=$?
+    # shellcheck disable=SC2086
     if [ ${last_rc} -ne 0 ]; then
-        error "mysqldump (global compressed) returned an error ${last_rc}, check ${dump_dir}/mysql.bak.err"
-        rc=101
+        error "mysqldump to ${dump_file} returned an error ${last_rc}, check ${error_file}"
+        rc=100
     else
-        rm -f "${dump_dir}/mysql.bak.err"
+        rm -f "${error_file}"
     fi
+    log "LOCAL_TASKS - stop ${dump_file}"
 }
 # shellcheck disable=SC2317
 dump_mysql_per_base() {
@@ -165,16 +176,23 @@ dump_mysql_per_base() {
     rm -rf "${dump_dir}"
     mkdir -p -m 700 "${dump_dir}"
 
-    for i in $(mysql_list_databases 3306); do
-        mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --events --hex-blob $i 2> "${dump_dir}/${i}.err" | gzip --best > "${dump_dir}/${i}.sql.gz"
+    databases=$(mysql_list_databases 3306)
+    for database in ${databases}; do
+        error_file="${dump_dir}/${database}.err"
+        dump_file="${dump_dir}/${database}.sql.gz"
+        log "LOCAL_TASKS - start ${dump_file}"
+
+        mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --events --hex-blob "${database}" 2> "${error_file}" | gzip --best > "${dump_file}"
 
         last_rc=$?
+        # shellcheck disable=SC2086
         if [ ${last_rc} -ne 0 ]; then
-            error "mysqldump (${i} compressed) returned an error ${last_rc}, check ${dump_dir}/${i}.err"
-            rc=102
+            error "mysqldump to ${dump_file} returned an error ${last_rc}, check ${error_file}"
+            rc=100
         else
-            rm -f "${dump_dir}/${i}.err"
+            rm -f "${error_file}"
         fi
+        log "LOCAL_TASKS - stop ${dump_file}"
     done
 }
 # shellcheck disable=SC2317
@@ -184,74 +202,108 @@ dump_mysql_meta() {
     mkdir -p -m 700 "${dump_dir}"
 
     ## Dump all grants (requires 'percona-toolkit' package)
-    pt-show-grants --flush --no-header 2> "${dump_dir}/all_grants.err" > "${dump_dir}/all_grants.sql"
+    error_file="${dump_dir}/all_grants.err"
+    dump_file="${dump_dir}/all_grants.sql"
+    log "LOCAL_TASKS - start ${dump_file}"
+
+    pt-show-grants --flush --no-header 2> "${error_file}" > "${dump_file}"
 
     last_rc=$?
+    # shellcheck disable=SC2086
     if [ ${last_rc} -ne 0 ]; then
-        error "pt-show-grants returned an error ${last_rc}, check ${dump_dir}/all_grants.err"
-        rc=103
+        error "pt-show-grants to ${dump_file} returned an error ${last_rc}, check ${error_file}"
+        rc=100
     else
-        rm -f "${dump_dir}/all_grants.err"
+        rm -f "${error_file}"
     fi
+    log "LOCAL_TASKS - stop ${dump_file}"
 
     ## Dump all variables
-    mysql -A -e"SHOW GLOBAL VARIABLES;" 2> "${dump_dir}/variables.err" > "${dump_dir}/variables.txt"
+    error_file="${dump_dir}/variables.err"
+    dump_file="${dump_dir}/variables.txt"
+    log "LOCAL_TASKS - start ${dump_file}"
+
+    mysql -A -e "SHOW GLOBAL VARIABLES;" 2> "${error_file}" > "${dump_file}"
 
     last_rc=$?
+    # shellcheck disable=SC2086
     if [ ${last_rc} -ne 0 ]; then
-        error "mysql (variables) returned an error ${last_rc}, check ${dump_dir}/variables.err"
-        rc=104
+        error "mysql 'show variables' returned an error ${last_rc}, check ${error_file}"
+        rc=100
     else
-        rm -f "${dump_dir}/variables.err"
+        rm -f "${error_file}"
     fi
+    log "LOCAL_TASKS - stop ${dump_file}"
 
     ## Schema only (no data) for each databases
-    for i in $(mysql_list_databases 3306); do
-        mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --no-data --databases $i 2> "${dump_dir}/${i}.schema.err" > "${dump_dir}/${i}.schema.sql"
+    databases=$(mysql_list_databases 3306)
+    for database in ${databases}; do
+        error_file="${dump_dir}/${database}.schema.err"
+        dump_file="${dump_dir}/${database}.schema.sql"
+        log "LOCAL_TASKS - start ${dump_file}"
+
+        mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --no-data --databases "${database}" 2> "${error_file}" > "${dump_file}"
 
         last_rc=$?
+        # shellcheck disable=SC2086
         if [ ${last_rc} -ne 0 ]; then
-            error "mysqldump (${i} schema) returned an error ${last_rc}, check ${dump_dir}/${i}.schema.err"
-            rc=105
+            error "mysqldump to ${dump_file} returned an error ${last_rc}, check ${error_file}"
+            rc=100
         else
-            rm -f "${dump_dir}/${i}.schema.err"
+            rm -f "${error_file}"
         fi
+        log "LOCAL_TASKS - stop ${dump_file}"
     done
 }
 # shellcheck disable=SC2317
 dump_mysql_tabs() {
-    for i in $(mysql_list_databases 3306); do
-        dump_dir="${LOCAL_BACKUP_DIR}/mysql-tabs/$i"
+    databases=$(mysql_list_databases 3306)
+    for database in ${databases}; do
+        dump_dir="${LOCAL_BACKUP_DIR}/mysql-tabs/${database}"
         rm -rf "${dump_dir}"
         mkdir -p -m 700 "${dump_dir}"
         chown -RL mysql "${dump_dir}"
 
-        mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 -Q --opt --events --hex-blob --skip-comments --fields-enclosed-by='\"' --fields-terminated-by=',' -T "${dump_dir}" $i 2> "${dump_dir}.err"
+        error_file="${dump_dir}.err"
+        log "LOCAL_TASKS - start ${dump_dir}"
+
+        mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 -Q --opt --events --hex-blob --skip-comments --fields-enclosed-by='\"' --fields-terminated-by=',' -T "${dump_dir}" "${database}" 2> "${error_file}"
  
         last_rc=$?
+        # shellcheck disable=SC2086
         if [ ${last_rc} -ne 0 ]; then
-            error "mysqldump (${i} files) returned an error ${last_rc}, check ${dump_dir}.err"
-            rc=107
+            error "mysqldump to ${dump_dir} returned an error ${last_rc}, check ${error_file}"
+            rc=100
         else
-            rm -f "${dump_dir}.err"
+            rm -f "${error_file}"
         fi
+        log "LOCAL_TASKS - stop ${dump_dir}"
     done
 }
 # shellcheck disable=SC2317
 dump_mysql_hotcopy() {
-    dump_dir="${LOCAL_BACKUP_DIR}/mysql-hotcopy/"
-    rm -rf "${dump_dir}"
-    mkdir -p -m 700 "${dump_dir}"
+    # customize the list of databases to hot-copy
+    databases=""
+    for database in ${databases}; do
+        dump_dir="${LOCAL_BACKUP_DIR}/mysql-hotcopy/${database}"
+        rm -rf "${dump_dir}"
+        mkdir -p -m 700 "${dump_dir}"
 
-    mysqlhotcopy MYBASE "${dump_dir}/" 2> "${dump_dir}/MYBASE.err"
+        error_file="${dump_dir}.err"
+        log "LOCAL_TASKS - start ${dump_dir}"
 
-    last_rc=$?
-    if [ ${last_rc} -ne 0 ]; then
-        error "mysqlhotcopy returned an error ${last_rc}, check ${dump_dir}/MYBASE.err"
-        rc=108
-    else
-        rm -f "${dump_dir}/MYBASE.err"
-    fi
+        mysqlhotcopy "${database}" "${dump_dir}/" 2> "${error_file}"
+
+        last_rc=$?
+        # shellcheck disable=SC2086
+        if [ ${last_rc} -ne 0 ]; then
+            error "mysqlhotcopy to ${dump_dir} returned an error ${last_rc}, check ${error_file}"
+            rc=100
+        else
+            rm -f "${error_file}"
+        fi
+        log "LOCAL_TASKS - stop ${dump_dir}"
+    done
 }
 # shellcheck disable=SC2317
 dump_mysql_instances() {
@@ -259,21 +311,26 @@ dump_mysql_instances() {
     rm -rf "${dump_dir}"
     mkdir -p -m 700 "${dump_dir}"
 
-    mysqladminpasswd=$(grep -m1 'password = .*' /root/.my.cnf|cut -d" " -f3)
+    mysqladminpasswd=$(grep -m1 'password = .*' /root/.my.cnf | cut -d " " -f 3)
 
-    grep --extended-regexp "^port\s*=\s*\d*" /etc/mysql/my.cnf | while read instance; do
-        instance=$(echo "$instance"|awk '{ print $3 }')
-        if [ "$instance" != "3306" ]; then
-            mysqldump -P ${instance} --opt --all-databases --hex-blob -u mysqladmin -p${mysqladminpasswd} 2> "${dump_dir}/${instance}.err" | gzip --best > "${dump_dir}/${instance}.bak.gz"
+    # customize list of instances
+    instances=""
+    for instance in ${instances}; do
+        error_file="${dump_dir}/${instance}.err"
+        dump_file="${dump_dir}/${instance}.bak.gz"
+        log "LOCAL_TASKS - start ${dump_file}"
 
-            last_rc=$?
-            if [ ${last_rc} -ne 0 ]; then
-                error "mysqldump (instance ${instance}) returned an error ${last_rc}, check ${dump_dir}/${instance}.err"
-                rc=107
-            else
-                rm -f "${dump_dir}/${instance}.err"
-            fi
+        mysqldump -P "${instance}" --opt --all-databases --hex-blob -u mysqladmin -p"${mysqladminpasswd}" 2> "${error_file}" | gzip --best > "${dump_file}"
+
+        last_rc=$?
+        # shellcheck disable=SC2086
+        if [ ${last_rc} -ne 0 ]; then
+            error "mysqldump to ${dump_file} returned an error ${last_rc}, check ${error_file}"
+            rc=100
+        else
+            rm -f "${error_file}"
         fi
+        log "LOCAL_TASKS - stop ${dump_file}"
     done
 }
 # shellcheck disable=SC2317
@@ -282,17 +339,32 @@ dump_postgresql_global() {
     rm -rf "${dump_dir}"
     mkdir -p -m 700 "${dump_dir}"
 
-    ## example with pg_dumpall
-    # WARNING: you need space in ~postgres
-    su - postgres -c "pg_dumpall > ~/pg.dump.bak"
-    mv ~postgres/pg.dump.bak "${dump_dir}/"
+    ## example with pg_dumpall and with compression
+    dump_file="${dump_dir}/pg.dump.bak.gz"
+    log "LOCAL_TASKS - start ${dump_file}"
 
-    ## another method with gzip directly piped
-    # (
-    #    cd /var/lib/postgresql;
-    #    sudo -u postgres pg_dumpall | gzip > ${dump_dir}/pg.dump.bak.gz
-    # )
+    (sudo -u postgres pg_dumpall) 2> "${error_file}" | gzip --best > "${dump_file}"
 
+    last_rc=$?
+    # shellcheck disable=SC2086
+    if [ ${last_rc} -ne 0 ]; then
+        error "pg_dumpall to ${dump_file} returned an error ${last_rc}, check ${error_file}"
+        rc=100
+    else
+        rm -f "${error_file}"
+    fi
+
+    log "LOCAL_TASKS - stop ${dump_file}"
+
+    ## example with pg_dumpall and without compression
+    ## WARNING: you need space in ~postgres
+    # dump_file="${dump_dir}/pg.dump.bak"
+    # log "LOCAL_TASKS - start ${dump_file}"
+    # 
+    # (su - postgres -c "pg_dumpall > ~/pg.dump.bak") 2> "${error_file}"
+    # mv ~postgres/pg.dump.bak "${dump_file}"
+    # 
+    # log "LOCAL_TASKS - stop ${dump_file}"
 }
 # shellcheck disable=SC2317
 dump_postgresql_per_base() {
@@ -302,9 +374,23 @@ dump_postgresql_per_base() {
 
     (
        cd /var/lib/postgresql
-       databases=$(sudo -u postgres psql -U postgres -lt | awk -F\| '{print $1}' | grep -v template*)
+       databases=$(sudo -u postgres psql -U postgres -lt | awk -F\| '{print $1}' | grep -v "template.*")
        for database in ${databases} ; do
-          sudo -u postgres /usr/bin/pg_dump --create -s -U postgres -d ${database} | gzip --best -c > ${dump_dir}/$databases.sql.gz
+            error_file="${dump_dir}/${database}.err"
+            dump_file="${dump_dir}/${database}.sql.gz"
+            log "LOCAL_TASKS - start ${dump_file}"
+
+            (sudo -u postgres /usr/bin/pg_dump --create -s -U postgres -d "${database}") 2> "${error_file}" | gzip --best > "${dump_file}"
+    
+            last_rc=$?
+            # shellcheck disable=SC2086
+            if [ ${last_rc} -ne 0 ]; then
+                error "pg_dump to ${dump_file} returned an error ${last_rc}, check ${error_file}"
+                rc=100
+            else
+                rm -f "${error_file}"
+            fi
+            log "LOCAL_TASKS - stop ${dump_file}"
        done
     )
 }
@@ -314,11 +400,25 @@ dump_postgresql_filtered() {
     rm -rf "${dump_dir}"
     mkdir -p -m 700 "${dump_dir}"
 
+    error_file="${dump_dir}/pg-backup.err"
+    dump_file="${dump_dir}/pg-backup.tar"
+    log "LOCAL_TASKS - start ${dump_file}"
+
     ## example with all tables from MYBASE excepts TABLE1 and TABLE2
-    # pg_dump -p 5432 -h 127.0.0.1 -U USER --clean -F t --inserts -f "${dump_dir}/pg-backup.tar" -t 'TABLE1' -t 'TABLE2' MYBASE
+    # pg_dump -p 5432 -h 127.0.0.1 -U USER --clean -F t --inserts -f "${dump_file}" -t 'TABLE1' -t 'TABLE2' MYBASE 2> "${error_file}"
 
     ## example with only TABLE1 and TABLE2 from MYBASE
-    # pg_dump -p 5432 -h 127.0.0.1 -U USER --clean -F t --inserts -f "${dump_dir}/pg-backup.tar" -T 'TABLE1' -T 'TABLE2' MYBASE
+    # pg_dump -p 5432 -h 127.0.0.1 -U USER --clean -F t --inserts -f "${dump_file}" -T 'TABLE1' -T 'TABLE2' MYBASE 2> "${error_file}"
+
+    last_rc=$?
+    # shellcheck disable=SC2086
+    if [ ${last_rc} -ne 0 ]; then
+        error "pg_dump to ${dump_file} returned an error ${last_rc}, check ${error_file}"
+        rc=100
+    else
+        rm -f "${error_file}"
+    fi
+    log "LOCAL_TASKS - stop ${dump_file}"
 }
 # shellcheck disable=SC2317
 dump_redis() {
@@ -329,7 +429,19 @@ dump_redis() {
 
         if [ -f "${instance}/dump.rdb" ]; then
             mkdir -p -m 700 "${dump_dir}"
-            cp -a "${instance}/dump.rdb" "${dump_dir}/"
+            log "LOCAL_TASKS - start ${dump_dir}"
+
+            cp -a "${instance}/dump.rdb" "${dump_dir}/" 2> "${error_file}"
+
+            last_rc=$?
+            # shellcheck disable=SC2086
+            if [ ${last_rc} -ne 0 ]; then
+                error "cp ${instance}/dump.rdb to ${dump_dir} returned an error ${last_rc}, check ${error_file}"
+                rc=100
+            else
+                rm -f "${error_file}"
+            fi
+            log "LOCAL_TASKS - stop ${dump_dir}"
         fi
     done
 }
@@ -339,21 +451,49 @@ dump_mongodb() {
     ## > use admin
     ## > db.createUser( { user: "mongobackup", pwd: "PASS", roles: [ "backup", ] } )
 
-    dump_dir="${LOCAL_BACKUP_DIR}/mongodump/"
+    dump_dir="${LOCAL_BACKUP_DIR}/mongodump"
     rm -rf "${dump_dir}"
     mkdir -p -m 700 "${dump_dir}"
+
+    error_file="${dump_dir}.err"
+    log "LOCAL_TASKS - start ${dump_dir}"
+
     mongo_user=""
     mongo_password=""
 
-    mongodump --quiet -u ${mongo_user} -p${mongo_password} -o "${dump_dir}/"
+    mongodump -u "${mongo_user}" -p"${mongo_password}" -o "${dump_dir}/" 2> "${error_file}" > /dev/null
 
-    if [ $? -ne 0 ]; then
-      echo "Error with mongodump!"
+    last_rc=$?
+    # shellcheck disable=SC2086
+    if [ ${last_rc} -ne 0 ]; then
+        error "mongodump to ${dump_dir} returned an error ${last_rc}, check ${error_file}"
+        rc=100
+    else
+        rm -f "${error_file}"
     fi
+    log "LOCAL_TASKS - stop ${dump_dir}"
 }
 # shellcheck disable=SC2317
 dump_megacli_config() {
-    megacli -CfgSave -f "${LOCAL_BACKUP_DIR}/megacli_conf.dump" -a0 >/dev/null
+    dump_dir="${LOCAL_BACKUP_DIR}/megacli/"
+    rm -rf "${dump_dir}"
+    mkdir -p -m 700 "${dump_dir}"
+
+    dump_file="${dump_dir}/megacli.cfg"
+    error_file="${dump_dir}/megacli.err"
+    log "LOCAL_TASKS - start ${dump_file}"
+
+    megacli -CfgSave -f "${dump_file}" -a0 2> "${error_file}" > /dev/null
+
+    last_rc=$?
+    # shellcheck disable=SC2086
+    if [ ${last_rc} -ne 0 ]; then
+        error "megacli to ${dump_file} returned an error ${last_rc}, check ${error_file}"
+        rc=100
+    else
+        rm -f "${error_file}"
+    fi
+    log "LOCAL_TASKS - stop ${dump_file}"
 }
 # shellcheck disable=SC2317
 dump_traceroute() {
@@ -366,14 +506,24 @@ dump_traceroute() {
     mtr_bin=$(command -v mtr)
     if [ -n "${network_targets}" ] && [ -n "${mtr_bin}" ]; then
         for addr in ${network_targets}; do
-            ${mtr_bin} -r "${addr}" > "${dump_dir}/mtr-${addr}"
+            dump_file="${dump_dir}/mtr-${addr}"
+            log "LOCAL_TASKS - start ${dump_file}"
+
+            ${mtr_bin} -r "${addr}" > "${dump_file}"
+
+            log "LOCAL_TASKS - stop ${dump_file}"
         done
     fi
 
     traceroute_bin=$(command -v traceroute)
     if [ -n "${network_targets}" ] && [ -n "${traceroute_bin}" ]; then
         for addr in ${network_targets}; do
-            ${traceroute_bin} -n "${addr}" > "${dump_dir}/traceroute-${addr}" 2>&1
+            dump_file="${dump_dir}/traceroute-${addr}"
+            log "LOCAL_TASKS - start ${dump_file}"
+
+            ${traceroute_bin} -n "${addr}" > "${dump_file}" 2>&1
+
+            log "LOCAL_TASKS - stop ${dump_file}"
         done
     fi
 }
@@ -384,6 +534,8 @@ dump_server_state() {
     # Do not create the directory
     # mkdir -p -m 700 "${dump_dir}"
 
+    log "LOCAL_TASKS - start ${dump_dir}"
+
     dump_server_state_bin=$(command -v dump-server-state)
     if [ -z "${dump_server_state_bin}" ]; then
         error "dump-server-state is missing"
@@ -392,19 +544,22 @@ dump_server_state() {
         if [ "${SYSTEM}" = "linux" ]; then
             ${dump_server_state_bin} --all --dump-dir "${dump_dir}"
             last_rc=$?
+            # shellcheck disable=SC2086
             if [ ${last_rc} -ne 0 ]; then
                 error "dump-server-state returned an error ${last_rc}, check ${dump_dir}"
-                rc=1
+                rc=100
             fi
         else
             ${dump_server_state_bin} --all --dump-dir "${dump_dir}"
             last_rc=$?
+            # shellcheck disable=SC2086
             if [ ${last_rc} -ne 0 ]; then
                 error "dump-server-state returned an error ${last_rc}, check ${dump_dir}"
-                rc=1
+                rc=100
             fi
         fi
     fi
+    log "LOCAL_TASKS - stop ${dump_dir}"
 }
 # shellcheck disable=SC2317
 dump_rabbitmq() {
@@ -412,7 +567,21 @@ dump_rabbitmq() {
     rm -rf "${dump_dir}"
     mkdir -p -m 700 "${dump_dir}"
 
-    rabbitmqadmin export "${dump_dir}/config" >> "${LOGFILE}"
+    error_file="${dump_dir}.err"
+    dump_file="${dump_dir}/config"
+    log "LOCAL_TASKS - start ${dump_file}"
+
+    rabbitmqadmin export "${dump_file}" 2> "${error_file}" >> "${LOGFILE}"
+
+    last_rc=$?
+    # shellcheck disable=SC2086
+    if [ ${last_rc} -ne 0 ]; then
+        error "pg_dump to ${dump_file} returned an error ${last_rc}, check ${error_file}"
+        rc=100
+    else
+        rm -f "${error_file}"
+    fi
+    log "LOCAL_TASKS - stop ${dump_file}"
 }
 # shellcheck disable=SC2317
 dump_facl() {
@@ -420,13 +589,19 @@ dump_facl() {
     rm -rf "${dump_dir}"
     mkdir -p -m 700 "${dump_dir}"
 
+    log "LOCAL_TASKS - start ${dump_dir}"
+
     getfacl -R /etc  > "${dump_dir}/etc.txt"
     getfacl -R /home > "${dump_dir}/home.txt"
     getfacl -R /usr  > "${dump_dir}/usr.txt"
     getfacl -R /var  > "${dump_dir}/var.txt"
+
+    log "LOCAL_TASKS - stop ${dump_dir}"
 }
 # shellcheck disable=SC2317
 dump_elasticsearch_snapshot() {
+    log "LOCAL_TASKS - start dump_elasticsearch_snapshot"
+
     ## Take a snapshot as a backup.
     ## Warning: You need to have a path.repo configured.
     ## See: https://wiki.evolix.org/HowtoElasticsearch#snapshots-et-sauvegardes
@@ -450,6 +625,8 @@ dump_elasticsearch_snapshot() {
     # done
     # date=$(/bin/date +%F)
     # curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot_${date}?wait_for_completion=true" >> "${LOGFILE}"
+
+    log "LOCAL_TASKS - stop dump_elasticsearch_snapshot"
 }
 
 local_tasks() {
@@ -510,6 +687,13 @@ local_tasks() {
 
     ## Dump file access control lists
     # dump_facl
+
+    # Remove previous error files
+    for error_file in $(find "${LOCAL_BACKUP_DIR}/" -type f -name '*.err' -print); do
+        printf "### Content of %s ###\n" "${error_file}" >&2
+        cat "${error_file}" >&2
+        printf "########################################\n" >&2
+    done
 
     log "STOP LOCAL_TASKS"
 }
