@@ -14,8 +14,9 @@
 #
 # Licence: AGPLv3
 
-######################################################################
-# To configure the script:
+VERSION="22.12"
+
+##### CONFIGURATION ###################################################
 #
 # 1. Set the following MAIL and SERVERS variables.
 # 2. Customize the RSYNC_INCLUDES and RSYNC_EXCLUDES variables.
@@ -24,12 +25,10 @@
 # Some local tasks are configurable.
 # If you enable them, have a look at their implementation.
 #
+# Some additional configuration variable can be customized
+# at the end of the script, before invoking the main() function.
+#
 #######################################################################
-
-
-##### Configuration ###################################################
-
-VERSION="22.12"
 
 # email adress for notifications
 MAIL=jdoe@example.com
@@ -37,43 +36,13 @@ MAIL=jdoe@example.com
 # list of hosts (hostname or IP) and SSH port for Rsync
 SERVERS="node0.backup.example.com:2XXX node1.backup.example.com:2XXX"
 
-# explicit PATH
-PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/sbin:/usr/local/bin
-
-# Should we fallback on other servers when the first one is unreachable?
-SERVERS_FALLBACK=${SERVERS_FALLBACK:-1}
-
-# timeout (in seconds) for SSH connections
-SSH_CONNECT_TIMEOUT=${SSH_CONNECT_TIMEOUT:-90}
-
 # We use /home/backup : feel free to use your own dir
 LOCAL_BACKUP_DIR="/home/backup"
-
-# You can set "linux" or "bsd" manually or let it choose automatically
-SYSTEM=$(uname | tr '[:upper:]' '[:lower:]')
-
-# Store pid in a file named after this program's name
-PROGNAME=$(basename "$0")
-PIDFILE="/var/run/${PROGNAME}.pid"
-
-# Customize the log path if you have multiple scripts and with separate logs
-LOGFILE="/var/log/evobackup.log"
-
-# Full Rsync log file, reset each time
-RSYNC_LOGFILE="/var/log/${PROGNAME}.rsync.log"
-# Rsync stats only, reset each time
-RSYNC_STATSFILE="/var/log/${PROGNAME}.rsync-stats.log"
-
-HOSTNAME=$(hostname)
-
-DATE_FORMAT="%Y-%m-%d %H:%M:%S"
 
 # Enable/disable local tasks (default: enabled)
 : "${LOCAL_TASKS:=1}"
 # Enable/disable sync tasks (default: enabled)
 : "${SYNC_TASKS:=1}"
-
-CANARY_FILE="/zzz_evobackup_canary"
 
 # Source paths can be customized
 # Empty lines, and lines containing # or ; are ignored
@@ -139,13 +108,19 @@ lxc/*/rootfs/var/tmp
 
 ##### FUNCTIONS #######################################################
 
+# Execute all local tasks: database dumps, system state dump…
 local_tasks() {
     log "START LOCAL_TASKS"
 
     # Remove previous error files
     find "${LOCAL_BACKUP_DIR}/" -type f -name '*.err' -delete
 
-    # You can comment or uncomment sections below to customize the backup
+    ###################################################################
+    # You can enable/disable local tasks
+    # by (un)commenting calls to "dump_XXX" functions.
+    #
+    # You can also add your own functions and call them from here.
+    ###################################################################
 
     ## OpenLDAP
     # dump_ldap
@@ -198,21 +173,26 @@ local_tasks() {
     ## Dump file access control lists
     # dump_facl
 
-    # Output error files content, if any
-    error_files=$(find "${LOCAL_BACKUP_DIR}/" -type f -name '*.err')
-    for error_file in ${error_files}; do
-        error_file_size=$(stat -c "%s" "${error_file}")
-        # shellcheck disable=SC2086
-        if [ ${error_file_size} -gt 0 ]; then
-            printf "### Content of %s ###\n" "${error_file}" >&2
-            cat "${error_file}" >&2
-            printf "########################################\n" >&2
-        fi
-    done
+    ###################################################################
+
+    print_error_files_content
 
     log "STOP LOCAL_TASKS"
 }
 
+# Output error files content, if any
+print_error_files_content() {
+    error_files=$(find "${LOCAL_BACKUP_DIR}/" -type f -name '*.err')
+    for error_file in ${error_files}; do
+        error_file_size=$(stat -c "%s" "${error_file}")
+
+        # shellcheck disable=SC2086
+        if [ ${error_file_size} -gt 0 ]; then
+            printf "### cat %s ###\n" "${error_file}" >&2
+            cat "${error_file}" >&2
+        fi
+    done
+}
 # shellcheck disable=SC2317
 mysql_list_databases() {
     port=${1:-"3306"}
@@ -1008,10 +988,39 @@ set -o pipefail
 # Default return-code (0 == succes)
 rc=0
 
-### Possible error codes
+# Possible error codes
 E_NOSRVAVAIL=21 # No server is available
 E_SYNCFAILED=20 # Faild sync task
 E_DUMPFAILED=10 # Faild dump task
+
+# explicit PATH
+PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/sbin:/usr/local/bin
+
+# You can set "linux" or "bsd" manually or let it choose automatically
+SYSTEM=$(uname | tr '[:upper:]' '[:lower:]')
+
+# Hostname reported in the mail subject
+HOSTNAME=$(hostname)
+
+# Store pid in a file named after this program's name
+PROGNAME=$(basename "$0")
+PIDFILE="/var/run/${PROGNAME}.pid"
+
+# Customize the log path if you want multiple scripts to have separate log files
+LOGFILE="/var/log/evobackup.log"
+# Rsync complete log file for the current run
+RSYNC_LOGFILE="/var/log/${PROGNAME}.rsync.log"
+# Rsync stats for the current run
+RSYNC_STATSFILE="/var/log/${PROGNAME}.rsync-stats.log"
+# Canary file to update before executing tasks
+CANARY_FILE="/zzz_evobackup_canary"
+
+DATE_FORMAT="%Y-%m-%d %H:%M:%S"
+
+# Should we fallback on other servers when the first one is unreachable?
+SERVERS_FALLBACK=${SERVERS_FALLBACK:-1}
+# timeout (in seconds) for SSH connections
+SSH_CONNECT_TIMEOUT=${SSH_CONNECT_TIMEOUT:-90}
 
 # execute main function
 main
