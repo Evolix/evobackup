@@ -227,7 +227,7 @@ dump_ldap() {
     slapcat -n 1 -l "${dump_dir}/data.bak"
     slapcat      -l "${dump_dir}/ldap.bak"
 
-    log "LOCAL_TASKS - stop dump_ldap"
+    log "LOCAL_TASKS - stop  dump_ldap"
 }
 # shellcheck disable=SC2317
 dump_mysql_global() {
@@ -249,7 +249,7 @@ dump_mysql_global() {
     else
         rm -f "${error_file}"
     fi
-    log "LOCAL_TASKS - stop ${dump_file}"
+    log "LOCAL_TASKS - stop  ${dump_file}"
 }
 # shellcheck disable=SC2317
 dump_mysql_per_base() {
@@ -273,7 +273,7 @@ dump_mysql_per_base() {
         else
             rm -f "${error_file}"
         fi
-        log "LOCAL_TASKS - stop ${dump_file}"
+        log "LOCAL_TASKS - stop  ${dump_file}"
     done
 }
 # shellcheck disable=SC2317
@@ -297,7 +297,7 @@ dump_mysql_meta() {
     else
         rm -f "${error_file}"
     fi
-    log "LOCAL_TASKS - stop ${dump_file}"
+    log "LOCAL_TASKS - stop  ${dump_file}"
 
     ## Dump all variables
     error_file="${dump_dir}/variables.err"
@@ -314,7 +314,7 @@ dump_mysql_meta() {
     else
         rm -f "${error_file}"
     fi
-    log "LOCAL_TASKS - stop ${dump_file}"
+    log "LOCAL_TASKS - stop  ${dump_file}"
 
     ## Schema only (no data) for each databases
     databases=$(mysql_list_databases 3306)
@@ -333,7 +333,7 @@ dump_mysql_meta() {
         else
             rm -f "${error_file}"
         fi
-        log "LOCAL_TASKS - stop ${dump_file}"
+        log "LOCAL_TASKS - stop  ${dump_file}"
     done
 }
 # shellcheck disable=SC2317
@@ -358,7 +358,7 @@ dump_mysql_tabs() {
         else
             rm -f "${error_file}"
         fi
-        log "LOCAL_TASKS - stop ${dump_dir}"
+        log "LOCAL_TASKS - stop  ${dump_dir}"
     done
 }
 # shellcheck disable=SC2317
@@ -383,7 +383,7 @@ dump_mysql_hotcopy() {
         else
             rm -f "${error_file}"
         fi
-        log "LOCAL_TASKS - stop ${dump_dir}"
+        log "LOCAL_TASKS - stop  ${dump_dir}"
     done
 }
 # shellcheck disable=SC2317
@@ -411,7 +411,7 @@ dump_mysql_instances() {
         else
             rm -f "${error_file}"
         fi
-        log "LOCAL_TASKS - stop ${dump_file}"
+        log "LOCAL_TASKS - stop  ${dump_file}"
     done
 }
 # shellcheck disable=SC2317
@@ -435,7 +435,7 @@ dump_postgresql_global() {
         rm -f "${error_file}"
     fi
 
-    log "LOCAL_TASKS - stop ${dump_file}"
+    log "LOCAL_TASKS - stop  ${dump_file}"
 
     ## example with pg_dumpall and without compression
     ## WARNING: you need space in ~postgres
@@ -445,7 +445,7 @@ dump_postgresql_global() {
     # (su - postgres -c "pg_dumpall > ~/pg.dump.bak") 2> "${error_file}"
     # mv ~postgres/pg.dump.bak "${dump_file}"
     # 
-    # log "LOCAL_TASKS - stop ${dump_file}"
+    # log "LOCAL_TASKS - stop  ${dump_file}"
 }
 # shellcheck disable=SC2317
 dump_postgresql_per_base() {
@@ -471,7 +471,7 @@ dump_postgresql_per_base() {
             else
                 rm -f "${error_file}"
             fi
-            log "LOCAL_TASKS - stop ${dump_file}"
+            log "LOCAL_TASKS - stop  ${dump_file}"
        done
     )
 }
@@ -499,7 +499,7 @@ dump_postgresql_filtered() {
     else
         rm -f "${error_file}"
     fi
-    log "LOCAL_TASKS - stop ${dump_file}"
+    log "LOCAL_TASKS - stop  ${dump_file}"
 }
 # shellcheck disable=SC2317
 dump_redis() {
@@ -522,7 +522,7 @@ dump_redis() {
             else
                 rm -f "${error_file}"
             fi
-            log "LOCAL_TASKS - stop ${dump_dir}"
+            log "LOCAL_TASKS - stop  ${dump_dir}"
         fi
     done
 }
@@ -552,7 +552,7 @@ dump_mongodb() {
     else
         rm -f "${error_file}"
     fi
-    log "LOCAL_TASKS - stop ${dump_dir}"
+    log "LOCAL_TASKS - stop  ${dump_dir}"
 }
 # shellcheck disable=SC2317
 dump_megacli_config() {
@@ -574,7 +574,7 @@ dump_megacli_config() {
     else
         rm -f "${error_file}"
     fi
-    log "LOCAL_TASKS - stop ${dump_file}"
+    log "LOCAL_TASKS - stop  ${dump_file}"
 }
 # shellcheck disable=SC2317
 dump_traceroute() {
@@ -592,7 +592,7 @@ dump_traceroute() {
 
             ${mtr_bin} -r "${addr}" > "${dump_file}"
 
-            log "LOCAL_TASKS - stop ${dump_file}"
+            log "LOCAL_TASKS - stop  ${dump_file}"
         done
     fi
 
@@ -604,7 +604,7 @@ dump_traceroute() {
 
             ${traceroute_bin} -n "${addr}" > "${dump_file}" 2>&1
 
-            log "LOCAL_TASKS - stop ${dump_file}"
+            log "LOCAL_TASKS - stop  ${dump_file}"
         done
     fi
 }
@@ -640,7 +640,7 @@ dump_server_state() {
             fi
         fi
     fi
-    log "LOCAL_TASKS - stop ${dump_dir}"
+    log "LOCAL_TASKS - stop  ${dump_dir}"
 }
 # shellcheck disable=SC2317
 dump_rabbitmq() {
@@ -662,7 +662,7 @@ dump_rabbitmq() {
     else
         rm -f "${error_file}"
     fi
-    log "LOCAL_TASKS - stop ${dump_file}"
+    log "LOCAL_TASKS - stop  ${dump_file}"
 }
 # shellcheck disable=SC2317
 dump_facl() {
@@ -677,7 +677,7 @@ dump_facl() {
     getfacl -R /usr  > "${dump_dir}/usr.txt"
     getfacl -R /var  > "${dump_dir}/var.txt"
 
-    log "LOCAL_TASKS - stop ${dump_dir}"
+    log "LOCAL_TASKS - stop  ${dump_dir}"
 }
 # shellcheck disable=SC2317
 dump_elasticsearch_snapshot() {
@@ -707,7 +707,7 @@ dump_elasticsearch_snapshot() {
     # date=$(/bin/date +%F)
     # curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot_${date}?wait_for_completion=true" >> "${LOGFILE}"
 
-    log "LOCAL_TASKS - stop dump_elasticsearch_snapshot"
+    log "LOCAL_TASKS - stop  dump_elasticsearch_snapshot"
 }
 
 build_rsync_main_cmd() {
