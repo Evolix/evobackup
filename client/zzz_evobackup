@@ -61,6 +61,7 @@ LOGFILE="/var/log/evobackup.log"
 
 # Full Rsync log file, reset each time
 RSYNC_LOGFILE="/var/log/${PROGNAME}.rsync.log"
+# Rsync stats only, reset each time
 RSYNC_STATSFILE="/var/log/${PROGNAME}.rsync-stats.log"
 
 HOSTNAME=$(hostname)
