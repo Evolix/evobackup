@@ -236,7 +236,7 @@ dump_mysql_global() {
     mkdir -p -m 700 "${dump_dir}"
 
     error_file="${dump_dir}/mysql.bak.err"
-    dump_file="${dump_dir}/mysql.bak.err"
+    dump_file="${dump_dir}/mysql.bak.gz"
     log "LOCAL_TASKS - start ${dump_file}"
 
     mysqldump --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 --opt --all-databases --force --events --hex-blob 2> "${error_file}" | gzip --best > "${dump_file}"
