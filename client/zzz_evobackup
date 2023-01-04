@@ -13,8 +13,19 @@
 #          and others.
 #
 # Licence: AGPLv3
+
+######################################################################
+# To configure the script:
 #
-# /!\ DON'T FORGET TO SET "MAIL" and "SERVERS" VARIABLES
+# 1. Set the following MAIL and SERVERS variables.
+# 2. Customize the RSYNC_INCLUDES and RSYNC_EXCLUDES variables.
+# 3. Enable or disable local tasks inside the local_tasks() function.
+#
+# Some local tasks are configurable.
+# If you enable them, have a look at their implementation.
+#
+#######################################################################
+
 
 ##### Configuration ###################################################
 
