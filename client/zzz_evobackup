@@ -217,7 +217,7 @@ mysql_list_databases() {
 # shellcheck disable=SC2317
 dump_ldap() {
     ## OpenLDAP : example with slapcat
-    dump_dir="${LOCAL_BACKUP_DIR}/ldap/"
+    dump_dir="${LOCAL_BACKUP_DIR}/ldap"
     rm -rf "${dump_dir}"
     mkdir -p -m 700 "${dump_dir}"
 
@@ -231,7 +231,7 @@ dump_ldap() {
 }
 # shellcheck disable=SC2317
 dump_mysql_global() {
-    dump_dir="${LOCAL_BACKUP_DIR}/mysql-global/"
+    dump_dir="${LOCAL_BACKUP_DIR}/mysql-global"
     rm -rf "${dump_dir}"
     mkdir -p -m 700 "${dump_dir}"
 
@@ -253,7 +253,7 @@ dump_mysql_global() {
 }
 # shellcheck disable=SC2317
 dump_mysql_per_base() {
-    dump_dir="${LOCAL_BACKUP_DIR}/mysql-per-base/"
+    dump_dir="${LOCAL_BACKUP_DIR}/mysql-per-base"
     rm -rf "${dump_dir}"
     mkdir -p -m 700 "${dump_dir}"
 
@@ -278,7 +278,7 @@ dump_mysql_per_base() {
 }
 # shellcheck disable=SC2317
 dump_mysql_meta() {
-    dump_dir="${LOCAL_BACKUP_DIR}/mysql-meta/"
+    dump_dir="${LOCAL_BACKUP_DIR}/mysql-meta"
     rm -rf "${dump_dir}"
     mkdir -p -m 700 "${dump_dir}"
 
@@ -388,7 +388,7 @@ dump_mysql_hotcopy() {
 }
 # shellcheck disable=SC2317
 dump_mysql_instances() {
-    dump_dir="${LOCAL_BACKUP_DIR}/mysql-instances/"
+    dump_dir="${LOCAL_BACKUP_DIR}/mysql-instances"
     rm -rf "${dump_dir}"
     mkdir -p -m 700 "${dump_dir}"
 
@@ -416,7 +416,7 @@ dump_mysql_instances() {
 }
 # shellcheck disable=SC2317
 dump_postgresql_global() {
-    dump_dir="${LOCAL_BACKUP_DIR}/postgresql-global/"
+    dump_dir="${LOCAL_BACKUP_DIR}/postgresql-global"
     rm -rf "${dump_dir}"
     mkdir -p -m 700 "${dump_dir}"
 
@@ -449,7 +449,7 @@ dump_postgresql_global() {
 }
 # shellcheck disable=SC2317
 dump_postgresql_per_base() {
-    dump_dir="${LOCAL_BACKUP_DIR}/postgresql-per-base/"
+    dump_dir="${LOCAL_BACKUP_DIR}/postgresql-per-base"
     rm -rf "${dump_dir}"
     mkdir -p -m 700 "${dump_dir}"
 
@@ -477,7 +477,7 @@ dump_postgresql_per_base() {
 }
 # shellcheck disable=SC2317
 dump_postgresql_filtered() {
-    dump_dir="${LOCAL_BACKUP_DIR}/postgresql-filtered/"
+    dump_dir="${LOCAL_BACKUP_DIR}/postgresql-filtered"
     rm -rf "${dump_dir}"
     mkdir -p -m 700 "${dump_dir}"
 
@@ -505,7 +505,7 @@ dump_postgresql_filtered() {
 dump_redis() {
     for instance in $(find /var/lib/ -mindepth 1 -maxdepth 1 -type d -name 'redis*'); do
         name=$(basename "${instance}")
-        dump_dir="${LOCAL_BACKUP_DIR}/${name}/"
+        dump_dir="${LOCAL_BACKUP_DIR}/${name}"
         rm -rf "${dump_dir}"
 
         if [ -f "${instance}/dump.rdb" ]; then
@@ -556,7 +556,7 @@ dump_mongodb() {
 }
 # shellcheck disable=SC2317
 dump_megacli_config() {
-    dump_dir="${LOCAL_BACKUP_DIR}/megacli/"
+    dump_dir="${LOCAL_BACKUP_DIR}/megacli"
     rm -rf "${dump_dir}"
     mkdir -p -m 700 "${dump_dir}"
 
@@ -578,7 +578,7 @@ dump_megacli_config() {
 }
 # shellcheck disable=SC2317
 dump_traceroute() {
-    dump_dir="${LOCAL_BACKUP_DIR}/traceroute/"
+    dump_dir="${LOCAL_BACKUP_DIR}/traceroute"
     rm -rf "${dump_dir}"
     mkdir -p -m 700 "${dump_dir}"
 
@@ -644,7 +644,7 @@ dump_server_state() {
 }
 # shellcheck disable=SC2317
 dump_rabbitmq() {
-    dump_dir="${LOCAL_BACKUP_DIR}/rabbitmq/"
+    dump_dir="${LOCAL_BACKUP_DIR}/rabbitmq"
     rm -rf "${dump_dir}"
     mkdir -p -m 700 "${dump_dir}"
 
@@ -666,7 +666,7 @@ dump_rabbitmq() {
 }
 # shellcheck disable=SC2317
 dump_facl() {
-    dump_dir="${LOCAL_BACKUP_DIR}/facl/"
+    dump_dir="${LOCAL_BACKUP_DIR}/facl"
     rm -rf "${dump_dir}"
     mkdir -p -m 700 "${dump_dir}"
 
