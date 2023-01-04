@@ -695,77 +695,6 @@ dump_elasticsearch_snapshot() {
     log "LOCAL_TASKS - stop  dump_elasticsearch_snapshot"
 }
 
-build_rsync_main_cmd() {
-    ###################################################################
-    # /!\ WARNING /!\ WARNING /!\ WARNING /!\ WARNING /!\ WARNING /!\ #
-    ###################################################################
-    # DO NOT USE COMMENTS in rsync lines                              #
-    # DO NOT ADD WHITESPACES AFTER \ in rsync lines                   #
-    # It breaks the command and destroys data                         #
-    # You should not modify this, unless you are really REALLY sure   #
-    ###################################################################
-
-    # Create a temp file for excludes and includes
-    includes_file="$(mktemp --tmpdir "${PROGNAME}.includes.XXXXXX")"
-    excludes_file="$(mktemp --tmpdir "${PROGNAME}.excludes.XXXXXX")"
-    # … and add them to the list of files to delete at exit
-    temp_files="${temp_files} ${includes_file} ${excludes_file}"
-
-    # Store includes/excludes in files
-    # without blank lines of comments (# or ;)
-    echo "${RSYNC_INCLUDES}" | sed -e 's/\s*\(#\|;\).*//; /^\s*$/d' > "${includes_file}"
-    echo "${RSYNC_EXCLUDES}" | sed -e 's/\s*\(#\|;\).*//; /^\s*$/d' > "${excludes_file}"
-
-    # Rsync command
-    cmd="$(command -v rsync)"
-
-    # Rsync main options
-    cmd="${cmd} --archive"
-    cmd="${cmd} --itemize-changes"
-    cmd="${cmd} --quiet"
-    cmd="${cmd} --stats"
-    cmd="${cmd} --human-readable"
-    cmd="${cmd} --relative"
-    cmd="${cmd} --partial"
-    cmd="${cmd} --delete"
-    cmd="${cmd} --delete-excluded"
-    cmd="${cmd} --force"
-    cmd="${cmd} --ignore-errors"
-    cmd="${cmd} --log-file=${RSYNC_LOGFILE}"
-    cmd="${cmd} --rsh='ssh -p ${SSH_PORT} -o \"ConnectTimeout ${SSH_CONNECT_TIMEOUT}\"'"
-
-    # Rsync excludes
-    while read -r line ; do
-        cmd="${cmd} --exclude ${line}"
-    done < "${excludes_file}"
-
-    # Rsync local sources
-    cmd="${cmd} ${default_includes}"
-    while read -r line ; do
-        cmd="${cmd} ${line}"
-    done < "${includes_file}"
-
-    # Rsync remote destination
-    cmd="${cmd} root@${SSH_SERVER}:/var/backup/"
-
-    # output final command
-    echo "${cmd}"
-}
-build_rsync_report_cmd() {
-    # Rsync command
-    cmd="$(command -v rsync)"
-    # Rsync options
-    cmd="${cmd} --rsh='ssh -p ${SSH_PORT} -o \"ConnectTimeout ${SSH_CONNECT_TIMEOUT}\"'"
-    # Rsync local source
-    cmd="${cmd} ${CANARY_FILE}"
-    cmd="${cmd} ${RSYNC_STATSFILE}"
-    # Rsync remote destination
-    cmd="${cmd} root@${SSH_SERVER}:/var/backup/"
-
-    # output final command
-    echo "${cmd}"
-}
-
 # Call test_server with "HOST:PORT" string
 # It will return with 0 if the server is reachable.
 # It will return with 1 and a message on stderr if not.
@@ -860,14 +789,55 @@ sync_tasks() {
         printf "" > "${RSYNC_LOGFILE}"
     fi
 
+    # Create a temp file for excludes and includes
+    includes_file="$(mktemp --tmpdir "${PROGNAME}.includes.XXXXXX")"
+    excludes_file="$(mktemp --tmpdir "${PROGNAME}.excludes.XXXXXX")"
+    # … and add them to the list of files to delete at exit
+    temp_files="${temp_files} ${includes_file} ${excludes_file}"
+
+    # Store includes/excludes in files
+    # without blank lines of comments (# or ;)
+    echo "${RSYNC_INCLUDES}" | sed -e 's/\s*\(#\|;\).*//; /^\s*$/d' > "${includes_file}"
+    echo "${RSYNC_EXCLUDES}" | sed -e 's/\s*\(#\|;\).*//; /^\s*$/d' > "${excludes_file}"
+
+    rsync_bin=$(command -v rsync)
     # Build the final Rsync command
-    rsync_main_cmd=$(build_rsync_main_cmd)
+
+    # Rsync main options
+    rsync_main_args=()
+    rsync_main_args+=(--archive)
+    rsync_main_args+=(--itemize-changes)
+    rsync_main_args+=(--quiet)
+    rsync_main_args+=(--stats)
+    rsync_main_args+=(--human-readable)
+    rsync_main_args+=(--relative)
+    rsync_main_args+=(--partial)
+    rsync_main_args+=(--delete)
+    rsync_main_args+=(--delete-excluded)
+    rsync_main_args+=(--force)
+    rsync_main_args+=(--ignore-errors)
+    rsync_main_args+=(--log-file "${RSYNC_LOGFILE}")
+    rsync_main_args+=(--rsh "ssh -p ${SSH_PORT} -o 'ConnectTimeout ${SSH_CONNECT_TIMEOUT}'")
+
+    # Rsync excludes
+    while read -r line ; do
+        rsync_main_args+=(--exclude "${line}")
+    done < "${excludes_file}"
+
+    # Rsync local sources
+    rsync_main_args+=(${default_includes})
+    while read -r line ; do
+        rsync_main_args+=("${line}")
+    done < "${includes_file}"
+
+    # Rsync remote destination
+    rsync_main_args+=("root@${SSH_SERVER}:/var/backup/")
 
     # … log it
-    log "SYNC_TASKS - Rsync main command : ${rsync_main_cmd}"
+    log "SYNC_TASKS - Rsync main command : ${rsync_bin} ${rsync_main_args[*]}"
 
     # … execute it
-    eval "${rsync_main_cmd}"
+    ${rsync_bin} "${rsync_main_args[@]}"
 
     rsync_main_rc=$?
 
@@ -881,13 +851,20 @@ sync_tasks() {
         rc=${E_SYNCFAILED}
     else
         # Build the canary Rsync command
-        rsync_report_cmd=$(build_rsync_report_cmd)
+        rsync_report_args=()
+        # Rsync options
+        rsync_report_args+=(--rsh "ssh -p ${SSH_PORT} -o 'ConnectTimeout ${SSH_CONNECT_TIMEOUT}'")
+        # Rsync local source
+        rsync_report_args+=("${CANARY_FILE}")
+        rsync_report_args+=("${RSYNC_STATSFILE}")
+        # Rsync remote destination
+        rsync_report_args+=("root@${SSH_SERVER}:/var/backup/")
 
         # … log it
-        log "SYNC_TASKS - Rsync report command : ${rsync_report_cmd}"
+        log "SYNC_TASKS - Rsync report command : ${rsync_bin} ${rsync_report_args[*]}"
 
         # … execute it
-        eval "${rsync_report_cmd}"
+        ${rsync_bin} "${rsync_report_args[@]}"
     fi
 
     log "STOP SYNC_TASKS - server=${server}"
@@ -909,7 +886,12 @@ error() {
         "$(/bin/date +"${DATE_FORMAT}")" "${PROGNAME}" "${pid}" "${msg}" \
         >&2
 }
-
+# Remove all temporary file created during the execution
+# shellcheck disable=SC2317
+clean_temp_files() {
+    # shellcheck disable=SC2086
+    rm -f ${temp_files}
+}
 main() {
     START_EPOCH=$(/bin/date +%s)
     log "START GLOBAL - VERSION=${VERSION} LOCAL_TASKS=${LOCAL_TASKS} SYNC_TASKS=${SYNC_TASKS}"
@@ -945,8 +927,7 @@ main() {
     # Any file added to the list will also be deleted at exit
     temp_files="${PIDFILE}"
 
-    # shellcheck disable=SC2064
-    trap "rm -f ${temp_files}" EXIT
+    trap clean_temp_files EXIT
 
     # Update canary to keep track of each run
     update-evobackup-canary --who "${PROGNAME}" --file "${CANARY_FILE}"
