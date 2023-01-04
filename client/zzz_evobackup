@@ -769,13 +769,14 @@ build_rsync_main_cmd() {
     # output final command
     echo "${cmd}"
 }
-build_rsync_canary_cmd() {
+build_rsync_report_cmd() {
     # Rsync command
     cmd="$(command -v rsync)"
     # Rsync options
     cmd="${cmd} --rsh='ssh -p ${SSH_PORT} -o \"ConnectTimeout ${SSH_CONNECT_TIMEOUT}\"'"
     # Rsync local source
     cmd="${cmd} ${CANARY_FILE}"
+    cmd="${cmd} ${RSYNC_LOGFILE}"
     # Rsync remote destination
     cmd="${cmd} root@${SSH_SERVER}:/var/backup/"
 
@@ -896,13 +897,13 @@ sync_tasks() {
         rc=${E_SYNCFAILED}
     else
         # Build the canary Rsync command
-        rsync_canary_cmd=$(build_rsync_canary_cmd)
+        rsync_report_cmd=$(build_rsync_report_cmd)
 
         # … log it
-        log "SYNC_TASKS - Rsync canary command : ${rsync_canary_cmd}"
+        log "SYNC_TASKS - Rsync report command : ${rsync_report_cmd}"
 
         # … execute it
-        eval "${rsync_canary_cmd}"
+        eval "${rsync_report_cmd}"
     fi
 
     log "STOP SYNC_TASKS - server=${server}"
