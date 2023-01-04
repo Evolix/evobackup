@@ -200,6 +200,7 @@ local_tasks() {
     error_files=$(find "${LOCAL_BACKUP_DIR}/" -type f -name '*.err')
     for error_file in ${error_files}; do
         error_file_size=$(stat -c "%s" "${error_file}")
+        # shellcheck disable=SC2086
         if [ ${error_file_size} -gt 0 ]; then
             printf "### Content of %s ###\n" "${error_file}" >&2
             cat "${error_file}" >&2
@@ -752,7 +753,7 @@ build_rsync_main_cmd() {
     cmd="${cmd} --rsh='ssh -p ${SSH_PORT} -o \"ConnectTimeout ${SSH_CONNECT_TIMEOUT}\"'"
 
     # Rsync excludes
-    while read line ; do
+    while read -r line ; do
         cmd="${cmd} --exclude ${line}"
     done < "${excludes_file}"
 
