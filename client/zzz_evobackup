@@ -198,9 +198,11 @@ local_tasks() {
 
     # Remove previous error files
     for error_file in $(find "${LOCAL_BACKUP_DIR}/" -type f -name '*.err' -print); do
-        printf "### Content of %s ###\n" "${error_file}" >&2
-        cat "${error_file}" >&2
-        printf "########################################\n" >&2
+        if [ $(stat -c "%s" "${error_file}") -gt 0 ]; then
+            printf "### Content of %s ###\n" "${error_file}" >&2
+            cat "${error_file}" >&2
+            printf "########################################\n" >&2
+        fi
     done
 
     log "STOP LOCAL_TASKS"
