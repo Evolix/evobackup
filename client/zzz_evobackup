@@ -741,7 +741,7 @@ build_rsync_main_cmd() {
 
     # Rsync local sources
     cmd="${cmd} ${default_includes}"
-    while read line ; do
+    while read -r line ; do
         cmd="${cmd} ${line}"
     done < "${includes_file}"
 
