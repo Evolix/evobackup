@@ -61,6 +61,7 @@ LOGFILE="/var/log/evobackup.log"
 
 # Full Rsync log file, reset each time
 RSYNC_LOGFILE="/var/log/${PROGNAME}.rsync.log"
+RSYNC_STATSFILE="/var/log/${PROGNAME}.rsync-stats.log"
 
 HOSTNAME=$(hostname)
 
@@ -776,7 +777,7 @@ build_rsync_report_cmd() {
     cmd="${cmd} --rsh='ssh -p ${SSH_PORT} -o \"ConnectTimeout ${SSH_CONNECT_TIMEOUT}\"'"
     # Rsync local source
     cmd="${cmd} ${CANARY_FILE}"
-    cmd="${cmd} ${RSYNC_LOGFILE}"
+    cmd="${cmd} ${RSYNC_STATSFILE}"
     # Rsync remote destination
     cmd="${cmd} root@${SSH_SERVER}:/var/backup/"
 
@@ -891,6 +892,8 @@ sync_tasks() {
 
     # Copy last lines of rsync log to the main log
     tail -n 30 "${RSYNC_LOGFILE}" >> "${LOGFILE}"
+    # Copy Rsync stats to special file
+    tail -n 30 "${RSYNC_LOGFILE}" | grep --invert-match --extended-regexp " [\<\>ch\.\*]\S{10} " > "${RSYNC_STATSFILE}"
 
     if [ ${rsync_main_rc} -ne 0 ]; then
         error "rsync returned an error ${rsync_main_rc}, check ${LOGFILE}"
