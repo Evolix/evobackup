@@ -127,26 +127,26 @@ local_tasks() {
 
     ## MySQL
 
-    ### example with global and compressed mysqldump
-    # dump_mysql_global
-    ### example with compressed SQL dump (with data) for each databases
-    # dump_mysql_per_base
     ### meta-data (grants, variables, schema…)
     # dump_mysql_meta
-    ### example with two dumps for each table (.sql/.txt) for all databases
-    # dump_mysql_tabs
-    ### example with mysqlhotcopy
-    # dump_mysql_hotcopy
-    ### example for multiples MySQL instances
+    ### global and compressed mysqldump
+    # dump_mysql_global
+    ### compressed SQL dump (with data) for each databases separately
+    # dump_mysql_per_base
+    ### global dump for multiple MySQL instances
     # dump_mysql_instances
+    ### two dumps for each table (.sql/.txt) for all databases
+    # dump_mysql_tabs
+    ### mysqlhotcopy
+    # dump_mysql_hotcopy
 
     ## PostgreSQL
 
-    ### example with global dump
+    ### global dump
     # dump_postgresql_global
-    ### example with filtered tables ("only" or "except")
+    ### dump with filtered tables ("only" or "except")
     # dump_postgresql_filtered
-    ### example with compressed PostgreSQL dump for each databases
+    ### compressed dump for each databases separately
     # dump_postgresql_per_base
 
     ## MongoDB
@@ -197,7 +197,8 @@ print_error_files_content() {
 mysql_list_databases() {
     port=${1:-"3306"}
 
-    mysql --defaults-extra-file=/etc/mysql/debian.cnf -P "${port}" -e 'show databases' -s --skip-column-names | grep --extended-regexp --invert-match "^(Database|information_schema|performance_schema|sys)"
+    mysql --defaults-extra-file=/etc/mysql/debian.cnf -P "${port}" -e 'show databases' -s --skip-column-names \
+        | grep --extended-regexp --invert-match "^(Database|information_schema|performance_schema|sys)"
 }
 # shellcheck disable=SC2317
 dump_ldap() {
@@ -224,7 +225,8 @@ dump_mysql_global() {
     dump_file="${dump_dir}/mysql.bak.gz"
     log "LOCAL_TASKS - start ${dump_file}"
 
-    mysqldump --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 --opt --all-databases --force --events --hex-blob 2> "${error_file}" | gzip --best > "${dump_file}"
+    mysqldump --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 --opt --all-databases --force --events --hex-blob 2> "${error_file}" \
+        | gzip --best > "${dump_file}"
 
     last_rc=$?
     # shellcheck disable=SC2086
@@ -248,7 +250,8 @@ dump_mysql_per_base() {
         dump_file="${dump_dir}/${database}.sql.gz"
         log "LOCAL_TASKS - start ${dump_file}"
 
-        mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --events --hex-blob "${database}" 2> "${error_file}" | gzip --best > "${dump_file}"
+        mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --events --hex-blob "${database}" 2> "${error_file}" \
+            | gzip --best > "${dump_file}"
 
         last_rc=$?
         # shellcheck disable=SC2086
