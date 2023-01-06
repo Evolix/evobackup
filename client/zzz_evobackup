@@ -799,7 +799,8 @@ sync_tasks() {
     rsync_includes_file="$(mktemp --tmpdir "${PROGNAME}.rsync-includes.XXXXXX")"
     rsync_excludes_file="$(mktemp --tmpdir "${PROGNAME}.rsync-excludes.XXXXXX")"
     # … and add them to the list of files to delete at exit
-    temp_files="${temp_files} ${rsync_includes_file} ${rsync_excludes_file}"
+    temp_files+=("${rsync_includes_file}")
+    temp_files+=("${rsync_excludes_file}")
 
     # Store includes/excludes in files
     # without blank lines of comments (# or ;)
@@ -815,11 +816,11 @@ sync_tasks() {
     while read -r line ; do
         # … but exclude for mtree what will be excluded by Rsync
         mtree_excludes_file="$(mktemp --tmpdir "${PROGNAME}.mtree-excludes.XXXXXX")"
-        temp_files="${temp_files} ${mtree_excludes_file}"
+        temp_files+=("${mtree_excludes_file}")
         grep -E "^([^/]|${line})" "${rsync_excludes_file}" | sed -e "s|^${line}|.|" > "${mtree_excludes_file}"
 
         mtree_file="/var/log/evobackup.$(basename "${line}").mtree"
-        temp_files="${temp_files} ${mtree_file}"
+        temp_files+=("${mtree_file}")
 
         mtree -x -c -p "${line}" -X "${mtree_excludes_file}" > "${mtree_file}"
         mtree_files+=("${mtree_file}")
@@ -928,7 +929,7 @@ error() {
 # shellcheck disable=SC2317
 clean_temp_files() {
     # shellcheck disable=SC2086
-    rm -f ${temp_files}
+    rm -f "${temp_files[@]}"
 }
 main() {
     START_EPOCH=$(/bin/date +%s)
@@ -963,7 +964,7 @@ main() {
 
     # Initialize a list of files to delete at exit
     # Any file added to the list will also be deleted at exit
-    temp_files="${PIDFILE}"
+    temp_files=("${PIDFILE}")
 
     trap clean_temp_files EXIT
 
