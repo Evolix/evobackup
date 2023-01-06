@@ -805,8 +805,32 @@ sync_tasks() {
     # without blank lines of comments (# or ;)
     echo "${RSYNC_INCLUDES}" | sed -e 's/\s*\(#\|;\).*//; /^\s*$/d' > "${rsync_includes_file}"
     echo "${RSYNC_EXCLUDES}" | sed -e 's/\s*\(#\|;\).*//; /^\s*$/d' > "${rsync_excludes_file}"
-    echo "${RSYNC_INCLUDES}" | sed -e 's/\s*\(#\|;\).*//; /^\s*$/d' > "${includes_file}"
-    echo "${RSYNC_EXCLUDES}" | sed -e 's/\s*\(#\|;\).*//; /^\s*$/d' > "${excludes_file}"
+    
+    # Dump filesystem stats with mtree
+    log "SYNC_TASKS - start mtree"
+
+    mtree_files=()
+
+    # Loop over Rsync includes
+    while read -r line ; do
+        # … but exclude for mtree what will be excluded by Rsync
+        mtree_excludes_file="$(mktemp --tmpdir "${PROGNAME}.mtree-excludes.XXXXXX")"
+        temp_files="${temp_files} ${mtree_excludes_file}"
+        grep -E "^([^/]|${line})" "${rsync_excludes_file}" | sed -e "s|^${line}|.|" > "${mtree_excludes_file}"
+
+        mtree_file="/var/log/evobackup.$(basename "${line}").mtree"
+        temp_files="${temp_files} ${mtree_file}"
+
+        mtree -x -c -p "${line}" -X "${mtree_excludes_file}" > "${mtree_file}"
+        mtree_files+=("${mtree_file}")
+    done < "${rsync_includes_file}"
+
+    if [ "${#mtree_files[@]}" -le 0 ]; then
+        error "ERROR: mtree didn't produce any file"
+    fi
+
+    log "SYNC_TASKS - stop  mtree (files: ${mtree_files[*]})"
+
 
     rsync_bin=$(command -v rsync)
     # Build the final Rsync command
@@ -868,6 +892,9 @@ sync_tasks() {
         rsync_report_args+=(--rsh "ssh -p ${SSH_PORT} -o 'ConnectTimeout ${SSH_CONNECT_TIMEOUT}'")
         # Rsync local source
         rsync_report_args+=("${RSYNC_STATSFILE}")
+        if [ "${#mtree_files[@]}" -gt 0 ]; then
+            rsync_report_args+=("${mtree_files[@]}")
+        fi
         # Rsync remote destination
         rsync_report_args+=("root@${SSH_SERVER}:/var/log/")
 
