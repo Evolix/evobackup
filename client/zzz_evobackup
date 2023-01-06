@@ -780,9 +780,12 @@ sync_tasks() {
 
     # default paths, depending on system
     if [ "${SYSTEM}" = "linux" ]; then
-        default_includes="/bin /boot /lib /opt /sbin /usr"
+        rsync_default_includes=(/bin /boot /lib /opt /sbin /usr)
     else
-        default_includes="/bsd /bin /sbin /usr"
+        rsync_default_includes=(/bsd /bin /sbin /usr)
+    fi
+    if [ -f "${CANARY_FILE}" ]; then
+        rsync_default_includes+=("${CANARY_FILE}")
     fi
 
     # reset Rsync log file
@@ -793,13 +796,15 @@ sync_tasks() {
     fi
 
     # Create a temp file for excludes and includes
-    includes_file="$(mktemp --tmpdir "${PROGNAME}.includes.XXXXXX")"
-    excludes_file="$(mktemp --tmpdir "${PROGNAME}.excludes.XXXXXX")"
+    rsync_includes_file="$(mktemp --tmpdir "${PROGNAME}.rsync-includes.XXXXXX")"
+    rsync_excludes_file="$(mktemp --tmpdir "${PROGNAME}.rsync-excludes.XXXXXX")"
     # … and add them to the list of files to delete at exit
-    temp_files="${temp_files} ${includes_file} ${excludes_file}"
+    temp_files="${temp_files} ${rsync_includes_file} ${rsync_excludes_file}"
 
     # Store includes/excludes in files
     # without blank lines of comments (# or ;)
+    echo "${RSYNC_INCLUDES}" | sed -e 's/\s*\(#\|;\).*//; /^\s*$/d' > "${rsync_includes_file}"
+    echo "${RSYNC_EXCLUDES}" | sed -e 's/\s*\(#\|;\).*//; /^\s*$/d' > "${rsync_excludes_file}"
     echo "${RSYNC_INCLUDES}" | sed -e 's/\s*\(#\|;\).*//; /^\s*$/d' > "${includes_file}"
     echo "${RSYNC_EXCLUDES}" | sed -e 's/\s*\(#\|;\).*//; /^\s*$/d' > "${excludes_file}"
 
@@ -825,13 +830,16 @@ sync_tasks() {
     # Rsync excludes
     while read -r line ; do
         rsync_main_args+=(--exclude "${line}")
-    done < "${excludes_file}"
+    done < "${rsync_excludes_file}"
 
     # Rsync local sources
-    rsync_main_args+=(${default_includes})
+    # Start with default includes
+    # shellcheck disable=SC2206
+    rsync_main_args+=(${rsync_default_includes[@]})
+    # … and add custom includes
     while read -r line ; do
         rsync_main_args+=("${line}")
-    done < "${includes_file}"
+    done < "${rsync_includes_file}"
 
     # Rsync remote destination
     rsync_main_args+=("root@${SSH_SERVER}:/var/backup/")
@@ -849,19 +857,19 @@ sync_tasks() {
     # Copy Rsync stats to special file
     tail -n 30 "${RSYNC_LOGFILE}" | grep --invert-match --extended-regexp " [\<\>ch\.\*]\S{10} " > "${RSYNC_STATSFILE}"
 
-    if [ ${rsync_main_rc} -ne 0 ]; then
+    # We ignore rc=24 (vanished files)
+    if [ ${rsync_main_rc} -ne 0 ] && [ ${rsync_main_rc} -ne 24 ]; then
         error "rsync returned an error ${rsync_main_rc}, check ${LOGFILE}"
         rc=${E_SYNCFAILED}
     else
-        # Build the canary Rsync command
+        # Build the report Rsync command
         rsync_report_args=()
         # Rsync options
         rsync_report_args+=(--rsh "ssh -p ${SSH_PORT} -o 'ConnectTimeout ${SSH_CONNECT_TIMEOUT}'")
         # Rsync local source
-        rsync_report_args+=("${CANARY_FILE}")
         rsync_report_args+=("${RSYNC_STATSFILE}")
         # Rsync remote destination
-        rsync_report_args+=("root@${SSH_SERVER}:/var/backup/")
+        rsync_report_args+=("root@${SSH_SERVER}:/var/log/")
 
         # … log it
         log "SYNC_TASKS - Rsync report command : ${rsync_bin} ${rsync_report_args[*]}"
