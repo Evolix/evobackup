@@ -122,56 +122,76 @@ local_tasks() {
     # You can also add your own functions and call them from here.
     ###################################################################
 
-    ## OpenLDAP
-    # dump_ldap
+    ########## OpenLDAP ###############
 
-    ## MySQL
+    ### dump_ldap
 
-    ### meta-data (grants, variables, schema…)
-    # dump_mysql_meta
-    ### global and compressed mysqldump
-    # dump_mysql_global
-    ### compressed SQL dump (with data) for each databases separately
-    # dump_mysql_per_base
-    ### global dump for multiple MySQL instances
-    # dump_mysql_instances
-    ### two dumps for each table (.sql/.txt) for all databases
-    # dump_mysql_tabs
-    ### mysqlhotcopy
+    ########## MySQL ##################
+
+    # Dump all grants (permissions), config variables and schema of databases
+    ### dump_mysql_meta
+
+    # Dump all databases in a single compressed file
+    ### dump_mysql_global
+    
+    # Dump each database separately, in a compressed file
+    ### dump_mysql_per_base
+ 
+    # Dump multiples instances, each in a single compressed file
+    ### dump_mysql_instances
+
+    # Dump each table in schema/data files, for all databases
+    ### dump_mysql_tabs
+
+    # Run mysqlhotcopy for a specific database (must be configured)
     # dump_mysql_hotcopy
 
-    ## PostgreSQL
+    ########## PostgreSQL #############
 
-    ### global dump
-    # dump_postgresql_global
-    ### dump with filtered tables ("only" or "except")
-    # dump_postgresql_filtered
-    ### compressed dump for each databases separately
-    # dump_postgresql_per_base
+    # Dump all databases in a single file (compressed or not)
+    ### dump_postgresql_global
 
-    ## MongoDB
-    # dump_mongodb
+    # Dump a specific databse with only some tables, or all but some tables (must be configured)
+    ### dump_postgresql_filtered
 
-    ## Redis
-    # dump_redis
+    # Dump each database separately, in a compressed file
+    ### dump_postgresql_per_base
 
-    ## ElasticSearch
-    # dump_elasticsearch_snapshot
+    ########## MongoDB ################
+    
+    ### dump_mongodb
 
-    ## RabbitMQ config
-    # dump_rabbitmq
+    ########## Redis ##################
 
-    ## MegaCli config
-    # dump_megacli_config
+    # Copy data file for all instances
+    ### dump_redis
 
-    ## Dump network routes with mtr and traceroute (warning: could be long with aggressive firewalls)
+    ########## ElasticSearch ##########
+
+    # Trigger snapshots (must be configured)
+    ### dump_elasticsearch_snapshot
+
+    ########## RabbitMQ ###############
+
+    ### dump_rabbitmq
+
+    ########## MegaCli ################
+
+    # Copy RAID config
+    ### dump_megacli_config
+
+    ########## Network ################
+
+    # Dump network routes with mtr and traceroute (warning: could be long with aggressive firewalls)
     dump_traceroute
 
-    ## Dump various information about server state
+    ########## Server state ###########
+
+    # Run dump-server-state to extract system information
     dump_server_state
 
-    ## Dump file access control lists
-    # dump_facl
+    # Dump file access control lists
+    ### dump_facl
 
     ###################################################################
 
