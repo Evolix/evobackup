@@ -727,6 +727,10 @@ test_server() {
     host=$(echo "${item}" | cut -d':' -f1)
     port=$(echo "${item}" | cut -d':' -f2)
 
+    if [ "${PING_BEFORE_SSH}" = "1" ]; then
+        ping -w 2 "${host}" > /dev/null
+    fi
+
     # Test if the server is accepting connections
     ssh -q -o "ConnectTimeout ${SSH_CONNECT_TIMEOUT}" "${host}" -p "${port}" -t "exit"
     # shellcheck disable=SC2181
@@ -1061,6 +1065,11 @@ DATE_FORMAT="%Y-%m-%d %H:%M:%S"
 SERVERS_FALLBACK=${SERVERS_FALLBACK:-1}
 # timeout (in seconds) for SSH connections
 SSH_CONNECT_TIMEOUT=${SSH_CONNECT_TIMEOUT:-90}
+
+# Send a couple of ping packets before SSH.
+# It comes from a weird bug in our network;
+# the connection could not be established without a ping in the preceding 5 minutes.
+PING_BEFORE_SSH=${PING_BEFORE_SSH:-1}
 
 # execute main function
 main
