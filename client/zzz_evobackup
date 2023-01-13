@@ -974,9 +974,17 @@ sync_tasks() {
         # Rsync options
         rsync_report_args+=(--rsh "ssh -p ${SSH_PORT} -o 'ConnectTimeout ${SSH_CONNECT_TIMEOUT}'")
         # Rsync local source
-        rsync_report_args+=("${RSYNC_STATSFILE}")
         if [ "${#mtree_files[@]}" -gt 0 ]; then
+            # send mtree files if there is any
             rsync_report_args+=("${mtree_files[@]}")
+        fi
+        if [ -f "${RSYNC_LOGFILE}" ]; then
+            # send rsync full log file if it exists
+            rsync_report_args+=("${RSYNC_LOGFILE}")
+        fi
+        if [ -f "${RSYNC_STATSFILE}" ]; then
+            # send rsync stats log file if it exists
+            rsync_report_args+=("${RSYNC_STATSFILE}")
         fi
         # Rsync remote destination
         rsync_report_args+=("root@${SSH_SERVER}:/var/log/")
