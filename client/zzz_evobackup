@@ -234,7 +234,7 @@ dump_ldap() {
 
     slapcat -n 0 -l "${dump_dir}/config.bak"
     slapcat -n 1 -l "${dump_dir}/data.bak"
-    slapcat      -l "${dump_dir}/ldap.bak"
+    slapcat      -l "${dump_dir}/all.bak"
 
     log "LOCAL_TASKS - stop  dump_ldap"
 }
