@@ -219,7 +219,7 @@ print_error_files_content() {
 mysql_list_databases() {
     port=${1:-"3306"}
 
-    mysql --defaults-extra-file=/etc/mysql/debian.cnf -P "${port}" -e 'show databases' -s --skip-column-names \
+    mysql --defaults-extra-file=/etc/mysql/debian.cnf --port="${port}" --execute="show databases" --silent --skip-column-names \
         | grep --extended-regexp --invert-match "^(Database|information_schema|performance_schema|sys)"
 }
 # shellcheck disable=SC2317
@@ -275,8 +275,7 @@ dump_mysql_per_base() {
         dump_file="${dump_dir}/${database}.sql.gz"
         log "LOCAL_TASKS - start ${dump_file}"
 
-        mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --events --hex-blob "${database}" 2> "${error_file}" \
-            | gzip --best > "${dump_file}"
+        mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --events --hex-blob "${database}" 2> "${error_file}" | gzip --best > "${dump_file}"
 
         last_rc=$?
         # shellcheck disable=SC2086
@@ -409,7 +408,8 @@ dump_mysql_instances() {
     # shellcheck disable=SC2174
     mkdir -p -m 700 "${dump_dir}"
 
-    mysqladminpasswd=$(grep -m1 'password = .*' /root/.my.cnf | cut -d " " -f 3)
+    mysql_user="mysqladmin"
+    mysql_passwd=$(grep -m1 'password = .*' /root/.my.cnf | cut -d " " -f 3)
 
     # customize list of instances
     instances=""
@@ -418,7 +418,7 @@ dump_mysql_instances() {
         dump_file="${dump_dir}/${instance}.bak.gz"
         log "LOCAL_TASKS - start ${dump_file}"
 
-        mysqldump -P "${instance}" --opt --all-databases --hex-blob -u mysqladmin -p"${mysqladminpasswd}" 2> "${error_file}" | gzip --best > "${dump_file}"
+        mysqldump --port="${instance}" --opt --all-databases --hex-blob --user="${mysql_user}" --password="${mysql_passwd}" 2> "${error_file}" | gzip --best > "${dump_file}"
 
         last_rc=$?
         # shellcheck disable=SC2086
