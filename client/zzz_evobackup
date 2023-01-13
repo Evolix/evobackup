@@ -821,9 +821,9 @@ sync_tasks() {
 
     # default paths, depending on system
     if [ "${SYSTEM}" = "linux" ]; then
-        declare -a rsync_default_includes=(/bin /boot /lib /opt /sbin /usr)
+        rsync_default_includes=(/bin /boot /lib /opt /sbin /usr)
     else
-        declare -a rsync_default_includes=(/bsd /bin /sbin /usr)
+        rsync_default_includes=(/bsd /bin /sbin /usr)
     fi
     if [ -f "${CANARY_FILE}" ]; then
         rsync_default_includes+=("${CANARY_FILE}")
@@ -855,7 +855,7 @@ sync_tasks() {
             # Dump filesystem stats with mtree
             log "SYNC_TASKS - start mtree"
 
-            declare -a mtree_files=()
+            mtree_files=()
 
             # Loop over Rsync includes
             while read -r line ; do
@@ -1014,7 +1014,7 @@ main() {
 
     # Initialize a list of files to delete at exit
     # Any file added to the list will also be deleted at exit
-    declare -a temp_files=("${PIDFILE}")
+    temp_files=("${PIDFILE}")
 
     trap clean_temp_files EXIT
 
