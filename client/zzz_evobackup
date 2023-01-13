@@ -114,8 +114,8 @@ lxc/*/rootfs/var/tmp
 local_tasks() {
     log "START LOCAL_TASKS"
 
-    # Remove previous error files
-    find "${LOCAL_BACKUP_DIR}/" -type f -name '*.err' -delete
+    # Remove old log directories
+    find "${LOCAL_BACKUP_DIR}/" -type d -name "${PROGNAME}.errors-*" -ctime +30 -delete
 
     ###################################################################
     # You can enable/disable local tasks
@@ -204,16 +204,28 @@ local_tasks() {
 
 # Output error files content, if any
 print_error_files_content() {
-    error_files=$(find "${LOCAL_BACKUP_DIR}/" -type f -name '*.err')
+    # Search for error files
+    error_files=$(find "${ERRORS_DIR}" -type f)
     for error_file in ${error_files}; do
         error_file_size=$(stat -c "%s" "${error_file}")
 
         # shellcheck disable=SC2086
         if [ ${error_file_size} -gt 0 ]; then
+            # if the file is not empty, display its content
             printf "### cat %s ###\n" "${error_file}" >&2
             cat "${error_file}" >&2
+        else
+            # if the file is empty, remove it
+            rm "${error_file}"
         fi
     done
+
+    # Search for remaining error_files
+    error_files_count=$(find "${ERRORS_DIR}" -type f | wc -l)
+    # If there is no error file, clean the parent directories
+    if [ "${error_files_count}" -eq 0 ]; then
+        rm -rf "${ERRORS_DIR}"
+    fi
 }
 # shellcheck disable=SC2317
 mysql_list_databases() {
@@ -221,6 +233,11 @@ mysql_list_databases() {
 
     mysql --defaults-extra-file=/etc/mysql/debian.cnf --port="${port}" --execute="show databases" --silent --skip-column-names \
         | grep --extended-regexp --invert-match "^(Database|information_schema|performance_schema|sys)"
+}
+
+# shellcheck disable=SC2317
+errors_dir_from_dump_dir() {
+    realpath --canonicalize-missing "${ERRORS_DIR}/$(realpath --relative-to="${LOCAL_BACKUP_DIR}" "${1}")"
 }
 # shellcheck disable=SC2317
 dump_ldap() {
@@ -241,16 +258,16 @@ dump_ldap() {
 # shellcheck disable=SC2317
 dump_mysql_global() {
     dump_dir="${LOCAL_BACKUP_DIR}/mysql-global"
-    rm -rf "${dump_dir}"
+    errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
+    rm -rf "${dump_dir}" "${errors_dir}"
     # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}"
+    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
 
-    error_file="${dump_dir}/mysql.bak.err"
+    error_file="${errors_dir}/mysql.bak.err"
     dump_file="${dump_dir}/mysql.bak.gz"
     log "LOCAL_TASKS - start ${dump_file}"
 
-    mysqldump --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 --opt --all-databases --force --events --hex-blob 2> "${error_file}" \
-        | gzip --best > "${dump_file}"
+    mysqldump --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 --opt --all-databases --force --events --hex-blob 2> "${error_file}" | gzip --best > "${dump_file}"
 
     last_rc=$?
     # shellcheck disable=SC2086
@@ -265,13 +282,14 @@ dump_mysql_global() {
 # shellcheck disable=SC2317
 dump_mysql_per_base() {
     dump_dir="${LOCAL_BACKUP_DIR}/mysql-per-base"
-    rm -rf "${dump_dir}"
+    errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
+    rm -rf "${dump_dir}" "${errors_dir}"
     # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}"
+    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
 
     databases=$(mysql_list_databases 3306)
     for database in ${databases}; do
-        error_file="${dump_dir}/${database}.err"
+        error_file="${errors_dir}/${database}.err"
         dump_file="${dump_dir}/${database}.sql.gz"
         log "LOCAL_TASKS - start ${dump_file}"
 
@@ -291,12 +309,13 @@ dump_mysql_per_base() {
 # shellcheck disable=SC2317
 dump_mysql_meta() {
     dump_dir="${LOCAL_BACKUP_DIR}/mysql-meta"
-    rm -rf "${dump_dir}"
+    errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
+    rm -rf "${dump_dir}" "${errors_dir}"
     # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}"
+    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
 
     ## Dump all grants (requires 'percona-toolkit' package)
-    error_file="${dump_dir}/all_grants.err"
+    error_file="${errors_dir}/all_grants.err"
     dump_file="${dump_dir}/all_grants.sql"
     log "LOCAL_TASKS - start ${dump_file}"
 
@@ -313,7 +332,7 @@ dump_mysql_meta() {
     log "LOCAL_TASKS - stop  ${dump_file}"
 
     ## Dump all variables
-    error_file="${dump_dir}/variables.err"
+    error_file="${errors_dir}/variables.err"
     dump_file="${dump_dir}/variables.txt"
     log "LOCAL_TASKS - start ${dump_file}"
 
@@ -332,7 +351,7 @@ dump_mysql_meta() {
     ## Schema only (no data) for each databases
     databases=$(mysql_list_databases 3306)
     for database in ${databases}; do
-        error_file="${dump_dir}/${database}.schema.err"
+        error_file="${errors_dir}/${database}.schema.err"
         dump_file="${dump_dir}/${database}.schema.sql"
         log "LOCAL_TASKS - start ${dump_file}"
 
@@ -354,12 +373,13 @@ dump_mysql_tabs() {
     databases=$(mysql_list_databases 3306)
     for database in ${databases}; do
         dump_dir="${LOCAL_BACKUP_DIR}/mysql-tabs/${database}"
-        rm -rf "${dump_dir}"
+        errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
+        rm -rf "${dump_dir}" "${errors_dir}"
         # shellcheck disable=SC2174
-        mkdir -p -m 700 "${dump_dir}"
+        mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
         chown -RL mysql "${dump_dir}"
 
-        error_file="${dump_dir}.err"
+        error_file="${errors_dir}.err"
         log "LOCAL_TASKS - start ${dump_dir}"
 
         mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 -Q --opt --events --hex-blob --skip-comments --fields-enclosed-by='\"' --fields-terminated-by=',' -T "${dump_dir}" "${database}" 2> "${error_file}"
@@ -381,11 +401,12 @@ dump_mysql_hotcopy() {
     databases=""
     for database in ${databases}; do
         dump_dir="${LOCAL_BACKUP_DIR}/mysql-hotcopy/${database}"
-        rm -rf "${dump_dir}"
+        errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
+        rm -rf "${dump_dir}" "${errors_dir}"
         # shellcheck disable=SC2174
-        mkdir -p -m 700 "${dump_dir}"
+        mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
 
-        error_file="${dump_dir}.err"
+        error_file="${errors_dir}.err"
         log "LOCAL_TASKS - start ${dump_dir}"
 
         mysqlhotcopy "${database}" "${dump_dir}/" 2> "${error_file}"
@@ -404,9 +425,10 @@ dump_mysql_hotcopy() {
 # shellcheck disable=SC2317
 dump_mysql_instances() {
     dump_dir="${LOCAL_BACKUP_DIR}/mysql-instances"
-    rm -rf "${dump_dir}"
+    errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
+    rm -rf "${dump_dir}" "${errors_dir}"
     # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}"
+    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
 
     mysql_user="mysqladmin"
     mysql_passwd=$(grep -m1 'password = .*' /root/.my.cnf | cut -d " " -f 3)
@@ -414,7 +436,7 @@ dump_mysql_instances() {
     # customize list of instances
     instances=""
     for instance in ${instances}; do
-        error_file="${dump_dir}/${instance}.err"
+        error_file="${errors_dir}/${instance}.err"
         dump_file="${dump_dir}/${instance}.bak.gz"
         log "LOCAL_TASKS - start ${dump_file}"
 
@@ -434,9 +456,10 @@ dump_mysql_instances() {
 # shellcheck disable=SC2317
 dump_postgresql_global() {
     dump_dir="${LOCAL_BACKUP_DIR}/postgresql-global"
-    rm -rf "${dump_dir}"
+    errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
+    rm -rf "${dump_dir}" "${errors_dir}"
     # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}"
+    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
 
     ## example with pg_dumpall and with compression
     dump_file="${dump_dir}/pg.dump.bak.gz"
@@ -468,16 +491,17 @@ dump_postgresql_global() {
 # shellcheck disable=SC2317
 dump_postgresql_per_base() {
     dump_dir="${LOCAL_BACKUP_DIR}/postgresql-per-base"
-    rm -rf "${dump_dir}"
+    errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
+    rm -rf "${dump_dir}" "${errors_dir}"
     # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}"
+    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
 
     (
         # shellcheck disable=SC2164
         cd /var/lib/postgresql
         databases=$(sudo -u postgres psql -U postgres -lt | awk -F\| '{print $1}' | grep -v "template.*")
         for database in ${databases} ; do
-            error_file="${dump_dir}/${database}.err"
+            error_file="${errors_dir}/${database}.err"
             dump_file="${dump_dir}/${database}.sql.gz"
             log "LOCAL_TASKS - start ${dump_file}"
 
@@ -498,11 +522,12 @@ dump_postgresql_per_base() {
 # shellcheck disable=SC2317
 dump_postgresql_filtered() {
     dump_dir="${LOCAL_BACKUP_DIR}/postgresql-filtered"
-    rm -rf "${dump_dir}"
+    errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
+    rm -rf "${dump_dir}" "${errors_dir}"
     # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}"
+    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
 
-    error_file="${dump_dir}/pg-backup.err"
+    error_file="${errors_dir}/pg-backup.err"
     dump_file="${dump_dir}/pg-backup.tar"
     log "LOCAL_TASKS - start ${dump_file}"
 
@@ -528,11 +553,13 @@ dump_redis() {
     for instance in ${instances}; do
         name=$(basename "${instance}")
         dump_dir="${LOCAL_BACKUP_DIR}/${name}"
-        rm -rf "${dump_dir}"
+        errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
+        rm -rf "${dump_dir}" "${errors_dir}"
+        # shellcheck disable=SC2174
+        mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
 
         if [ -f "${instance}/dump.rdb" ]; then
-            # shellcheck disable=SC2174
-            mkdir -p -m 700 "${dump_dir}"
+            error_file="${errors_dir}/${instance}.err"
             log "LOCAL_TASKS - start ${dump_dir}"
 
             cp -a "${instance}/dump.rdb" "${dump_dir}/" 2> "${error_file}"
@@ -556,11 +583,12 @@ dump_mongodb() {
     ## > db.createUser( { user: "mongobackup", pwd: "PASS", roles: [ "backup", ] } )
 
     dump_dir="${LOCAL_BACKUP_DIR}/mongodump"
-    rm -rf "${dump_dir}"
+    errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
+    rm -rf "${dump_dir}" "${errors_dir}"
     # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}"
+    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
 
-    error_file="${dump_dir}.err"
+    error_file="${errors_dir}.err"
     log "LOCAL_TASKS - start ${dump_dir}"
 
     mongo_user=""
@@ -581,12 +609,13 @@ dump_mongodb() {
 # shellcheck disable=SC2317
 dump_megacli_config() {
     dump_dir="${LOCAL_BACKUP_DIR}/megacli"
-    rm -rf "${dump_dir}"
+    errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
+    rm -rf "${dump_dir}" "${errors_dir}"
     # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}"
+    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
 
     dump_file="${dump_dir}/megacli.cfg"
-    error_file="${dump_dir}/megacli.err"
+    error_file="${errors_dir}/megacli.err"
     log "LOCAL_TASKS - start ${dump_file}"
 
     megacli -CfgSave -f "${dump_file}" -a0 2> "${error_file}" > /dev/null
@@ -604,9 +633,10 @@ dump_megacli_config() {
 # shellcheck disable=SC2317
 dump_traceroute() {
     dump_dir="${LOCAL_BACKUP_DIR}/traceroute"
-    rm -rf "${dump_dir}"
+    errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
+    rm -rf "${dump_dir}" "${errors_dir}"
     # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}"
+    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
 
     network_targets="8.8.8.8 www.evolix.fr travaux.evolix.net"
 
@@ -672,11 +702,12 @@ dump_server_state() {
 # shellcheck disable=SC2317
 dump_rabbitmq() {
     dump_dir="${LOCAL_BACKUP_DIR}/rabbitmq"
-    rm -rf "${dump_dir}"
+    errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
+    rm -rf "${dump_dir}" "${errors_dir}"
     # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}"
+    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
 
-    error_file="${dump_dir}.err"
+    error_file="${errors_dir}.err"
     dump_file="${dump_dir}/config"
     log "LOCAL_TASKS - start ${dump_file}"
 
@@ -695,9 +726,10 @@ dump_rabbitmq() {
 # shellcheck disable=SC2317
 dump_facl() {
     dump_dir="${LOCAL_BACKUP_DIR}/facl"
-    rm -rf "${dump_dir}"
+    errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
+    rm -rf "${dump_dir}" "${errors_dir}"
     # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}"
+    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
 
     log "LOCAL_TASKS - start ${dump_dir}"
 
@@ -983,10 +1015,16 @@ clean_temp_files() {
 }
 main() {
     START_EPOCH=$(/bin/date +%s)
+    START_TIME=$(/bin/date +"%Y%m%d%H%M%S")
+
     log "START GLOBAL - VERSION=${VERSION} LOCAL_TASKS=${LOCAL_TASKS} SYNC_TASKS=${SYNC_TASKS}"
 
     # shellcheck disable=SC2174
-    mkdir -p -m 700 ${LOCAL_BACKUP_DIR}
+    mkdir -p -m 700 "${LOCAL_BACKUP_DIR}"
+
+    ERRORS_DIR="${LOCAL_BACKUP_DIR}/${PROGNAME}.errors-${START_TIME}"
+    # shellcheck disable=SC2174
+    mkdir -p -m 700 "${ERRORS_DIR}"
 
     ## Force umask
     umask 077
