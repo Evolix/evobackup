@@ -43,6 +43,8 @@ LOCAL_BACKUP_DIR="/home/backup"
 : "${LOCAL_TASKS:=1}"
 # Enable/disable sync tasks (default: enabled)
 : "${SYNC_TASKS:=1}"
+# Enable/disable mtree (default: enabled)
+: "${MTREE_ENABLED:=1}"
 
 # Source paths can be customized
 # Empty lines, and lines containing # or ; are ignored
@@ -846,31 +848,40 @@ sync_tasks() {
     echo "${RSYNC_INCLUDES}" | sed -e 's/\s*\(#\|;\).*//; /^\s*$/d' > "${rsync_includes_file}"
     echo "${RSYNC_EXCLUDES}" | sed -e 's/\s*\(#\|;\).*//; /^\s*$/d' > "${rsync_excludes_file}"
     
-    # Dump filesystem stats with mtree
-    log "SYNC_TASKS - start mtree"
+    if [ "${MTREE_ENABLED}" = "1" ]; then
+        mtree_bin=$(command -v mtree)
 
-    declare -a mtree_files=()
+        if [ -n "${mtree_bin}" ]; then
+            # Dump filesystem stats with mtree
+            log "SYNC_TASKS - start mtree"
 
-    # Loop over Rsync includes
-    while read -r line ; do
-        # … but exclude for mtree what will be excluded by Rsync
-        mtree_excludes_file="$(mktemp --tmpdir "${PROGNAME}.mtree-excludes.XXXXXX")"
-        temp_files+=("${mtree_excludes_file}")
-        grep -E "^([^/]|${line})" "${rsync_excludes_file}" | sed -e "s|^${line}|.|" > "${mtree_excludes_file}"
+            declare -a mtree_files=()
 
-        mtree_file="/var/log/evobackup.$(basename "${line}").mtree"
-        temp_files+=("${mtree_file}")
+            # Loop over Rsync includes
+            while read -r line ; do
+                # … but exclude for mtree what will be excluded by Rsync
+                mtree_excludes_file="$(mktemp --tmpdir "${PROGNAME}.mtree-excludes.XXXXXX")"
+                temp_files+=("${mtree_excludes_file}")
+                grep -E "^([^/]|${line})" "${rsync_excludes_file}" | sed -e "s|^${line}|.|" > "${mtree_excludes_file}"
 
-        mtree -x -c -p "${line}" -X "${mtree_excludes_file}" > "${mtree_file}"
-        mtree_files+=("${mtree_file}")
-    done < "${rsync_includes_file}"
+                mtree_file="/var/log/evobackup.$(basename "${line}").mtree"
+                temp_files+=("${mtree_file}")
 
-    if [ "${#mtree_files[@]}" -le 0 ]; then
-        error "ERROR: mtree didn't produce any file"
+                ${mtree_bin} -x -c -p "${line}" -X "${mtree_excludes_file}" > "${mtree_file}"
+                mtree_files+=("${mtree_file}")
+            done < "${rsync_includes_file}"
+
+            if [ "${#mtree_files[@]}" -le 0 ]; then
+                error "ERROR: mtree didn't produce any file"
+            fi
+
+            log "SYNC_TASKS - stop  mtree (files: ${mtree_files[*]})"
+        else
+            log "SYNC_TASKS - skip mtree (missing)"
+        fi
+    else
+        log "SYNC_TASKS - skip mtree (disabled)"
     fi
-
-    log "SYNC_TASKS - stop  mtree (files: ${mtree_files[*]})"
-
 
     rsync_bin=$(command -v rsync)
     # Build the final Rsync command
