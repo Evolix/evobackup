@@ -225,6 +225,7 @@ dump_ldap() {
     ## OpenLDAP : example with slapcat
     dump_dir="${LOCAL_BACKUP_DIR}/ldap"
     rm -rf "${dump_dir}"
+    # shellcheck disable=SC2174
     mkdir -p -m 700 "${dump_dir}"
 
     log "LOCAL_TASKS - start dump_ldap to ${dump_dir}"
@@ -239,6 +240,7 @@ dump_ldap() {
 dump_mysql_global() {
     dump_dir="${LOCAL_BACKUP_DIR}/mysql-global"
     rm -rf "${dump_dir}"
+    # shellcheck disable=SC2174
     mkdir -p -m 700 "${dump_dir}"
 
     error_file="${dump_dir}/mysql.bak.err"
@@ -262,6 +264,7 @@ dump_mysql_global() {
 dump_mysql_per_base() {
     dump_dir="${LOCAL_BACKUP_DIR}/mysql-per-base"
     rm -rf "${dump_dir}"
+    # shellcheck disable=SC2174
     mkdir -p -m 700 "${dump_dir}"
 
     databases=$(mysql_list_databases 3306)
@@ -288,6 +291,7 @@ dump_mysql_per_base() {
 dump_mysql_meta() {
     dump_dir="${LOCAL_BACKUP_DIR}/mysql-meta"
     rm -rf "${dump_dir}"
+    # shellcheck disable=SC2174
     mkdir -p -m 700 "${dump_dir}"
 
     ## Dump all grants (requires 'percona-toolkit' package)
@@ -350,6 +354,7 @@ dump_mysql_tabs() {
     for database in ${databases}; do
         dump_dir="${LOCAL_BACKUP_DIR}/mysql-tabs/${database}"
         rm -rf "${dump_dir}"
+        # shellcheck disable=SC2174
         mkdir -p -m 700 "${dump_dir}"
         chown -RL mysql "${dump_dir}"
 
@@ -376,6 +381,7 @@ dump_mysql_hotcopy() {
     for database in ${databases}; do
         dump_dir="${LOCAL_BACKUP_DIR}/mysql-hotcopy/${database}"
         rm -rf "${dump_dir}"
+        # shellcheck disable=SC2174
         mkdir -p -m 700 "${dump_dir}"
 
         error_file="${dump_dir}.err"
@@ -398,6 +404,7 @@ dump_mysql_hotcopy() {
 dump_mysql_instances() {
     dump_dir="${LOCAL_BACKUP_DIR}/mysql-instances"
     rm -rf "${dump_dir}"
+    # shellcheck disable=SC2174
     mkdir -p -m 700 "${dump_dir}"
 
     mysqladminpasswd=$(grep -m1 'password = .*' /root/.my.cnf | cut -d " " -f 3)
@@ -426,6 +433,7 @@ dump_mysql_instances() {
 dump_postgresql_global() {
     dump_dir="${LOCAL_BACKUP_DIR}/postgresql-global"
     rm -rf "${dump_dir}"
+    # shellcheck disable=SC2174
     mkdir -p -m 700 "${dump_dir}"
 
     ## example with pg_dumpall and with compression
@@ -459,18 +467,20 @@ dump_postgresql_global() {
 dump_postgresql_per_base() {
     dump_dir="${LOCAL_BACKUP_DIR}/postgresql-per-base"
     rm -rf "${dump_dir}"
+    # shellcheck disable=SC2174
     mkdir -p -m 700 "${dump_dir}"
 
     (
-       cd /var/lib/postgresql
-       databases=$(sudo -u postgres psql -U postgres -lt | awk -F\| '{print $1}' | grep -v "template.*")
-       for database in ${databases} ; do
+        # shellcheck disable=SC2164
+        cd /var/lib/postgresql
+        databases=$(sudo -u postgres psql -U postgres -lt | awk -F\| '{print $1}' | grep -v "template.*")
+        for database in ${databases} ; do
             error_file="${dump_dir}/${database}.err"
             dump_file="${dump_dir}/${database}.sql.gz"
             log "LOCAL_TASKS - start ${dump_file}"
 
             (sudo -u postgres /usr/bin/pg_dump --create -s -U postgres -d "${database}") 2> "${error_file}" | gzip --best > "${dump_file}"
-    
+
             last_rc=$?
             # shellcheck disable=SC2086
             if [ ${last_rc} -ne 0 ]; then
@@ -480,13 +490,14 @@ dump_postgresql_per_base() {
                 rm -f "${error_file}"
             fi
             log "LOCAL_TASKS - stop  ${dump_file}"
-       done
+        done
     )
 }
 # shellcheck disable=SC2317
 dump_postgresql_filtered() {
     dump_dir="${LOCAL_BACKUP_DIR}/postgresql-filtered"
     rm -rf "${dump_dir}"
+    # shellcheck disable=SC2174
     mkdir -p -m 700 "${dump_dir}"
 
     error_file="${dump_dir}/pg-backup.err"
@@ -511,12 +522,14 @@ dump_postgresql_filtered() {
 }
 # shellcheck disable=SC2317
 dump_redis() {
-    for instance in $(find /var/lib/ -mindepth 1 -maxdepth 1 -type d -name 'redis*'); do
+    instances=$(find /var/lib/ -mindepth 1 -maxdepth 1 -type d -name 'redis*')
+    for instance in ${instances}; do
         name=$(basename "${instance}")
         dump_dir="${LOCAL_BACKUP_DIR}/${name}"
         rm -rf "${dump_dir}"
 
         if [ -f "${instance}/dump.rdb" ]; then
+            # shellcheck disable=SC2174
             mkdir -p -m 700 "${dump_dir}"
             log "LOCAL_TASKS - start ${dump_dir}"
 
@@ -542,6 +555,7 @@ dump_mongodb() {
 
     dump_dir="${LOCAL_BACKUP_DIR}/mongodump"
     rm -rf "${dump_dir}"
+    # shellcheck disable=SC2174
     mkdir -p -m 700 "${dump_dir}"
 
     error_file="${dump_dir}.err"
@@ -566,6 +580,7 @@ dump_mongodb() {
 dump_megacli_config() {
     dump_dir="${LOCAL_BACKUP_DIR}/megacli"
     rm -rf "${dump_dir}"
+    # shellcheck disable=SC2174
     mkdir -p -m 700 "${dump_dir}"
 
     dump_file="${dump_dir}/megacli.cfg"
@@ -588,6 +603,7 @@ dump_megacli_config() {
 dump_traceroute() {
     dump_dir="${LOCAL_BACKUP_DIR}/traceroute"
     rm -rf "${dump_dir}"
+    # shellcheck disable=SC2174
     mkdir -p -m 700 "${dump_dir}"
 
     network_targets="8.8.8.8 www.evolix.fr travaux.evolix.net"
@@ -621,6 +637,7 @@ dump_server_state() {
     dump_dir="${LOCAL_BACKUP_DIR}/server-state"
     rm -rf "${dump_dir}"
     # Do not create the directory
+    # shellcheck disable=SC2174
     # mkdir -p -m 700 "${dump_dir}"
 
     log "LOCAL_TASKS - start ${dump_dir}"
@@ -654,6 +671,7 @@ dump_server_state() {
 dump_rabbitmq() {
     dump_dir="${LOCAL_BACKUP_DIR}/rabbitmq"
     rm -rf "${dump_dir}"
+    # shellcheck disable=SC2174
     mkdir -p -m 700 "${dump_dir}"
 
     error_file="${dump_dir}.err"
@@ -676,6 +694,7 @@ dump_rabbitmq() {
 dump_facl() {
     dump_dir="${LOCAL_BACKUP_DIR}/facl"
     rm -rf "${dump_dir}"
+    # shellcheck disable=SC2174
     mkdir -p -m 700 "${dump_dir}"
 
     log "LOCAL_TASKS - start ${dump_dir}"
