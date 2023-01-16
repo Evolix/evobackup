@@ -186,12 +186,12 @@ local_tasks() {
     ########## Network ################
 
     # Dump network routes with mtr and traceroute (warning: could be long with aggressive firewalls)
-    ### dump_traceroute
+    dump_traceroute
 
     ########## Server state ###########
 
     # Run dump-server-state to extract system information
-    ### dump_server_state
+    dump_server_state
 
     # Dump file access control lists
     ### dump_facl
@@ -235,24 +235,31 @@ local_tasks() {
 ###     log "LOCAL_TASKS - stop  ${dump_file}"
 ### }
 
-########## Libraries ##################################################
-
-source ./lib/utilities.sh
-source ./lib/dump.sh
-source ./lib/main.sh
-
 ########## Optional configuration #####################################
 
-# If you set a value (like "linux", "openbsd"…) it will be used,
-# Default: uname(1) in lowercase.
-### SYSTEM="linux"
+setup_custom() {
+    # If you set a value (like "linux", "openbsd"…) it will be used,
+    # Default: uname(1) in lowercase.
+    ### SYSTEM="linux"
 
-# If you set a value it will be used,
-# Default: hostname(1).
-### HOSTNAME="example-host"
+    # If you set a value it will be used,
+    # Default: hostname(1).
+    ### HOSTNAME="example-host"
 
-# Email subect for notifications
-### MAIL_SUBJECT="[info] EvoBackup - Client ${HOSTNAME}"}"
+    # Email subect for notifications
+    ### MAIL_SUBJECT="[info] EvoBackup - Client ${HOSTNAME}"
 
-# Call main function
+    # No-op in case nothing is executed
+    :
+}
+
+########## Libraries ##################################################
+
+# Change this to wherever you install the libraries
+LIBDIR="./lib"
+
+source "${LIBDIR}/main.sh"
+
+########## Let's go! ##################################################
+
 main

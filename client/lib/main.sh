@@ -13,9 +13,9 @@ set -u
 # to exit with a non-zero status, or zero if all commands exit successfully.
 set -o pipefail
 
-local_tasks() {
-    log_error "The 'local_tasks' function hasn't been customized"
-}
+source "${LIBDIR}/utilities.sh"
+source "${LIBDIR}/dump.sh"
+
 # Called from main, it is wrapping the local_tasks function defined in the real script
 local_tasks_wrapper() {
     log "START LOCAL_TASKS"
@@ -23,17 +23,19 @@ local_tasks_wrapper() {
     # Remove old log directories
     find "${LOCAL_BACKUP_DIR}/" -type d -name "${PROGNAME}.errors-*" -ctime +30 -delete
 
-    # This function must be defined in the calling script
-    local_tasks
+    local_tasks_type="$(type -t local_tasks)"
+    if [ "${local_tasks_type}" = "function" ]; then
+        local_tasks
+    else
+        log_error "There is no 'local_tasks' function to execute"
+    fi
 
     # TODO: check if this is still needed
     # print_error_files_content
 
     log "STOP LOCAL_TASKS"
 }
-sync_tasks() {
-    log_error "The 'sync_tasks' function hasn't been customized"
-}
+
 # Called from main, it is wrapping the sync_tasks function defined in the real script
 sync_tasks_wrapper() {
     declare -a SERVERS        # Indexed array for server/port values
@@ -121,8 +123,12 @@ sync_tasks_wrapper() {
     )
     readonly rsync_default_excludes
 
-    # This function must be defined in the calling script
-    sync_tasks
+    sync_tasks_type="$(type -t sync_tasks)"
+    if [ "${sync_tasks_type}" = "function" ]; then
+        sync_tasks
+    else
+        log_error "There is no 'sync_tasks' function to execute"
+    fi
 }
 
 sync() {
@@ -171,7 +177,7 @@ sync() {
     rsync_server=$(echo "${server}" | cut -d':' -f1)
     rsync_port=$(echo "${server}" | cut -d':' -f2)
 
-    log "START SYNC_TASKS - ${sync_name} : server=${server}"
+    log "START SYNC_TASKS - \"${sync_name}\" : server=${server}"
     
     # Rsync complete log file for the current run
     RSYNC_LOGFILE="/var/log/${PROGNAME}.${sync_name}.rsync.log"
@@ -261,7 +267,7 @@ sync() {
     rsync_main_args+=("root@${rsync_server}:${REMOTE_BACKUP_DIR}/")
 
     # … log it
-    log "SYNC_TASKS - ${sync_name} Rsync main command : ${rsync_bin} ${rsync_main_args[*]}"
+    log "SYNC_TASKS - \"${sync_name}\" Rsync main command : ${rsync_bin} ${rsync_main_args[*]}"
 
     # … execute it
     ${rsync_bin} "${rsync_main_args[@]}"
@@ -315,7 +321,7 @@ sync() {
 
 setup() {
     # Default return-code (0 == succes)
-    declare -i GLOBAL_RC=0
+    GLOBAL_RC=0
 
     # Possible error codes
     readonly E_NOSRVAVAIL=21 # No server is available
@@ -376,6 +382,12 @@ setup() {
     # Enable/disable mtree (default: enabled)
     : "${MTREE_ENABLED:=1}"
 
+    # If "setup_custom" exists and is a function, let's call it
+    setup_custom_type="$(type -t setup_custom)"
+    if [ "${setup_custom_type}" = "function" ]; then
+        setup_custom
+    fi
+
     ## Force umask
     umask 077
 
@@ -384,6 +396,7 @@ setup() {
     # Any file in this list will be deleted when the program exits
     trap "clean_temp_files" EXIT
 }
+
 
 main() {
     # Start timer
