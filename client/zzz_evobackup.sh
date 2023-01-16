@@ -14,10 +14,6 @@
 #
 # Licence: AGPLv3
 
-source ./lib/utilities.sh
-source ./lib/dump.sh
-source ./lib/main.sh
-
 #######################################################################
 #
 # You must configure the MAIL variable to receive notifications.
@@ -238,6 +234,12 @@ local_tasks() {
 ###     # Log the end of the command
 ###     log "LOCAL_TASKS - stop  ${dump_file}"
 ### }
+
+########## Libraries ##################################################
+
+source ./lib/utilities.sh
+source ./lib/dump.sh
+source ./lib/main.sh
 
 ########## Optional configuration #####################################
 
