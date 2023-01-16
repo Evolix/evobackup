@@ -201,19 +201,21 @@ sync() {
             for i in "${!rsync_includes[@]}"; do
                 include="${rsync_includes[i]}"
 
-                # … but exclude for mtree what will be excluded by Rsync
-                mtree_excludes_file="$(mktemp --tmpdir "${PROGNAME}.${sync_name}.mtree-excludes.XXXXXX")"
-                add_to_temp_files "${mtree_excludes_file}"
+                if [ -d "${include}" ]; then
+                    # … but exclude for mtree what will be excluded by Rsync
+                    mtree_excludes_file="$(mktemp --tmpdir "${PROGNAME}.${sync_name}.mtree-excludes.XXXXXX")"
+                    add_to_temp_files "${mtree_excludes_file}"
 
-                for j in "${!rsync_excludes[@]}"; do
-                    echo "${rsync_excludes[j]}" | grep -E "^([^/]|${include})" | sed -e "s|^${include}|.|" >> "${mtree_excludes_file}"
-                done
+                    for j in "${!rsync_excludes[@]}"; do
+                        echo "${rsync_excludes[j]}" | grep -E "^([^/]|${include})" | sed -e "s|^${include}|.|" >> "${mtree_excludes_file}"
+                    done
 
-                mtree_file="/var/log/evobackup.$(basename "${include}").mtree"
-                add_to_temp_files "${mtree_file}"
+                    mtree_file="/var/log/evobackup.$(basename "${include}").mtree"
+                    add_to_temp_files "${mtree_file}"
 
-                ${mtree_bin} -x -c -p "${include}" -X "${mtree_excludes_file}" > "${mtree_file}"
-                mtree_files+=("${mtree_file}")
+                    ${mtree_bin} -x -c -p "${include}" -X "${mtree_excludes_file}" > "${mtree_file}"
+                    mtree_files+=("${mtree_file}")
+                fi
             done
 
             if [ "${#mtree_files[@]}" -le 0 ]; then
