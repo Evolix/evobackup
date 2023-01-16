@@ -11,7 +11,7 @@ log() {
 }
 log_error() {
     local error_msg=${1}
-    local error_file=${2:""}
+    local error_file=${2:-""}
 
     if [ -n "${error_file}" ] && [ -f "${error_file}" ]; then
         printf "\n### %s\n" "${error_msg}" >&2
