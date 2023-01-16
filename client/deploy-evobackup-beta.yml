@@ -1,0 +1,33 @@
+---
+
+- hosts: lecour-www00
+  gather_facts: yes
+  become: yes
+
+  tasks:
+
+    - name: LIBDIR is present
+      file:
+        path: /usr/local/lib/evobackup
+        state: directory
+
+    - name: libraries are installed
+      copy:
+        src: "{{ item }}"
+        dest: /usr/local/lib/evobackup/
+        remote_src: False
+        owner: root
+        group: root
+        mode: "0640"
+        force: yes
+      loop: "{{ lookup('fileglob', 'lib/*.sh', wantlist=True) }}"
+
+    - name: script is present
+      copy:
+        src: zzz_evobackup.sh
+        dest: /root/evobackup-beta.sh
+        remote_src: False
+        owner: root
+        group: root
+        mode: "0750"
+        force: no
