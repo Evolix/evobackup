@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+* Test presence of old config file before trying to delete it
+
 ### Security
 
 ## [22.11] - 2022-11-28
