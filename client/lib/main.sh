@@ -193,6 +193,9 @@ sync() {
         printf "" > "${RSYNC_STATSFILE}"
     fi
     
+    # Initialize variable here, we need it later
+    local -a mtree_files=()
+
     if [ "${MTREE_ENABLED}" = "1" ]; then
         mtree_bin=$(command -v mtree)
 
@@ -200,10 +203,7 @@ sync() {
             # Dump filesystem stats with mtree
             log "SYNC_TASKS - start mtree"
 
-            local -a mtree_files=()
-
             # Loop over Rsync includes
-
             for i in "${!rsync_includes[@]}"; do
                 include="${rsync_includes[i]}"
 
