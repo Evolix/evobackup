@@ -1,20 +1,23 @@
 ---
 
-- hosts: lecour-www00
+- hosts: all
   gather_facts: yes
   become: yes
 
-  tasks:
+  vars:
+    evobackup_mail: alert4@evolix.net
+    evobackup_libdir: "/usr/local/lib/evobackup"
 
+  tasks:
     - name: LIBDIR is present
       file:
-        path: /usr/local/lib/evobackup
+        path: "{{ evobackup_libdir }}"
         state: directory
 
     - name: libraries are installed
       copy:
         src: "{{ item }}"
-        dest: /usr/local/lib/evobackup/
+        dest: "{{ evobackup_libdir }}/"
         remote_src: False
         owner: root
         group: root
@@ -25,9 +28,21 @@
     - name: script is present
       copy:
         src: zzz_evobackup.sh
-        dest: /root/evobackup-beta.sh
+        dest: /etc/cron.daily/zzz_evobackup
         remote_src: False
         owner: root
         group: root
         mode: "0750"
         force: no
+
+    - name: Email is customized
+      replace:
+        dest: /etc/cron.daily/zzz_evobackup
+        regexp: "^MAIL=.*"
+        replace: "MAIL={{ evobackup_mail }}"
+
+    - name: LIBDIR is customized
+      replace:
+        dest: /etc/cron.daily/zzz_evobackup
+        regexp: "^LIBDIR=.*"
+        replace: "LIBDIR=\"{{ evobackup_libdir }}\""
