@@ -53,12 +53,14 @@ sync_tasks() {
     sync_name="evolix-system"
 
     # List of host/port for your sync task
+    # shellcheck disable=SC2034
     SERVERS=(
         node0.backup.evolix.net:2234
         node1.backup.evolix.net:2234
     )
 
     # What to include in your sync task
+    # Add or remove paths if you need
     # shellcheck disable=SC2034
     RSYNC_INCLUDES=(
         "${rsync_default_includes[@]}"
@@ -68,6 +70,7 @@ sync_tasks() {
     )
 
     # What to exclude from your sync task
+    # Add or remove paths if you need
     # shellcheck disable=SC2034
     RSYNC_EXCLUDES=(
         "${rsync_default_excludes[@]}"
@@ -83,12 +86,14 @@ sync_tasks() {
     sync_name="client-full"
 
     # List of host/port for your sync task
+    # shellcheck disable=SC2034
     SERVERS=(
         client-backup00.evolix.net:2221
         client-backup01.evolix.net:2221
     )
 
     # What to include in your sync task
+    # Add or remove paths if you need
     # shellcheck disable=SC2034
     RSYNC_INCLUDES=(
         "${rsync_default_includes[@]}"
@@ -100,10 +105,10 @@ sync_tasks() {
     )
 
     # What to exclude from your sync task
+    # Add or remove paths if you need
     # shellcheck disable=SC2034
     RSYNC_EXCLUDES=(
         "${rsync_default_excludes[@]}"
-        /home/foo
     )
 
     # Call the sync task
