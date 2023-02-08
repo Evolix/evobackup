@@ -10,10 +10,11 @@ mysql_list_databases() {
 
 ### BEGIN Dump functions ####
 
-dump_from_lib() {
-    echo "Dump from lib"
-}
-
+#######################################################################
+# Dump LDAP files (config, data, all)
+#
+# Arguments: <none>
+#######################################################################
 dump_ldap() {
     ## OpenLDAP : example with slapcat
     local dump_dir="${LOCAL_BACKUP_DIR}/ldap"
@@ -29,6 +30,14 @@ dump_ldap() {
 
     log "LOCAL_TASKS - stop  dump_ldap"
 }
+
+#######################################################################
+# Dump a single compressed file of all databases of an instance
+#
+# Arguments:
+# --masterdata (default: <absent>)
+# --port=[Integer] (default: 3306)
+#######################################################################
 dump_mysql_global() {
     local dump_dir="${LOCAL_BACKUP_DIR}/mysql-global"
     local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
@@ -40,7 +49,62 @@ dump_mysql_global() {
     local dump_file="${dump_dir}/mysql.bak.gz"
     log "LOCAL_TASKS - start ${dump_file}"
 
-    mysqldump --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 --opt --all-databases --force --events --hex-blob 2> "${error_file}" | gzip --best > "${dump_file}"
+    local option_masterdata=""
+    local option_port="3306"
+    # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
+    while :; do
+        case $1 in
+            --masterdata)
+                option_masterdata=1
+                ;;
+            --port)
+                # port options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_port="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - '--port' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --port=?*)
+                # port options, with value separated by =
+                option_port="${1#*=}"
+                ;;
+            --port=)
+                # port options, without value
+                log_error "LOCAL_TASKS - '--port' requires a non-empty option argument."
+                exit 1
+                ;;
+            --)
+                # End of all options.
+                shift
+                break
+                ;;
+            -?*|[[:alnum:]]*)
+                # ignore unknown options
+                log_error "LOCAL_TASKS - unkwnown option (ignored): '${1}'"
+                ;;
+            *)
+                # Default case: If no more options then break out of the loop.
+                break
+                ;;
+        esac
+
+        shift
+    done
+
+    declare -a options
+    options+=("${option_masterdata}")
+    options+=(--defaults-extra-file=/etc/mysql/debian.cnf)
+    options+=(--port="${option_port}")
+    options+=(--opt)
+    options+=(--all-databases)
+    options+=(--force)
+    options+=(--events)
+    options+=(--hex-blob)
+
+    mysqldump "${options[@]}" 2> "${error_file}" | gzip --best > "${dump_file}"
 
     local last_rc=$?
     # shellcheck disable=SC2086
@@ -52,6 +116,13 @@ dump_mysql_global() {
     fi
     log "LOCAL_TASKS - stop  ${dump_file}"
 }
+
+#######################################################################
+# Dump a compressed file per database of an instance
+#
+# Arguments:
+# --port=[Integer] (default: 3306)
+#######################################################################
 dump_mysql_per_base() {
     local dump_dir="${LOCAL_BACKUP_DIR}/mysql-per-base"
     local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
@@ -59,13 +130,61 @@ dump_mysql_per_base() {
     # shellcheck disable=SC2174
     mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
 
-    databases=$(mysql_list_databases 3306)
+    local option_port="3306"
+    # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
+    while :; do
+        case $1 in
+            --port)
+                # port options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_port="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - '--port' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --port=?*)
+                # port options, with value separated by =
+                option_port="${1#*=}"
+                ;;
+            --port=)
+                # port options, without value
+                log_error "LOCAL_TASKS - '--port' requires a non-empty option argument."
+                exit 1
+                ;;
+            --)
+                # End of all options.
+                shift
+                break
+                ;;
+            -?*|[[:alnum:]]*)
+                # ignore unknown options
+                log_error "LOCAL_TASKS - unkwnown option (ignored): '${1}'"
+                ;;
+            *)
+                # Default case: If no more options then break out of the loop.
+                break
+                ;;
+        esac
+
+        shift
+    done
+
+    declare -a options
+    options+=(--defaults-extra-file=/etc/mysql/debian.cnf)
+    options+=(--port="${option_port}")
+    options+=(--force)
+    options+=(--events)
+    options+=(--hex-blob)
+
+    databases=$(mysql_list_databases ${option_port})
     for database in ${databases}; do
         local error_file="${errors_dir}/${database}.err"
         local dump_file="${dump_dir}/${database}.sql.gz"
         log "LOCAL_TASKS - start ${dump_file}"
 
-        mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --events --hex-blob "${database}" 2> "${error_file}" | gzip --best > "${dump_file}"
+        mysqldump "${options[@]}" "${database}" 2> "${error_file}" | gzip --best > "${dump_file}"
 
         local last_rc=$?
         # shellcheck disable=SC2086
@@ -78,6 +197,13 @@ dump_mysql_per_base() {
         log "LOCAL_TASKS - stop  ${dump_file}"
     done
 }
+
+#######################################################################
+# Dump grants, variables and databases schemas for an instance
+#
+# Arguments:
+# --port=[Integer] (default: 3306)
+#######################################################################
 dump_mysql_meta() {
     local dump_dir="${LOCAL_BACKUP_DIR}/mysql-meta"
     local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
@@ -85,12 +211,58 @@ dump_mysql_meta() {
     # shellcheck disable=SC2174
     mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
 
+    local option_port="3306"
+    # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
+    while :; do
+        case $1 in
+            --port)
+                # port options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_port="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - '--port' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --port=?*)
+                # port options, with value separated by =
+                option_port="${1#*=}"
+                ;;
+            --port=)
+                # port options, without value
+                log_error "LOCAL_TASKS - '--port' requires a non-empty option argument."
+                exit 1
+                ;;
+            --)
+                # End of all options.
+                shift
+                break
+                ;;
+            -?*|[[:alnum:]]*)
+                # ignore unknown options
+                log_error "LOCAL_TASKS - unkwnown option (ignored): '${1}'"
+                ;;
+            *)
+                # Default case: If no more options then break out of the loop.
+                break
+                ;;
+        esac
+
+        shift
+    done
+
     ## Dump all grants (requires 'percona-toolkit' package)
     local error_file="${errors_dir}/all_grants.err"
     local dump_file="${dump_dir}/all_grants.sql"
     log "LOCAL_TASKS - start ${dump_file}"
 
-    pt-show-grants --flush --no-header 2> "${error_file}" > "${dump_file}"
+    declare -a options
+    options+=(--port "${option_port}")
+    options+=(--flush)
+    options+=(--no-header)
+
+    pt-show-grants "${options[@]}" 2> "${error_file}" > "${dump_file}"
 
     local last_rc=$?
     # shellcheck disable=SC2086
@@ -107,7 +279,12 @@ dump_mysql_meta() {
     local dump_file="${dump_dir}/variables.txt"
     log "LOCAL_TASKS - start ${dump_file}"
 
-    mysql -A -e "SHOW GLOBAL VARIABLES;" 2> "${error_file}" > "${dump_file}"
+    declare -a options
+    options+=(--port="${option_port}")
+    options+=(-A)
+    options+=(-e "SHOW GLOBAL VARIABLES;")
+
+    mysql "${options[@]}" 2> "${error_file}" > "${dump_file}"
 
     local last_rc=$?
     # shellcheck disable=SC2086
@@ -120,13 +297,20 @@ dump_mysql_meta() {
     log "LOCAL_TASKS - stop  ${dump_file}"
 
     ## Schema only (no data) for each databases
-    databases=$(mysql_list_databases 3306)
+    databases=$(mysql_list_databases "${option_port}")
     for database in ${databases}; do
         local error_file="${errors_dir}/${database}.schema.err"
         local dump_file="${dump_dir}/${database}.schema.sql"
         log "LOCAL_TASKS - start ${dump_file}"
 
-        mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --no-data --databases "${database}" 2> "${error_file}" > "${dump_file}"
+        declare -a options
+        options+=(--defaults-extra-file=/etc/mysql/debian.cnf)
+        options+=(--port="${option_port}")
+        options+=(--force)
+        options+=(--no-data)
+        options+=(--databases "${database}")
+
+        mysqldump "${options[@]}" 2> "${error_file}" > "${dump_file}"
 
         local last_rc=$?
         # shellcheck disable=SC2086
@@ -139,6 +323,13 @@ dump_mysql_meta() {
         log "LOCAL_TASKS - stop  ${dump_file}"
     done
 }
+
+#######################################################################
+# Dump "tabs style" separate schema/data for each database of an instance
+#
+# Arguments:
+# --port=[Integer] (default: 3306)
+#######################################################################
 dump_mysql_tabs() {
     databases=$(mysql_list_databases 3306)
     for database in ${databases}; do
@@ -152,7 +343,63 @@ dump_mysql_tabs() {
         local error_file="${errors_dir}.err"
         log "LOCAL_TASKS - start ${dump_dir}"
 
-        mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 -Q --opt --events --hex-blob --skip-comments --fields-enclosed-by='\"' --fields-terminated-by=',' -T "${dump_dir}" "${database}" 2> "${error_file}"
+        local option_port="3306"
+        # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
+        while :; do
+            case $1 in
+                --port)
+                    # port options, with value separated by space
+                    if [ -n "$2" ]; then
+                        option_port="${2}"
+                        shift
+                    else
+                        log_error "LOCAL_TASKS - '--port' requires a non-empty option argument."
+                        exit 1
+                    fi
+                    ;;
+                --port=?*)
+                    # port options, with value separated by =
+                    option_port="${1#*=}"
+                    ;;
+                --port=)
+                    # port options, without value
+                    log_error "LOCAL_TASKS - '--port' requires a non-empty option argument."
+                    exit 1
+                    ;;
+                --)
+                    # End of all options.
+                    shift
+                    break
+                    ;;
+                -?*|[[:alnum:]]*)
+                    # ignore unknown options
+                    log_error "LOCAL_TASKS - unkwnown option (ignored): '${1}'"
+                    printf 'WARN: Unknown option (ignored): %s\n' "$1" >&2
+                    ;;
+                *)
+                    # Default case: If no more options then break out of the loop.
+                    break
+                    ;;
+            esac
+
+            shift
+        done
+
+        declare -a options
+        options+=(--defaults-extra-file=/etc/mysql/debian.cnf)
+        options+=(--port="${option_port}")
+        options+=(--force)
+        options+=(--quote-names)
+        options+=(--opt)
+        options+=(--events)
+        options+=(--hex-blob)
+        options+=(--skip-comments)
+        options+=(--fields-enclosed-by='\"')
+        options+=(--fields-terminated-by=',')
+        options+=(--tab="${dump_dir}")
+        options+=("${database}")
+
+        mysqldump "${options[@]}" 2> "${error_file}"
  
         local last_rc=$?
         # shellcheck disable=SC2086
@@ -165,62 +412,136 @@ dump_mysql_tabs() {
         log "LOCAL_TASKS - stop  ${dump_dir}"
     done
 }
-dump_mysql_hotcopy() {
-    # customize the list of databases to hot-copy
-    databases=""
-    for database in ${databases}; do
-        local dump_dir="${LOCAL_BACKUP_DIR}/mysql-hotcopy/${database}"
-        local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
-        rm -rf "${dump_dir}" "${errors_dir}"
-        # shellcheck disable=SC2174
-        mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
 
-        local error_file="${errors_dir}.err"
-        log "LOCAL_TASKS - start ${dump_dir}"
-
-        mysqlhotcopy "${database}" "${dump_dir}/" 2> "${error_file}"
-
-        local last_rc=$?
-        # shellcheck disable=SC2086
-        if [ ${last_rc} -ne 0 ]; then
-            log_error "LOCAL_TASKS - mysqlhotcopy to ${dump_dir} returned an error ${last_rc}" "${error_file}"
-            GLOBAL_RC=${E_DUMPFAILED}
-        else
-            rm -f "${error_file}"
-        fi
-        log "LOCAL_TASKS - stop  ${dump_dir}"
-    done
-}
-dump_mysql_instances() {
+#######################################################################
+# Dump a single file for all databases of an instance
+# using a custom authentication, instead of /etc/mysql/debian.cnf
+#
+# Arguments:
+# --port=[Integer] (default: 3306)
+# --user=[String] (default: <blank>)
+# --password=[String] (default: <blank>)
+#######################################################################
+dump_mysql_instance() {
     local dump_dir="${LOCAL_BACKUP_DIR}/mysql-instances"
     local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
     rm -rf "${dump_dir}" "${errors_dir}"
     # shellcheck disable=SC2174
     mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
 
-    mysql_user="mysqladmin"
-    mysql_passwd=$(grep -m1 'password = .*' /root/.my.cnf | cut -d " " -f 3)
+    local option_port=""
+    local option_user=""
+    local option_password=""
+    # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
+    while :; do
+        case $1 in
+            --port)
+                # port options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_port="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - '--port' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --port=?*)
+                # port options, with value separated by =
+                option_port="${1#*=}"
+                ;;
+            --port=)
+                # port options, without value
+                log_error "LOCAL_TASKS - '--port' requires a non-empty option argument."
+                exit 1
+                ;;
+            --user)
+                # user options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_user="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - '--user' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --user=?*)
+                # user options, with value separated by =
+                option_user="${1#*=}"
+                ;;
+            --user=)
+                # user options, without value
+                log_error "LOCAL_TASKS - '--user' requires a non-empty option argument."
+                exit 1
+                ;;
+            --password)
+                # password options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_password="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - '--password' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --password=?*)
+                # password options, with value separated by =
+                option_password="${1#*=}"
+                ;;
+            --password=)
+                # password options, without value
+                log_error "LOCAL_TASKS - '--password' requires a non-empty option argument."
+                exit 1
+                ;;
+            --)
+                # End of all options.
+                shift
+                break
+                ;;
+            -?*|[[:alnum:]]*)
+                # ignore unknown options
+                log_error "LOCAL_TASKS - unkwnown option (ignored): '${1}'"
+                ;;
+            *)
+                # Default case: If no more options then break out of the loop.
+                break
+                ;;
+        esac
 
-    # customize list of instances
-    instances=""
-    for instance in ${instances}; do
-        local error_file="${errors_dir}/${instance}.err"
-        local dump_file="${dump_dir}/${instance}.bak.gz"
-        log "LOCAL_TASKS - start ${dump_file}"
-
-        mysqldump --port="${instance}" --opt --all-databases --hex-blob --user="${mysql_user}" --password="${mysql_passwd}" 2> "${error_file}" | gzip --best > "${dump_file}"
-
-        local last_rc=$?
-        # shellcheck disable=SC2086
-        if [ ${last_rc} -ne 0 ]; then
-            log_error "LOCAL_TASKS - mysqldump to ${dump_file} returned an error ${last_rc}" "${error_file}"
-            GLOBAL_RC=${E_DUMPFAILED}
-        else
-            rm -f "${error_file}"
-        fi
-        log "LOCAL_TASKS - stop  ${dump_file}"
+        shift
     done
+
+    declare -a options
+    options+=(--port="${option_port}")
+    options+=(--user="${option_user}")
+    options+=(--password="${option_password}")
+    options+=(--force)
+    options+=(--opt)
+    options+=(--all-databases)
+    options+=(--events)
+    options+=(--hex-blob)
+
+    local error_file="${errors_dir}/${option_port}.err"
+    local dump_file="${dump_dir}/${option_port}.bak.gz"
+    log "LOCAL_TASKS - start ${dump_file}"
+
+    mysqldump "${options[@]}" 2> "${error_file}" | gzip --best > "${dump_file}"
+
+    local last_rc=$?
+    # shellcheck disable=SC2086
+    if [ ${last_rc} -ne 0 ]; then
+        log_error "LOCAL_TASKS - mysqldump to ${dump_file} returned an error ${last_rc}" "${error_file}"
+        GLOBAL_RC=${E_DUMPFAILED}
+    else
+        rm -f "${error_file}"
+    fi
+    log "LOCAL_TASKS - stop  ${dump_file}"
 }
+
+#######################################################################
+# Dump a single file of all PostgreSQL databases
+#
+# Arguments: <none>
+#######################################################################
 dump_postgresql_global() {
     local dump_dir="${LOCAL_BACKUP_DIR}/postgresql-global"
     local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
@@ -255,6 +576,12 @@ dump_postgresql_global() {
     # 
     # log "LOCAL_TASKS - stop  ${dump_file}"
 }
+
+#######################################################################
+# Dump a compressed file per database
+#
+# Arguments: <none>
+#######################################################################
 dump_postgresql_per_base() {
     local dump_dir="${LOCAL_BACKUP_DIR}/postgresql-per-base"
     local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
@@ -285,6 +612,14 @@ dump_postgresql_per_base() {
         done
     )
 }
+
+#######################################################################
+# Dump a compressed file per database
+#
+# Arguments: <none>
+#
+# TODO: add arguments to include/exclude tables
+#######################################################################
 dump_postgresql_filtered() {
     local dump_dir="${LOCAL_BACKUP_DIR}/postgresql-filtered"
     local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
@@ -312,9 +647,66 @@ dump_postgresql_filtered() {
     fi
     log "LOCAL_TASKS - stop  ${dump_file}"
 }
+
+#######################################################################
+# Copy dump file of Redis instances
+#
+# Arguments:
+# --instances=[Integer] (default: all)
+#######################################################################
 dump_redis() {
-    instances=$(find /var/lib/ -mindepth 1 -maxdepth 1 -type d -name 'redis*')
-    for instance in ${instances}; do
+    all_instances=$(find /var/lib/ -mindepth 1 -maxdepth 1 -type d -name 'redis*')
+
+    local option_instances=""
+    # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
+    while :; do
+        case $1 in
+            --instances)
+                # instances options, with key and value separated by space
+                if [ -n "$2" ]; then
+                    if [ "${2}" == "all" ]; then
+                        read -a option_instances <<< "${all_instances}"
+                    else
+                        IFS="," read -a option_instances <<< "${2}"
+                    fi
+                    shift
+                else
+                    log_error "LOCAL_TASKS - '--instances' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --instances=?*)
+                # instances options, with key and value separated by =
+                if [ "${1#*=}" == "all" ]; then
+                    read -a option_instances <<< "${all_instances}"
+                else
+                    IFS="," read -a option_instances <<< "${1#*=}"
+                fi
+                ;;
+            --instances=)
+                # instances options, without value
+                log_error "LOCAL_TASKS - '--instances' requires a non-empty option argument."
+                exit 1
+                ;;
+            --)
+                # End of all options.
+                shift
+                break
+                ;;
+            -?*|[[:alnum:]]*)
+                # ignore unknown options
+                log_error "LOCAL_TASKS - unkwnown option (ignored): '${1}'"
+                ;;
+            *)
+                # Default case: If no more options then break out of the loop.
+                break
+                ;;
+        esac
+
+        shift
+    done
+    
+    for instance in "${option_instances[@]}"; do
         name=$(basename "${instance}")
         local dump_dir="${LOCAL_BACKUP_DIR}/${name}"
         local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
@@ -337,9 +729,20 @@ dump_redis() {
                 rm -f "${error_file}"
             fi
             log "LOCAL_TASKS - stop  ${dump_dir}"
+        else
+            log_error "LOCAL_TASKS - '${instance}/dump.rdb' not found."
         fi
     done
 }
+
+#######################################################################
+# Dump all collections of a MongoDB database
+# using a custom authentication, instead of /etc/mysql/debian.cnf
+#
+# Arguments:
+# --user=[String] (default: <blank>)
+# --password=[String] (default: <blank>)
+#######################################################################
 dump_mongodb() {
     ## don't forget to create use with read-only access
     ## > use admin
@@ -354,10 +757,73 @@ dump_mongodb() {
     local error_file="${errors_dir}.err"
     log "LOCAL_TASKS - start ${dump_dir}"
 
-    mongo_user=""
-    mongo_password=""
+    local option_user=""
+    local option_password=""
+    # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
+    while :; do
+        case $1 in
+            --user)
+                # user options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_user="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - '--user' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --user=?*)
+                # user options, with value separated by =
+                option_user="${1#*=}"
+                ;;
+            --user=)
+                # user options, without value
+                log_error "LOCAL_TASKS - '--user' requires a non-empty option argument."
+                exit 1
+                ;;
+            --password)
+                # password options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_password="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - '--password' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --password=?*)
+                # password options, with value separated by =
+                option_password="${1#*=}"
+                ;;
+            --password=)
+                # password options, without value
+                log_error "LOCAL_TASKS - '--password' requires a non-empty option argument."
+                exit 1
+                ;;
+            --)
+                # End of all options.
+                shift
+                break
+                ;;
+            -?*|[[:alnum:]]*)
+                # ignore unknown options
+                log_error "LOCAL_TASKS - unkwnown option (ignored): '${1}'"
+                ;;
+            *)
+                # Default case: If no more options then break out of the loop.
+                break
+                ;;
+        esac
 
-    mongodump -u "${mongo_user}" -p"${mongo_password}" -o "${dump_dir}/" 2> "${error_file}" > /dev/null
+        shift
+    done
+
+    declare -a options
+    options+=(--username="${option_user}")
+    options+=(--password="${option_password}")
+    options+=(--out="${dump_dir}/")
+
+    mongodump "${options[@]}" 2> "${error_file}" > /dev/null
 
     local last_rc=$?
     # shellcheck disable=SC2086
@@ -369,6 +835,12 @@ dump_mongodb() {
     fi
     log "LOCAL_TASKS - stop  ${dump_dir}"
 }
+
+#######################################################################
+# Dump MegaCLI configuration
+#
+# Arguments: <none>
+#######################################################################
 dump_megacli_config() {
     local dump_dir="${LOCAL_BACKUP_DIR}/megacli"
     local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
@@ -392,6 +864,13 @@ dump_megacli_config() {
     fi
     log "LOCAL_TASKS - stop  ${dump_file}"
 }
+
+#######################################################################
+# Save some traceroute/mtr results
+#
+# Arguments:
+# --targets=[IP,HOST] (default: <none>)
+#######################################################################
 dump_traceroute() {
     local dump_dir="${LOCAL_BACKUP_DIR}/traceroute"
     local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
@@ -399,32 +878,80 @@ dump_traceroute() {
     # shellcheck disable=SC2174
     mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
 
-    network_targets="8.8.8.8 www.evolix.fr travaux.evolix.net"
+    local option_targets=""
+    # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
+    while :; do
+        case $1 in
+            --targets)
+                # targets options, with key and value separated by space
+                if [ -n "$2" ]; then
+                    IFS="," read -a option_targets <<< "${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - '--targets' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --targets=?*)
+                # targets options, with key and value separated by =
+                IFS="," read -a option_targets <<< "${1#*=}"
+                ;;
+            --targets=)
+                # targets options, without value
+                log_error "LOCAL_TASKS - '--targets' requires a non-empty option argument."
+                exit 1
+                ;;
+            --)
+                # End of all options.
+                shift
+                break
+                ;;
+            -?*|[[:alnum:]]*)
+                # ignore unknown options
+                log_error "LOCAL_TASKS - unkwnown option (ignored): '${1}'"
+                ;;
+            *)
+                # Default case: If no more options then break out of the loop.
+                break
+                ;;
+        esac
+
+        shift
+    done
 
     mtr_bin=$(command -v mtr)
-    if [ -n "${network_targets}" ] && [ -n "${mtr_bin}" ]; then
-        for addr in ${network_targets}; do
-            local dump_file="${dump_dir}/mtr-${addr}"
+    if [ -n "${mtr_bin}" ]; then
+        for target in "${option_targets[@]}"; do
+            local dump_file="${dump_dir}/mtr-${target}"
             log "LOCAL_TASKS - start ${dump_file}"
 
-            ${mtr_bin} -r "${addr}" > "${dump_file}"
+            ${mtr_bin} -r "${target}" > "${dump_file}"
 
             log "LOCAL_TASKS - stop  ${dump_file}"
         done
     fi
 
     traceroute_bin=$(command -v traceroute)
-    if [ -n "${network_targets}" ] && [ -n "${traceroute_bin}" ]; then
-        for addr in ${network_targets}; do
-            local dump_file="${dump_dir}/traceroute-${addr}"
+    if [ -n "${traceroute_bin}" ]; then
+        for target in "${option_targets[@]}"; do
+            local dump_file="${dump_dir}/traceroute-${target}"
             log "LOCAL_TASKS - start ${dump_file}"
 
-            ${traceroute_bin} -n "${addr}" > "${dump_file}" 2>&1
+            ${traceroute_bin} -n "${target}" > "${dump_file}" 2>&1
 
             log "LOCAL_TASKS - stop  ${dump_file}"
         done
     fi
 }
+
+#######################################################################
+# Save many system information, using dump_server_state
+#
+# Arguments: <none>
+#
+# TODO: pass arguments to the dump_server_state command
+# with defaults and overrides (incuding "dump-dir")
+#######################################################################
 dump_server_state() {
     local dump_dir="${LOCAL_BACKUP_DIR}/server-state"
     rm -rf "${dump_dir}"
@@ -459,6 +986,14 @@ dump_server_state() {
     fi
     log "LOCAL_TASKS - stop  ${dump_dir}"
 }
+
+#######################################################################
+# Save RabbitMQ data
+# 
+# Arguments: <none>
+# 
+# Warning: This has been poorly tested
+#######################################################################
 dump_rabbitmq() {
     local dump_dir="${LOCAL_BACKUP_DIR}/rabbitmq"
     local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
@@ -482,6 +1017,12 @@ dump_rabbitmq() {
     fi
     log "LOCAL_TASKS - stop  ${dump_file}"
 }
+
+#######################################################################
+# Save Files ACL on various partitions.
+# 
+# Arguments: <none>
+#######################################################################
 dump_facl() {
     local dump_dir="${LOCAL_BACKUP_DIR}/facl"
     local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
@@ -498,32 +1039,430 @@ dump_facl() {
 
     log "LOCAL_TASKS - stop  ${dump_dir}"
 }
-dump_elasticsearch_snapshot() {
-    log "LOCAL_TASKS - start dump_elasticsearch_snapshot"
+
+#######################################################################
+# Snapshot Elasticsearch data (single-node cluster)
+# 
+# Arguments:
+# --protocol=[String] (default: http)
+# --host=[String] (default: localhost)
+# --port=[Integer] (default: 9200)
+# --user=[String] (default: <none>)
+# --password=[String] (default: <none>)
+# --repository=[String] (default: snaprepo)
+# --snapshot=[String] (default: snapshot.daily)
+#######################################################################
+dump_elasticsearch_snapshot_singlenode() {
+    log "LOCAL_TASKS - start dump_elasticsearch_snapshot_singlenode"
+
+    local option_protocol="http"
+    local option_host="localhost"
+    local option_port="9200"
+    local option_user=""
+    local option_password=""
+    local option_repository="snaprepo"
+    local option_snapshot="snapshot.daily"
+    # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
+    while :; do
+        case $1 in
+            --protocol)
+                # protocol options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_protocol="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - '--protocol' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --protocol=?*)
+                # protocol options, with value separated by =
+                option_protocol="${1#*=}"
+                ;;
+            --protocol=)
+                # protocol options, without value
+                log_error "LOCAL_TASKS - '--protocol' requires a non-empty option argument."
+                exit 1
+                ;;
+            --host)
+                # host options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_host="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - '--host' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --host=?*)
+                # host options, with value separated by =
+                option_host="${1#*=}"
+                ;;
+            --host=)
+                # host options, without value
+                log_error "LOCAL_TASKS - '--host' requires a non-empty option argument."
+                exit 1
+                ;;
+            --port)
+                # port options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_port="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - '--port' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --port=?*)
+                # port options, with value separated by =
+                option_port="${1#*=}"
+                ;;
+            --port=)
+                # port options, without value
+                log_error "LOCAL_TASKS - '--port' requires a non-empty option argument."
+                exit 1
+                ;;
+            --user)
+                # user options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_user="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - '--user' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --user=?*)
+                # user options, with value separated by =
+                option_user="${1#*=}"
+                ;;
+            --user=)
+                # user options, without value
+                log_error "LOCAL_TASKS - '--user' requires a non-empty option argument."
+                exit 1
+                ;;
+            --password)
+                # password options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_password="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - '--password' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --password=?*)
+                # password options, with value separated by =
+                option_password="${1#*=}"
+                ;;
+            --password=)
+                # password options, without value
+                log_error "LOCAL_TASKS - '--password' requires a non-empty option argument."
+                exit 1
+                ;;
+            --repository)
+                # repository options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_repository="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - '--repository' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --repository=?*)
+                # repository options, with value separated by =
+                option_repository="${1#*=}"
+                ;;
+            --repository=)
+                # repository options, without value
+                log_error "LOCAL_TASKS - '--repository' requires a non-empty option argument."
+                exit 1
+                ;;
+            --snapshot)
+                # snapshot options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_snapshot="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - '--snapshot' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --snapshot=?*)
+                # snapshot options, with value separated by =
+                option_snapshot="${1#*=}"
+                ;;
+            --snapshot=)
+                # snapshot options, without value
+                log_error "LOCAL_TASKS - '--snapshot' requires a non-empty option argument."
+                exit 1
+                ;;
+            --)
+                # End of all options.
+                shift
+                break
+                ;;
+            -?*|[[:alnum:]]*)
+                # ignore unknown options
+                log_error "LOCAL_TASKS - unkwnown option (ignored): '${1}'"
+                ;;
+            *)
+                # Default case: If no more options then break out of the loop.
+                break
+                ;;
+        esac
+
+        shift
+    done
 
     ## Take a snapshot as a backup.
     ## Warning: You need to have a path.repo configured.
     ## See: https://wiki.evolix.org/HowtoElasticsearch#snapshots-et-sauvegardes
 
-    curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/snapshot.daily" >> "${LOGFILE}"
-    curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot.daily?wait_for_completion=true" >> "${LOGFILE}"
+    local base_url="${option_protocol}://${option_host}:${option_port}"
+    local snapshot_url="${base_url}/_snapshot/${option_repository}/${option_snapshot}"
+
+    if [ -n "${option_user}" ] || [ -n "${option_password}" ]; then
+        local option_auth="--user ${option_user}:${option_password}"
+    else
+        local option_auth=""
+    fi
+
+    curl -s -XDELETE "${option_auth}" "${snapshot_url}" >> "${LOGFILE}"
+    curl -s -XPUT "${option_auth}" "${snapshot_url}?wait_for_completion=true" >> "${LOGFILE}"
 
     # Clustered version here
     # It basically the same thing except that you need to check that NFS is mounted
     # if ss | grep ':nfs' | grep -q 'ip\.add\.res\.s1' && ss | grep ':nfs' | grep -q 'ip\.add\.res\.s2'
     # then
-    #     curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/snapshot.daily" >> "${LOGFILE}"
-    #     curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot.daily?wait_for_completion=true" >> "${LOGFILE}"
+    #     curl -s -XDELETE "${option_auth}" "${snapshot_url}" >> "${LOGFILE}"
+    #     curl -s -XPUT "${option_auth}" "${snapshot_url}?wait_for_completion=true" >> "${LOGFILE}"
     # else
     #     echo 'Cannot make a snapshot of elasticsearch, at least one node is not mounting the repository.'
     # fi
 
-    ## If you need to keep older snapshot, for example the last 10 daily snapshots, replace the XDELETE and XPUT lines by :
-    # for snapshot in $(curl -s -XGET "localhost:9200/_snapshot/snaprepo/_all?pretty=true" | grep -Eo 'snapshot_[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -n -10); do
-    #     curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/${snapshot}" | grep -v -Fx '{"acknowledged":true}'
-    # done
-    # date=$(/bin/date +%F)
-    # curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot_${date}?wait_for_completion=true" >> "${LOGFILE}"
+    log "LOCAL_TASKS - stop  dump_elasticsearch_snapshot_singlenode"
+}
 
-    log "LOCAL_TASKS - stop  dump_elasticsearch_snapshot"
+#######################################################################
+# Snapshot Elasticsearch data (multi-node cluster)
+# 
+# Arguments:
+# --protocol=[String] (default: http)
+# --host=[String] (default: localhost)
+# --port=[Integer] (default: 9200)
+# --user=[String] (default: <none>)
+# --password=[String] (default: <none>)
+# --repository=[String] (default: snaprepo)
+# --snapshot=[String] (default: snapshot.daily)
+# --nfs-server=[IP|HOST] (default: <none>)
+#######################################################################
+dump_elasticsearch_snapshot_multinode() {
+    log "LOCAL_TASKS - start dump_elasticsearch_snapshot_multinode"
+
+    local option_protocol="http"
+    local option_host="localhost"
+    local option_port="9200"
+    local option_user=""
+    local option_password=""
+    local option_repository="snaprepo"
+    local option_snapshot="snapshot.daily"
+    local option_nfs_server=""
+    # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
+    while :; do
+        case $1 in
+            --protocol)
+                # protocol options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_protocol="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - '--protocol' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --protocol=?*)
+                # protocol options, with value separated by =
+                option_protocol="${1#*=}"
+                ;;
+            --protocol=)
+                # protocol options, without value
+                log_error "LOCAL_TASKS - '--protocol' requires a non-empty option argument."
+                exit 1
+                ;;
+            --host)
+                # host options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_host="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - '--host' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --host=?*)
+                # host options, with value separated by =
+                option_host="${1#*=}"
+                ;;
+            --host=)
+                # host options, without value
+                log_error "LOCAL_TASKS - '--host' requires a non-empty option argument."
+                exit 1
+                ;;
+            --port)
+                # port options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_port="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - '--port' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --port=?*)
+                # port options, with value separated by =
+                option_port="${1#*=}"
+                ;;
+            --port=)
+                # port options, without value
+                log_error "LOCAL_TASKS - '--port' requires a non-empty option argument."
+                exit 1
+                ;;
+            --user)
+                # user options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_user="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - '--user' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --user=?*)
+                # user options, with value separated by =
+                option_user="${1#*=}"
+                ;;
+            --user=)
+                # user options, without value
+                log_error "LOCAL_TASKS - '--user' requires a non-empty option argument."
+                exit 1
+                ;;
+            --password)
+                # password options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_password="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - '--password' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --password=?*)
+                # password options, with value separated by =
+                option_password="${1#*=}"
+                ;;
+            --password=)
+                # password options, without value
+                log_error "LOCAL_TASKS - '--password' requires a non-empty option argument."
+                exit 1
+                ;;
+            --repository)
+                # repository options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_repository="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - '--repository' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --repository=?*)
+                # repository options, with value separated by =
+                option_repository="${1#*=}"
+                ;;
+            --repository=)
+                # repository options, without value
+                log_error "LOCAL_TASKS - '--repository' requires a non-empty option argument."
+                exit 1
+                ;;
+            --snapshot)
+                # snapshot options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_snapshot="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - '--snapshot' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --snapshot=?*)
+                # snapshot options, with value separated by =
+                option_snapshot="${1#*=}"
+                ;;
+            --snapshot=)
+                # snapshot options, without value
+                log_error "LOCAL_TASKS - '--snapshot' requires a non-empty option argument."
+                exit 1
+                ;;
+            --nfs-server)
+                # nfs-server options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_nfs_server="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - '--nfs-server' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --nfs-server=?*)
+                # nfs-server options, with value separated by =
+                option_nfs_server="${1#*=}"
+                ;;
+            --nfs-server=)
+                # nfs-server options, without value
+                log_error "LOCAL_TASKS - '--nfs-server' requires a non-empty option argument."
+                exit 1
+                ;;
+            --)
+                # End of all options.
+                shift
+                break
+                ;;
+            -?*|[[:alnum:]]*)
+                # ignore unknown options
+                log_error "LOCAL_TASKS - unkwnown option (ignored): '${1}'"
+                ;;
+            *)
+                # Default case: If no more options then break out of the loop.
+                break
+                ;;
+        esac
+
+        shift
+    done
+
+    ## Take a snapshot as a backup.
+    ## Warning: You need to have a path.repo configured.
+    ## See: https://wiki.evolix.org/HowtoElasticsearch#snapshots-et-sauvegardes
+
+    local base_url="${option_protocol}://${option_host}:${option_port}"
+    local snapshot_url="${base_url}/_snapshot/${option_repository}/${option_snapshot}"
+
+    if [ -n "${option_user}" ] || [ -n "${option_password}" ]; then
+        local option_auth="--user ${option_user}:${option_password}"
+    else
+        local option_auth=""
+    fi
+
+    # Clustered version here
+    # It basically the same thing except that you need to check that NFS is mounted
+    if ss | grep ':nfs' | grep -q -F "${option_nfs_server}"; then
+        curl -s -XDELETE "${option_auth}" "${snapshot_url}" >> "${LOGFILE}"
+        curl -s -XPUT "${option_auth}" "${snapshot_url}?wait_for_completion=true" >> "${LOGFILE}"
+    else
+        echo 'Cannot make a snapshot of elasticsearch, at least one node is not mounting the repository.'
+    fi
+
+    log "LOCAL_TASKS - stop  dump_elasticsearch_snapshot_multinode"
 }

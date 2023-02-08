@@ -137,22 +137,19 @@ local_tasks() {
     ########## MySQL ##################
 
     # Dump all grants (permissions), config variables and schema of databases
-    ### dump_mysql_meta
+    ### dump_mysql_meta [--port=3306]
 
     # Dump all databases in a single compressed file
-    ### dump_mysql_global
+    ### dump_mysql_global [--port=3306] [--masterdata]
     
     # Dump each database separately, in a compressed file
-    ### dump_mysql_per_base
+    ### dump_mysql_per_base [--port=3306]
  
     # Dump multiples instances, each in a single compressed file
-    ### dump_mysql_instances
+    ### dump_mysql_instance [--port=3306]
 
     # Dump each table in schema/data files, for all databases
-    ### dump_mysql_tabs
-
-    # Run mysqlhotcopy for a specific database (must be configured)
-    # dump_mysql_hotcopy
+    ### dump_mysql_tabs [--port=3306] [--user=foo] [--password=123456789]
 
     ########## PostgreSQL #############
 
@@ -167,17 +164,20 @@ local_tasks() {
 
     ########## MongoDB ################
     
-    ### dump_mongodb
+    ### dump_mongodb [--user=foo] [--password=123456789]
 
     ########## Redis ##################
 
     # Copy data file for all instances
-    ### dump_redis
+    ### dump_redis [--instances=<all|instance1|instance2>]
 
-    ########## ElasticSearch ##########
+    ########## Elasticsearch ##########
 
-    # Trigger snapshots (must be configured)
-    ### dump_elasticsearch_snapshot
+    # Snapshot data for a single-node cluster
+    ### dump_elasticsearch_snapshot_singlenode [--protocol=http] [--host=localhost] [--port=9200] [--user=foo] [--password=123456789] [--repository=snaprepo] [--snapshot=snapshot.daily]
+
+    # Snapshot data for a multi-node cluster
+    ### dump_elasticsearch_snapshot_multinode [--protocol=http] [--host=localhost] [--port=9200] [--user=foo] [--password=123456789] [--repository=snaprepo] [--snapshot=snapshot.daily] [--nfs-server=192.168.2.1]
 
     ########## RabbitMQ ###############
 
@@ -191,7 +191,7 @@ local_tasks() {
     ########## Network ################
 
     # Dump network routes with mtr and traceroute (warning: could be long with aggressive firewalls)
-    dump_traceroute
+    dump_traceroute --targets=8.8.8.8,www.evolix.fr,travaux.evolix.net
 
     ########## Server state ###########
 
