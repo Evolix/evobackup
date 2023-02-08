@@ -5,6 +5,7 @@
   become: yes
 
   vars:
+    evobackup_script_path: /etc/cron.daily/zzz_evobackup_beta
     evobackup_mail: alert4@evolix.net
     evobackup_libdir: "/usr/local/lib/evobackup"
 
@@ -28,7 +29,7 @@
     - name: script is present
       copy:
         src: zzz_evobackup.sh
-        dest: /etc/cron.daily/zzz_evobackup
+        dest: "{{ evobackup_script_path }}"
         remote_src: False
         owner: root
         group: root
