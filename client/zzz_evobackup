@@ -114,7 +114,7 @@ lxc/*/rootfs/var/tmp
 local_tasks() {
     log "START LOCAL_TASKS"
 
-    # Remove old log directories
+    # Remove old log directories (recursively)
     find "${LOCAL_BACKUP_DIR}/" -type d -name "${PROGNAME}.errors-*" -ctime +30 -delete
 
     ###################################################################

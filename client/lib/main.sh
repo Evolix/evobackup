@@ -20,8 +20,8 @@ source "${LIBDIR}/dump.sh"
 local_tasks_wrapper() {
     log "START LOCAL_TASKS"
 
-    # Remove old log directories
-    find "${LOCAL_BACKUP_DIR}/" -type d -name "${PROGNAME}.errors-*" -ctime +30 -delete
+    # Remove old log directories (recursively)
+    find "${LOCAL_BACKUP_DIR}/" -type d -name "${PROGNAME}.errors-*" -ctime +30 -exec rm -rf \;
 
     local_tasks_type="$(type -t local_tasks)"
     if [ "${local_tasks_type}" = "function" ]; then
