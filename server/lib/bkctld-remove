@@ -49,7 +49,7 @@ fi
 
 "${LIBDIR}/bkctld-is-on" "${jail_name}" && "${LIBDIR}/bkctld-stop" "${jail_name}"
 
-rm -f "${CONFDIR}/${jail_name}"
+test -f "${CONFDIR}/${jail_name}" && rm -f "${CONFDIR}/${jail_name}"
 rm -rf "$(jail_config_dir "${jail_name}")"
 
 btrfs_bin=$(command -v btrfs)
