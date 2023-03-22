@@ -14,115 +14,121 @@
 #
 # Licence: AGPLv3
 
-VERSION="22.12"
-
-##### CONFIGURATION ###################################################
+#######################################################################
 #
-# 1. Set the following MAIL and SERVERS variables.
-# 2. Customize the RSYNC_INCLUDES and RSYNC_EXCLUDES variables.
-# 3. Enable or disable local tasks inside the local_tasks() function.
+# You must configure the MAIL variable to receive notifications.
 #
-# Some local tasks are configurable.
-# If you enable them, have a look at their implementation.
+# There is some optional configuration that you can do
+# at the end of this script.
 #
-# Some additional configuration variable can be customized
-# at the end of the script, before invoking the main() function.
+# The library (usually installed at /usr/local/lib/evobackup/main.sh)
+# also has many variables that you can override for fine-tuning.
 #
 #######################################################################
 
-# email adress for notifications
+# Email adress for notifications
 MAIL=jdoe@example.com
 
-# list of hosts (hostname or IP) and SSH port for Rsync
-SERVERS="node0.backup.example.com:2XXX node1.backup.example.com:2XXX"
+#######################################################################
+#
+# The "sync_tasks" function will be called by the main function. 
+#
+# You can customize the variables:
+# * "sync_name"      (String)
+# * "SERVERS"        (Array of HOST:PORT)
+# * "RSYNC_INCLUDES" (Array of paths to include)
+# * "RSYNC_EXCLUDES" (Array of paths to exclude)
+#
+# The "sync" function can be called multiple times
+# with a different set of variables.
+# That way you can to sync to various destinations.
+#
+#######################################################################
 
-# We use /home/backup : feel free to use your own dir
-LOCAL_BACKUP_DIR="/home/backup"
+sync_tasks() {
 
-# Enable/disable local tasks (default: enabled)
-: "${LOCAL_TASKS:=1}"
-# Enable/disable sync tasks (default: enabled)
-: "${SYNC_TASKS:=1}"
-# Enable/disable mtree (default: enabled)
-: "${MTREE_ENABLED:=1}"
+    ########## System-only backup (to Evolix servers) #################
 
-# Source paths can be customized
-# Empty lines, and lines containing # or ; are ignored
-RSYNC_INCLUDES="
-/etc
-/root
-/var
-/home
-"
+    # Name your sync task, for logs
+    sync_name="evolix-system"
 
-# Excluded paths can be customized
-# Empty lines, and lines beginning with # or ; are ignored
-RSYNC_EXCLUDES="
-/dev
-/proc
-/run
-/sys
-/tmp
-/usr/doc
-/usr/obj
-/usr/share/doc
-/usr/src
-/var/apt
-/var/cache
-/var/db/munin/*.tmp
-/var/lib/amavis/amavisd.sock
-/var/lib/amavis/tmp
-/var/lib/clamav/*.tmp
-/var/lib/elasticsearch
-/var/lib/metche
-/var/lib/mongodb
-/var/lib/munin/*tmp*
-/var/lib/mysql
-/var/lib/php/sessions
-/var/lib/php5
-/var/lib/postgres
-/var/lib/postgresql
-/var/lib/sympa
-/var/lock
-/var/run
-/var/spool/postfix
-/var/spool/smtpd
-/var/spool/squid
-/var/state
-/var/tmp
-lost+found
-.nfs.*
-lxc/*/rootfs/tmp
-lxc/*/rootfs/usr/doc
-lxc/*/rootfs/usr/obj
-lxc/*/rootfs/usr/share/doc
-lxc/*/rootfs/usr/src
-lxc/*/rootfs/var/apt
-lxc/*/rootfs/var/cache
-lxc/*/rootfs/var/lib/php5
-lxc/*/rootfs/var/lib/php/sessions
-lxc/*/rootfs/var/lock
-lxc/*/rootfs/var/run
-lxc/*/rootfs/var/state
-lxc/*/rootfs/var/tmp
-/home/mysqltmp
-"
+    # List of host/port for your sync task
+    # shellcheck disable=SC2034
+    SERVERS=(
+        node0.backup.evolix.net:2234
+        node1.backup.evolix.net:2234
+    )
 
-##### FUNCTIONS #######################################################
+    # What to include in your sync task
+    # Add or remove paths if you need
+    # shellcheck disable=SC2034
+    RSYNC_INCLUDES=(
+        "${rsync_default_includes[@]}"
+        /etc
+        /root
+        /var
+    )
 
-# Execute all local tasks: database dumps, system state dump…
+    # What to exclude from your sync task
+    # Add or remove paths if you need
+    # shellcheck disable=SC2034
+    RSYNC_EXCLUDES=(
+        "${rsync_default_excludes[@]}"
+    )
+
+    # Call the sync task
+    sync "${sync_name}" "SERVERS[@]" "RSYNC_INCLUDES[@]" "RSYNC_EXCLUDES[@]"
+
+
+    ########## Full backup (to client servers) ########################
+
+    # Name your sync task, for logs
+    sync_name="client-full"
+
+    # List of host/port for your sync task
+    # shellcheck disable=SC2034
+    SERVERS=(
+        client-backup00.evolix.net:2221
+        client-backup01.evolix.net:2221
+    )
+
+    # What to include in your sync task
+    # Add or remove paths if you need
+    # shellcheck disable=SC2034
+    RSYNC_INCLUDES=(
+        "${rsync_default_includes[@]}"
+        /etc
+        /root
+        /var
+        /home
+        /srv
+    )
+
+    # What to exclude from your sync task
+    # Add or remove paths if you need
+    # shellcheck disable=SC2034
+    RSYNC_EXCLUDES=(
+        "${rsync_default_excludes[@]}"
+    )
+
+    # Call the sync task
+    sync "${sync_name}" "SERVERS[@]" "RSYNC_INCLUDES[@]" "RSYNC_EXCLUDES[@]"
+
+}
+
+#######################################################################
+#
+# The "local_tasks" function will be called by the main function. 
+#
+# You can call any available "dump_xxx" function
+# (usually installed at /usr/local/lib/evobackup/dump.sh)
+#
+# You can also write some custom functions and call them.
+# A "dump_custom" example is available further down.
+#
+#######################################################################
+
 local_tasks() {
-    log "START LOCAL_TASKS"
-
-    # Remove old log directories (recursively)
-    find "${LOCAL_BACKUP_DIR}/" -type d -name "${PROGNAME}.errors-*" -ctime +30 -delete
-
-    ###################################################################
-    # You can enable/disable local tasks
-    # by (un)commenting calls to "dump_XXX" functions.
-    #
-    # You can also add your own functions and call them from here.
-    ###################################################################
 
     ########## OpenLDAP ###############
 
@@ -131,22 +137,19 @@ local_tasks() {
     ########## MySQL ##################
 
     # Dump all grants (permissions), config variables and schema of databases
-    ### dump_mysql_meta
+    ### dump_mysql_meta [--port=3306]
 
     # Dump all databases in a single compressed file
-    ### dump_mysql_global
+    ### dump_mysql_global [--port=3306] [--masterdata]
     
     # Dump each database separately, in a compressed file
-    ### dump_mysql_per_base
+    ### dump_mysql_per_base [--port=3306]
  
     # Dump multiples instances, each in a single compressed file
-    ### dump_mysql_instances
+    ### dump_mysql_instance [--port=3306]
 
     # Dump each table in schema/data files, for all databases
-    ### dump_mysql_tabs
-
-    # Run mysqlhotcopy for a specific database (must be configured)
-    # dump_mysql_hotcopy
+    ### dump_mysql_tabs [--port=3306] [--user=foo] [--password=123456789]
 
     ########## PostgreSQL #############
 
@@ -161,17 +164,20 @@ local_tasks() {
 
     ########## MongoDB ################
     
-    ### dump_mongodb
+    ### dump_mongodb [--user=foo] [--password=123456789]
 
     ########## Redis ##################
 
     # Copy data file for all instances
-    ### dump_redis
+    ### dump_redis [--instances=<all|instance1|instance2>]
 
-    ########## ElasticSearch ##########
+    ########## Elasticsearch ##########
 
-    # Trigger snapshots (must be configured)
-    ### dump_elasticsearch_snapshot
+    # Snapshot data for a single-node cluster
+    ### dump_elasticsearch_snapshot_singlenode [--protocol=http] [--host=localhost] [--port=9200] [--user=foo] [--password=123456789] [--repository=snaprepo] [--snapshot=snapshot.daily]
+
+    # Snapshot data for a multi-node cluster
+    ### dump_elasticsearch_snapshot_multinode [--protocol=http] [--host=localhost] [--port=9200] [--user=foo] [--password=123456789] [--repository=snaprepo] [--snapshot=snapshot.daily] [--nfs-server=192.168.2.1]
 
     ########## RabbitMQ ###############
 
@@ -185,976 +191,82 @@ local_tasks() {
     ########## Network ################
 
     # Dump network routes with mtr and traceroute (warning: could be long with aggressive firewalls)
-    dump_traceroute
+    ### dump_traceroute --targets=host_or_ip[,host_or_ip]
+    dump_traceroute --targets=8.8.8.8,www.evolix.fr,travaux.evolix.net
 
     ########## Server state ###########
 
     # Run dump-server-state to extract system information
+    ### dump-server-state [any dump-server-state option]
     dump_server_state
 
     # Dump file access control lists
     ### dump_facl
 
-    ###################################################################
-
-    print_error_files_content
-
-    log "STOP LOCAL_TASKS"
+    # No-op, in case nothing is enabled
+    :
 }
 
-# Output error files content, if any
-print_error_files_content() {
-    # Search for error files
-    error_files=$(find "${ERRORS_DIR}" -type f)
-    for error_file in ${error_files}; do
-        error_file_size=$(stat -c "%s" "${error_file}")
-
-        # shellcheck disable=SC2086
-        if [ ${error_file_size} -gt 0 ]; then
-            # if the file is not empty, display its content
-            printf "### cat %s ###\n" "${error_file}" >&2
-            cat "${error_file}" >&2
-        else
-            # if the file is empty, remove it
-            rm "${error_file}"
-        fi
-    done
-
-    # Search for remaining error_files
-    error_files_count=$(find "${ERRORS_DIR}" -type f | wc -l)
-    # If there is no error file, clean the parent directories
-    if [ "${error_files_count}" -eq 0 ]; then
-        rm -rf "${ERRORS_DIR}"
-    fi
-}
-# shellcheck disable=SC2317
-mysql_list_databases() {
-    port=${1:-"3306"}
-
-    mysql --defaults-extra-file=/etc/mysql/debian.cnf --port="${port}" --execute="show databases" --silent --skip-column-names \
-        | grep --extended-regexp --invert-match "^(Database|information_schema|performance_schema|sys)"
-}
-
-# shellcheck disable=SC2317
-errors_dir_from_dump_dir() {
-    realpath --canonicalize-missing "${ERRORS_DIR}/$(realpath --relative-to="${LOCAL_BACKUP_DIR}" "${1}")"
-}
-# shellcheck disable=SC2317
-dump_ldap() {
-    ## OpenLDAP : example with slapcat
-    dump_dir="${LOCAL_BACKUP_DIR}/ldap"
-    rm -rf "${dump_dir}"
-    # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}"
-
-    log "LOCAL_TASKS - start dump_ldap to ${dump_dir}"
-
-    slapcat -n 0 -l "${dump_dir}/config.bak"
-    slapcat -n 1 -l "${dump_dir}/data.bak"
-    slapcat      -l "${dump_dir}/all.bak"
-
-    log "LOCAL_TASKS - stop  dump_ldap"
-}
-# shellcheck disable=SC2317
-dump_mysql_global() {
-    dump_dir="${LOCAL_BACKUP_DIR}/mysql-global"
-    errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
-    rm -rf "${dump_dir}" "${errors_dir}"
-    # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
-
-    error_file="${errors_dir}/mysql.bak.err"
-    dump_file="${dump_dir}/mysql.bak.gz"
-    log "LOCAL_TASKS - start ${dump_file}"
-
-    mysqldump --defaults-extra-file=/etc/mysql/debian.cnf -P 3306 --opt --all-databases --force --events --hex-blob 2> "${error_file}" | gzip --best > "${dump_file}"
-
-    last_rc=$?
-    # shellcheck disable=SC2086
-    if [ ${last_rc} -ne 0 ]; then
-        log_error "LOCAL_TASKS - mysqldump to ${dump_file} returned an error ${last_rc}" "${error_file}"
-        rc=${E_DUMPFAILED}
-    else
-        rm -f "${error_file}"
-    fi
-    log "LOCAL_TASKS - stop  ${dump_file}"
-}
-# shellcheck disable=SC2317
-dump_mysql_per_base() {
-    dump_dir="${LOCAL_BACKUP_DIR}/mysql-per-base"
-    errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
-    rm -rf "${dump_dir}" "${errors_dir}"
-    # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
-
-    databases=$(mysql_list_databases 3306)
-    for database in ${databases}; do
-        error_file="${errors_dir}/${database}.err"
-        dump_file="${dump_dir}/${database}.sql.gz"
-        log "LOCAL_TASKS - start ${dump_file}"
-
-        mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --events --hex-blob "${database}" 2> "${error_file}" | gzip --best > "${dump_file}"
-
-        last_rc=$?
-        # shellcheck disable=SC2086
-        if [ ${last_rc} -ne 0 ]; then
-            log_error "LOCAL_TASKS - mysqldump to ${dump_file} returned an error ${last_rc}" "${error_file}"
-            rc=${E_DUMPFAILED}
-        else
-            rm -f "${error_file}"
-        fi
-        log "LOCAL_TASKS - stop  ${dump_file}"
-    done
-}
-# shellcheck disable=SC2317
-dump_mysql_meta() {
-    dump_dir="${LOCAL_BACKUP_DIR}/mysql-meta"
-    errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
-    rm -rf "${dump_dir}" "${errors_dir}"
-    # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
-
-    ## Dump all grants (requires 'percona-toolkit' package)
-    error_file="${errors_dir}/all_grants.err"
-    dump_file="${dump_dir}/all_grants.sql"
-    log "LOCAL_TASKS - start ${dump_file}"
-
-    pt-show-grants --flush --no-header 2> "${error_file}" > "${dump_file}"
-
-    last_rc=$?
-    # shellcheck disable=SC2086
-    if [ ${last_rc} -ne 0 ]; then
-        log_error "LOCAL_TASKS - pt-show-grants to ${dump_file} returned an error ${last_rc}" "${error_file}"
-        rc=${E_DUMPFAILED}
-    else
-        rm -f "${error_file}"
-    fi
-    log "LOCAL_TASKS - stop  ${dump_file}"
-
-    ## Dump all variables
-    error_file="${errors_dir}/variables.err"
-    dump_file="${dump_dir}/variables.txt"
-    log "LOCAL_TASKS - start ${dump_file}"
-
-    mysql -A -e "SHOW GLOBAL VARIABLES;" 2> "${error_file}" > "${dump_file}"
-
-    last_rc=$?
-    # shellcheck disable=SC2086
-    if [ ${last_rc} -ne 0 ]; then
-        log_error "LOCAL_TASKS - mysql 'show variables' returned an error ${last_rc}" "${error_file}"
-        rc=${E_DUMPFAILED}
-    else
-        rm -f "${error_file}"
-    fi
-    log "LOCAL_TASKS - stop  ${dump_file}"
-
-    ## Schema only (no data) for each databases
-    databases=$(mysql_list_databases 3306)
-    for database in ${databases}; do
-        error_file="${errors_dir}/${database}.schema.err"
-        dump_file="${dump_dir}/${database}.schema.sql"
-        log "LOCAL_TASKS - start ${dump_file}"
-
-        mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 --no-data --databases "${database}" 2> "${error_file}" > "${dump_file}"
-
-        last_rc=$?
-        # shellcheck disable=SC2086
-        if [ ${last_rc} -ne 0 ]; then
-            log_error "LOCAL_TASKS - mysqldump to ${dump_file} returned an error ${last_rc}" "${error_file}"
-            rc=${E_DUMPFAILED}
-        else
-            rm -f "${error_file}"
-        fi
-        log "LOCAL_TASKS - stop  ${dump_file}"
-    done
-}
-# shellcheck disable=SC2317
-dump_mysql_tabs() {
-    databases=$(mysql_list_databases 3306)
-    for database in ${databases}; do
-        dump_dir="${LOCAL_BACKUP_DIR}/mysql-tabs/${database}"
-        errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
-        rm -rf "${dump_dir}" "${errors_dir}"
-        # shellcheck disable=SC2174
-        mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
-        chown -RL mysql "${dump_dir}"
-
-        error_file="${errors_dir}.err"
-        log "LOCAL_TASKS - start ${dump_dir}"
-
-        mysqldump --defaults-extra-file=/etc/mysql/debian.cnf --force -P 3306 -Q --opt --events --hex-blob --skip-comments --fields-enclosed-by='\"' --fields-terminated-by=',' -T "${dump_dir}" "${database}" 2> "${error_file}"
- 
-        last_rc=$?
-        # shellcheck disable=SC2086
-        if [ ${last_rc} -ne 0 ]; then
-            log_error "LOCAL_TASKS - mysqldump to ${dump_dir} returned an error ${last_rc}" "${error_file}"
-            rc=${E_DUMPFAILED}
-        else
-            rm -f "${error_file}"
-        fi
-        log "LOCAL_TASKS - stop  ${dump_dir}"
-    done
-}
-# shellcheck disable=SC2317
-dump_mysql_hotcopy() {
-    # customize the list of databases to hot-copy
-    databases=""
-    for database in ${databases}; do
-        dump_dir="${LOCAL_BACKUP_DIR}/mysql-hotcopy/${database}"
-        errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
-        rm -rf "${dump_dir}" "${errors_dir}"
-        # shellcheck disable=SC2174
-        mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
-
-        error_file="${errors_dir}.err"
-        log "LOCAL_TASKS - start ${dump_dir}"
-
-        mysqlhotcopy "${database}" "${dump_dir}/" 2> "${error_file}"
-
-        last_rc=$?
-        # shellcheck disable=SC2086
-        if [ ${last_rc} -ne 0 ]; then
-            log_error "LOCAL_TASKS - mysqlhotcopy to ${dump_dir} returned an error ${last_rc}" "${error_file}"
-            rc=${E_DUMPFAILED}
-        else
-            rm -f "${error_file}"
-        fi
-        log "LOCAL_TASKS - stop  ${dump_dir}"
-    done
-}
-# shellcheck disable=SC2317
-dump_mysql_instances() {
-    dump_dir="${LOCAL_BACKUP_DIR}/mysql-instances"
-    errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
-    rm -rf "${dump_dir}" "${errors_dir}"
-    # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
-
-    mysql_user="mysqladmin"
-    mysql_passwd=$(grep -m1 'password = .*' /root/.my.cnf | cut -d " " -f 3)
-
-    # customize list of instances
-    instances=""
-    for instance in ${instances}; do
-        error_file="${errors_dir}/${instance}.err"
-        dump_file="${dump_dir}/${instance}.bak.gz"
-        log "LOCAL_TASKS - start ${dump_file}"
-
-        mysqldump --port="${instance}" --opt --all-databases --hex-blob --user="${mysql_user}" --password="${mysql_passwd}" 2> "${error_file}" | gzip --best > "${dump_file}"
-
-        last_rc=$?
-        # shellcheck disable=SC2086
-        if [ ${last_rc} -ne 0 ]; then
-            log_error "LOCAL_TASKS - mysqldump to ${dump_file} returned an error ${last_rc}" "${error_file}"
-            rc=${E_DUMPFAILED}
-        else
-            rm -f "${error_file}"
-        fi
-        log "LOCAL_TASKS - stop  ${dump_file}"
-    done
-}
-# shellcheck disable=SC2317
-dump_postgresql_global() {
-    dump_dir="${LOCAL_BACKUP_DIR}/postgresql-global"
-    errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
-    rm -rf "${dump_dir}" "${errors_dir}"
-    # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
-
-    ## example with pg_dumpall and with compression
-    dump_file="${dump_dir}/pg.dump.bak.gz"
-    log "LOCAL_TASKS - start ${dump_file}"
-
-    (sudo -u postgres pg_dumpall) 2> "${error_file}" | gzip --best > "${dump_file}"
-
-    last_rc=$?
-    # shellcheck disable=SC2086
-    if [ ${last_rc} -ne 0 ]; then
-        log_error "LOCAL_TASKS - pg_dumpall to ${dump_file} returned an error ${last_rc}" "${error_file}"
-        rc=${E_DUMPFAILED}
-    else
-        rm -f "${error_file}"
-    fi
-
-    log "LOCAL_TASKS - stop  ${dump_file}"
-
-    ## example with pg_dumpall and without compression
-    ## WARNING: you need space in ~postgres
-    # dump_file="${dump_dir}/pg.dump.bak"
-    # log "LOCAL_TASKS - start ${dump_file}"
-    # 
-    # (su - postgres -c "pg_dumpall > ~/pg.dump.bak") 2> "${error_file}"
-    # mv ~postgres/pg.dump.bak "${dump_file}"
-    # 
-    # log "LOCAL_TASKS - stop  ${dump_file}"
-}
-# shellcheck disable=SC2317
-dump_postgresql_per_base() {
-    dump_dir="${LOCAL_BACKUP_DIR}/postgresql-per-base"
-    errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
-    rm -rf "${dump_dir}" "${errors_dir}"
-    # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
-
-    (
-        # shellcheck disable=SC2164
-        cd /var/lib/postgresql
-        databases=$(sudo -u postgres psql -U postgres -lt | awk -F\| '{print $1}' | grep -v "template.*")
-        for database in ${databases} ; do
-            error_file="${errors_dir}/${database}.err"
-            dump_file="${dump_dir}/${database}.sql.gz"
-            log "LOCAL_TASKS - start ${dump_file}"
-
-            (sudo -u postgres /usr/bin/pg_dump --create -s -U postgres -d "${database}") 2> "${error_file}" | gzip --best > "${dump_file}"
-
-            last_rc=$?
-            # shellcheck disable=SC2086
-            if [ ${last_rc} -ne 0 ]; then
-                log_error "LOCAL_TASKS - pg_dump to ${dump_file} returned an error ${last_rc}" "${error_file}"
-                rc=${E_DUMPFAILED}
-            else
-                rm -f "${error_file}"
-            fi
-            log "LOCAL_TASKS - stop  ${dump_file}"
-        done
-    )
-}
-# shellcheck disable=SC2317
-dump_postgresql_filtered() {
-    dump_dir="${LOCAL_BACKUP_DIR}/postgresql-filtered"
-    errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
-    rm -rf "${dump_dir}" "${errors_dir}"
-    # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
-
-    error_file="${errors_dir}/pg-backup.err"
-    dump_file="${dump_dir}/pg-backup.tar"
-    log "LOCAL_TASKS - start ${dump_file}"
-
-    ## example with all tables from MYBASE excepts TABLE1 and TABLE2
-    # pg_dump -p 5432 -h 127.0.0.1 -U USER --clean -F t --inserts -f "${dump_file}" -t 'TABLE1' -t 'TABLE2' MYBASE 2> "${error_file}"
-
-    ## example with only TABLE1 and TABLE2 from MYBASE
-    # pg_dump -p 5432 -h 127.0.0.1 -U USER --clean -F t --inserts -f "${dump_file}" -T 'TABLE1' -T 'TABLE2' MYBASE 2> "${error_file}"
-
-    last_rc=$?
-    # shellcheck disable=SC2086
-    if [ ${last_rc} -ne 0 ]; then
-        log_error "LOCAL_TASKS - pg_dump to ${dump_file} returned an error ${last_rc}" "${error_file}"
-        rc=${E_DUMPFAILED}
-    else
-        rm -f "${error_file}"
-    fi
-    log "LOCAL_TASKS - stop  ${dump_file}"
-}
-# shellcheck disable=SC2317
-dump_redis() {
-    instances=$(find /var/lib/ -mindepth 1 -maxdepth 1 -type d -name 'redis*')
-    for instance in ${instances}; do
-        name=$(basename "${instance}")
-        dump_dir="${LOCAL_BACKUP_DIR}/${name}"
-        errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
-        rm -rf "${dump_dir}" "${errors_dir}"
-        # shellcheck disable=SC2174
-        mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
-
-        if [ -f "${instance}/dump.rdb" ]; then
-            error_file="${errors_dir}/${instance}.err"
-            log "LOCAL_TASKS - start ${dump_dir}"
-
-            cp -a "${instance}/dump.rdb" "${dump_dir}/" 2> "${error_file}"
-
-            last_rc=$?
-            # shellcheck disable=SC2086
-            if [ ${last_rc} -ne 0 ]; then
-                log_error "LOCAL_TASKS - cp ${instance}/dump.rdb to ${dump_dir} returned an error ${last_rc}" "${error_file}"
-                rc=${E_DUMPFAILED}
-            else
-                rm -f "${error_file}"
-            fi
-            log "LOCAL_TASKS - stop  ${dump_dir}"
-        fi
-    done
-}
-# shellcheck disable=SC2317
-dump_mongodb() {
-    ## don't forget to create use with read-only access
-    ## > use admin
-    ## > db.createUser( { user: "mongobackup", pwd: "PASS", roles: [ "backup", ] } )
-
-    dump_dir="${LOCAL_BACKUP_DIR}/mongodump"
-    errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
-    rm -rf "${dump_dir}" "${errors_dir}"
-    # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
-
-    error_file="${errors_dir}.err"
-    log "LOCAL_TASKS - start ${dump_dir}"
-
-    mongo_user=""
-    mongo_password=""
-
-    mongodump -u "${mongo_user}" -p"${mongo_password}" -o "${dump_dir}/" 2> "${error_file}" > /dev/null
-
-    last_rc=$?
-    # shellcheck disable=SC2086
-    if [ ${last_rc} -ne 0 ]; then
-        log_error "LOCAL_TASKS - mongodump to ${dump_dir} returned an error ${last_rc}" "${error_file}"
-        rc=${E_DUMPFAILED}
-    else
-        rm -f "${error_file}"
-    fi
-    log "LOCAL_TASKS - stop  ${dump_dir}"
-}
-# shellcheck disable=SC2317
-dump_megacli_config() {
-    dump_dir="${LOCAL_BACKUP_DIR}/megacli"
-    errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
-    rm -rf "${dump_dir}" "${errors_dir}"
-    # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
-
-    dump_file="${dump_dir}/megacli.cfg"
-    error_file="${errors_dir}/megacli.err"
-    log "LOCAL_TASKS - start ${dump_file}"
-
-    megacli -CfgSave -f "${dump_file}" -a0 2> "${error_file}" > /dev/null
-
-    last_rc=$?
-    # shellcheck disable=SC2086
-    if [ ${last_rc} -ne 0 ]; then
-        log_error "LOCAL_TASKS - megacli to ${dump_file} returned an error ${last_rc}" "${error_file}"
-        rc=${E_DUMPFAILED}
-    else
-        rm -f "${error_file}"
-    fi
-    log "LOCAL_TASKS - stop  ${dump_file}"
-}
-# shellcheck disable=SC2317
-dump_traceroute() {
-    dump_dir="${LOCAL_BACKUP_DIR}/traceroute"
-    errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
-    rm -rf "${dump_dir}" "${errors_dir}"
-    # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
-
-    network_targets="8.8.8.8 www.evolix.fr travaux.evolix.net"
-
-    mtr_bin=$(command -v mtr)
-    if [ -n "${network_targets}" ] && [ -n "${mtr_bin}" ]; then
-        for addr in ${network_targets}; do
-            dump_file="${dump_dir}/mtr-${addr}"
-            log "LOCAL_TASKS - start ${dump_file}"
-
-            ${mtr_bin} -r "${addr}" > "${dump_file}"
-
-            log "LOCAL_TASKS - stop  ${dump_file}"
-        done
-    fi
-
-    traceroute_bin=$(command -v traceroute)
-    if [ -n "${network_targets}" ] && [ -n "${traceroute_bin}" ]; then
-        for addr in ${network_targets}; do
-            dump_file="${dump_dir}/traceroute-${addr}"
-            log "LOCAL_TASKS - start ${dump_file}"
-
-            ${traceroute_bin} -n "${addr}" > "${dump_file}" 2>&1
-
-            log "LOCAL_TASKS - stop  ${dump_file}"
-        done
-    fi
-}
-# shellcheck disable=SC2317
-dump_server_state() {
-    dump_dir="${LOCAL_BACKUP_DIR}/server-state"
-    rm -rf "${dump_dir}"
-    # Do not create the directory
-    # shellcheck disable=SC2174
-    # mkdir -p -m 700 "${dump_dir}"
-
-    log "LOCAL_TASKS - start ${dump_dir}"
-
-    dump_server_state_bin=$(command -v dump-server-state)
-    if [ -z "${dump_server_state_bin}" ]; then
-        log_error "LOCAL_TASKS - dump-server-state is missing"
-        rc=1
-    else
-        if [ "${SYSTEM}" = "linux" ]; then
-            ${dump_server_state_bin} --all --dump-dir "${dump_dir}"
-            last_rc=$?
-            # shellcheck disable=SC2086
-            if [ ${last_rc} -ne 0 ]; then
-                log_error "LOCAL_TASKS - dump-server-state returned an error ${last_rc}, check ${dump_dir}"
-                rc=${E_DUMPFAILED}
-            fi
-        else
-            ${dump_server_state_bin} --all --dump-dir "${dump_dir}"
-            last_rc=$?
-            # shellcheck disable=SC2086
-            if [ ${last_rc} -ne 0 ]; then
-                log_error "LOCAL_TASKS - dump-server-state returned an error ${last_rc}, check ${dump_dir}"
-                rc=${E_DUMPFAILED}
-            fi
-        fi
-    fi
-    log "LOCAL_TASKS - stop  ${dump_dir}"
-}
-# shellcheck disable=SC2317
-dump_rabbitmq() {
-    dump_dir="${LOCAL_BACKUP_DIR}/rabbitmq"
-    errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
-    rm -rf "${dump_dir}" "${errors_dir}"
-    # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
-
-    error_file="${errors_dir}.err"
-    dump_file="${dump_dir}/config"
-    log "LOCAL_TASKS - start ${dump_file}"
-
-    rabbitmqadmin export "${dump_file}" 2> "${error_file}" >> "${LOGFILE}"
-
-    last_rc=$?
-    # shellcheck disable=SC2086
-    if [ ${last_rc} -ne 0 ]; then
-        log_error "LOCAL_TASKS - pg_dump to ${dump_file} returned an error ${last_rc}" "${error_file}"
-        rc=${E_DUMPFAILED}
-    else
-        rm -f "${error_file}"
-    fi
-    log "LOCAL_TASKS - stop  ${dump_file}"
-}
-# shellcheck disable=SC2317
-dump_facl() {
-    dump_dir="${LOCAL_BACKUP_DIR}/facl"
-    errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
-    rm -rf "${dump_dir}" "${errors_dir}"
-    # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
-
-    log "LOCAL_TASKS - start ${dump_dir}"
-
-    getfacl -R /etc  > "${dump_dir}/etc.txt"
-    getfacl -R /home > "${dump_dir}/home.txt"
-    getfacl -R /usr  > "${dump_dir}/usr.txt"
-    getfacl -R /var  > "${dump_dir}/var.txt"
-
-    log "LOCAL_TASKS - stop  ${dump_dir}"
-}
-# shellcheck disable=SC2317
-dump_elasticsearch_snapshot() {
-    log "LOCAL_TASKS - start dump_elasticsearch_snapshot"
-
-    ## Take a snapshot as a backup.
-    ## Warning: You need to have a path.repo configured.
-    ## See: https://wiki.evolix.org/HowtoElasticsearch#snapshots-et-sauvegardes
-
-    curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/snapshot.daily" >> "${LOGFILE}"
-    curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot.daily?wait_for_completion=true" >> "${LOGFILE}"
-
-    # Clustered version here
-    # It basically the same thing except that you need to check that NFS is mounted
-    # if ss | grep ':nfs' | grep -q 'ip\.add\.res\.s1' && ss | grep ':nfs' | grep -q 'ip\.add\.res\.s2'
-    # then
-    #     curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/snapshot.daily" >> "${LOGFILE}"
-    #     curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot.daily?wait_for_completion=true" >> "${LOGFILE}"
-    # else
-    #     echo 'Cannot make a snapshot of elasticsearch, at least one node is not mounting the repository.'
-    # fi
-
-    ## If you need to keep older snapshot, for example the last 10 daily snapshots, replace the XDELETE and XPUT lines by :
-    # for snapshot in $(curl -s -XGET "localhost:9200/_snapshot/snaprepo/_all?pretty=true" | grep -Eo 'snapshot_[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -n -10); do
-    #     curl -s -XDELETE "localhost:9200/_snapshot/snaprepo/${snapshot}" | grep -v -Fx '{"acknowledged":true}'
-    # done
-    # date=$(/bin/date +%F)
-    # curl -s -XPUT "localhost:9200/_snapshot/snaprepo/snapshot_${date}?wait_for_completion=true" >> "${LOGFILE}"
-
-    log "LOCAL_TASKS - stop  dump_elasticsearch_snapshot"
+# This is an example for a custom dump function
+# Uncomment, customize and call it from the "local_tasks" function
+### dump_custom() {
+###     # Set dump and errors directories and files
+###     local dump_dir="${LOCAL_BACKUP_DIR}/custom"
+###     local dump_file="${dump_dir}/dump.gz"
+###     local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
+###     local error_file="${errors_dir}/dump.err"
+### 
+###     # Reset dump and errors directories
+###     rm -rf "${dump_dir}" "${errors_dir}"
+###     # shellcheck disable=SC2174
+###     mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
+###
+###     # Log the start of the command
+###     log "LOCAL_TASKS - start ${dump_file}"
+###
+###     # Execute your dump command
+###     # Send errors to the error file and the data to the dump file
+###     my-dump-command 2> "${error_file}" > "${dump_file}"
+###
+###     # Check result and deal with potential errors
+###     local last_rc=$?
+###     # shellcheck disable=SC2086
+###     if [ ${last_rc} -ne 0 ]; then
+###         log_error "LOCAL_TASKS - my-dump-command to ${dump_file} returned an error ${last_rc}" "${error_file}"
+###         GLOBAL_RC=${E_DUMPFAILED}
+###     else
+###         rm -f "${error_file}"
+###     fi
+###
+###     # Log the end of the command
+###     log "LOCAL_TASKS - stop  ${dump_file}"
+### }
+
+########## Optional configuration #####################################
+
+setup_custom() {
+    # If you set a value (like "linux", "openbsd"…) it will be used,
+    # Default: uname(1) in lowercase.
+    ### SYSTEM="linux"
+
+    # If you set a value it will be used,
+    # Default: hostname(1).
+    ### HOSTNAME="example-host"
+
+    # Email subect for notifications
+    ### MAIL_SUBJECT="[info] EvoBackup - Client ${HOSTNAME}"
+
+    # No-op in case nothing is executed
+    :
 }
 
-# Call test_server with "HOST:PORT" string
-# It will return with 0 if the server is reachable.
-# It will return with 1 and a message on stderr if not.
-test_server() {
-    item=$1
-    # split HOST and PORT from the input string
-    host=$(echo "${item}" | cut -d':' -f1)
-    port=$(echo "${item}" | cut -d':' -f2)
+########## Libraries ##################################################
 
-    # Test if the server is accepting connections
-    ssh -q -o "ConnectTimeout ${SSH_CONNECT_TIMEOUT}" "${host}" -p "${port}" -t "exit"
-    # shellcheck disable=SC2181
-    if [ $? = 0 ]; then
-        # SSH connection is OK
-        return 0
-    else
-        # SSH connection failed
-        new_error=$(printf "Failed to connect to \`%s' within %s seconds" "${item}" "${SSH_CONNECT_TIMEOUT}")
-        log "${new_error}"
-        SERVERS_SSH_ERRORS=$(printf "%s\\n%s" "${SERVERS_SSH_ERRORS}" "${new_error}" | sed -e '/^$/d')
+# Change this to wherever you install the libraries
+LIBDIR="/usr/local/lib/evobackup"
 
-        return 1
-    fi
-}
-# Call pick_server with an optional positive integer to get the nth server in the list.
-pick_server() {
-    increment=${1:-0}
-    list_length=$(echo "${SERVERS}" | wc -w)
+source "${LIBDIR}/main.sh"
 
-    if [ "${increment}" -ge "${list_length}" ]; then
-        # We've reached the end of the list
-        new_error="No more server available"
-        log "${new_error}"
-        SERVERS_SSH_ERRORS=$(printf "%s\\n%s" "${SERVERS_SSH_ERRORS}" "${new_error}" | sed -e '/^$/d')
+########## Let's go! ##################################################
 
-        # Log errors to stderr
-        printf "%s\\n" "${SERVERS_SSH_ERRORS}" >&2
-        return 1
-    fi
-
-    # Extract the day of month, without leading 0 (which would give an octal based number)
-    today=$(/bin/date +%e)
-    # A salt is useful to randomize the starting point in the list
-    # but stay identical each time it's called for a server (based on hostname).
-    salt=$(hostname | cksum | cut -d' ' -f1)
-    # Pick an integer between 0 and the length of the SERVERS list
-    # It changes each day
-    item=$(( (today + salt + increment) % list_length ))
-    # cut starts counting fields at 1, not 0.
-    field=$(( item + 1 ))
-
-    echo "${SERVERS}" | cut -d ' ' -f ${field}
-}
-
-sync_tasks() {
-    n=0
-    server=""
-    if [ "${SERVERS_FALLBACK}" = "1" ]; then
-        # We try to find a suitable server
-        while :; do
-            server=$(pick_server "${n}")
-            test $? = 0 || exit ${E_NOSRVAVAIL}
-
-            if test_server "${server}"; then
-                break
-            else
-                server=""
-                n=$(( n + 1 ))
-            fi
-        done
-    else
-        # we force the server
-        server=$(pick_server "${n}")
-    fi
-
-    SSH_SERVER=$(echo "${server}" | cut -d':' -f1)
-    SSH_PORT=$(echo "${server}" | cut -d':' -f2)
-
-    log "START SYNC_TASKS - server=${server}"
-
-    # default paths, depending on system
-    if [ "${SYSTEM}" = "linux" ]; then
-        rsync_default_includes=(/bin /boot /lib /opt /sbin /usr)
-    else
-        rsync_default_includes=(/bsd /bin /sbin /usr)
-    fi
-    if [ -f "${CANARY_FILE}" ]; then
-        rsync_default_includes+=("${CANARY_FILE}")
-    fi
-
-    # reset Rsync log file
-    if [ -n "$(command -v truncate)" ]; then 
-        truncate -s 0 "${RSYNC_LOGFILE}"
-    else
-        printf "" > "${RSYNC_LOGFILE}"
-    fi
-
-    # Create a temp file for excludes and includes
-    rsync_includes_file="$(mktemp --tmpdir "${PROGNAME}.rsync-includes.XXXXXX")"
-    rsync_excludes_file="$(mktemp --tmpdir "${PROGNAME}.rsync-excludes.XXXXXX")"
-    # … and add them to the list of files to delete at exit
-    temp_files+=("${rsync_includes_file}")
-    temp_files+=("${rsync_excludes_file}")
-
-    # Store includes/excludes in files
-    # without blank lines of comments (# or ;)
-    echo "${RSYNC_INCLUDES}" | sed -e 's/\s*\(#\|;\).*//; /^\s*$/d' > "${rsync_includes_file}"
-    echo "${RSYNC_EXCLUDES}" | sed -e 's/\s*\(#\|;\).*//; /^\s*$/d' > "${rsync_excludes_file}"
-    
-    if [ "${MTREE_ENABLED}" = "1" ]; then
-        mtree_bin=$(command -v mtree)
-
-        if [ -n "${mtree_bin}" ]; then
-            # Dump filesystem stats with mtree
-            log "SYNC_TASKS - start mtree"
-
-            mtree_files=()
-
-            # Loop over Rsync includes
-            while read -r line ; do
-                # … but exclude for mtree what will be excluded by Rsync
-                mtree_excludes_file="$(mktemp --tmpdir "${PROGNAME}.mtree-excludes.XXXXXX")"
-                temp_files+=("${mtree_excludes_file}")
-                grep -E "^([^/]|${line})" "${rsync_excludes_file}" | sed -e "s|^${line}|.|" > "${mtree_excludes_file}"
-
-                mtree_file="/var/log/evobackup.$(basename "${line}").mtree"
-                temp_files+=("${mtree_file}")
-
-                ${mtree_bin} -x -c -p "${line}" -X "${mtree_excludes_file}" > "${mtree_file}"
-                mtree_files+=("${mtree_file}")
-            done < "${rsync_includes_file}"
-
-            if [ "${#mtree_files[@]}" -le 0 ]; then
-                log_error "SYNC_TASKS - ERROR: mtree didn't produce any file"
-            fi
-
-            log "SYNC_TASKS - stop  mtree (files: ${mtree_files[*]})"
-        else
-            log "SYNC_TASKS - skip mtree (missing)"
-        fi
-    else
-        log "SYNC_TASKS - skip mtree (disabled)"
-    fi
-
-    rsync_bin=$(command -v rsync)
-    # Build the final Rsync command
-
-    # Rsync main options
-    rsync_main_args=()
-    rsync_main_args+=(--archive)
-    rsync_main_args+=(--itemize-changes)
-    rsync_main_args+=(--quiet)
-    rsync_main_args+=(--stats)
-    rsync_main_args+=(--human-readable)
-    rsync_main_args+=(--relative)
-    rsync_main_args+=(--partial)
-    rsync_main_args+=(--delete)
-    rsync_main_args+=(--delete-excluded)
-    rsync_main_args+=(--force)
-    rsync_main_args+=(--ignore-errors)
-    rsync_main_args+=(--log-file "${RSYNC_LOGFILE}")
-    rsync_main_args+=(--rsh "ssh -p ${SSH_PORT} -o 'ConnectTimeout ${SSH_CONNECT_TIMEOUT}'")
-
-    # Rsync excludes
-    while read -r line ; do
-        rsync_main_args+=(--exclude "${line}")
-    done < "${rsync_excludes_file}"
-
-    # Rsync local sources
-    # Start with default includes
-    # shellcheck disable=SC2206
-    rsync_main_args+=(${rsync_default_includes[@]})
-    # … and add custom includes
-    while read -r line ; do
-        rsync_main_args+=("${line}")
-    done < "${rsync_includes_file}"
-
-    # Rsync remote destination
-    rsync_main_args+=("root@${SSH_SERVER}:/var/backup/")
-
-    # … log it
-    log "SYNC_TASKS - Rsync main command : ${rsync_bin} ${rsync_main_args[*]}"
-
-    # … execute it
-    ${rsync_bin} "${rsync_main_args[@]}"
-
-    rsync_main_rc=$?
-
-    # Copy last lines of rsync log to the main log
-    tail -n 30 "${RSYNC_LOGFILE}" >> "${LOGFILE}"
-    # Copy Rsync stats to special file
-    tail -n 30 "${RSYNC_LOGFILE}" | grep --invert-match --extended-regexp " [\<\>ch\.\*]\S{10} " > "${RSYNC_STATSFILE}"
-
-    # We ignore rc=24 (vanished files)
-    if [ ${rsync_main_rc} -ne 0 ] && [ ${rsync_main_rc} -ne 24 ]; then
-        log_error "SYNC_TASKS - rsync returned an error ${rsync_main_rc}" "${LOGFILE}"
-        rc=${E_SYNCFAILED}
-    else
-        # Build the report Rsync command
-        rsync_report_args=()
-        # Rsync options
-        rsync_report_args+=(--rsh "ssh -p ${SSH_PORT} -o 'ConnectTimeout ${SSH_CONNECT_TIMEOUT}'")
-        # Rsync local source
-        if [ "${#mtree_files[@]}" -gt 0 ]; then
-            # send mtree files if there is any
-            rsync_report_args+=("${mtree_files[@]}")
-        fi
-        if [ -f "${RSYNC_LOGFILE}" ]; then
-            # send rsync full log file if it exists
-            rsync_report_args+=("${RSYNC_LOGFILE}")
-        fi
-        if [ -f "${RSYNC_STATSFILE}" ]; then
-            # send rsync stats log file if it exists
-            rsync_report_args+=("${RSYNC_STATSFILE}")
-        fi
-        # Rsync remote destination
-        rsync_report_args+=("root@${SSH_SERVER}:/var/log/")
-
-        # … log it
-        log "SYNC_TASKS - Rsync report command : ${rsync_bin} ${rsync_report_args[*]}"
-
-        # … execute it
-        ${rsync_bin} "${rsync_report_args[@]}"
-    fi
-
-    log "STOP SYNC_TASKS - server=${server}"
-}
-
-# Output a message to the log file
-log() {
-    msg="${1:-$(cat /dev/stdin)}"
-    pid=$$
-    printf "[%s] %s[%s]: %s\\n" \
-        "$(/bin/date +"${DATE_FORMAT}")" "${PROGNAME}" "${pid}" "${msg}" \
-        >> "${LOGFILE}"
-}
-log_error() {
-    error_msg=${1}
-    error_file=${2:""}
-
-    if [ -n "${error_file}" ] && [ -f "${error_file}" ]; then
-        printf "\n### %s\n" "${error_msg}" >&2
-        # shellcheck disable=SC2046
-        if [ $(wc -l "${error_file}") -gt 30 ]; then
-            printf "~~~{%s (tail -30)}\n" "${error_file}" >&2
-            tail -n 30 "${error_file}" >&2
-        else
-            printf "~~~{%s}\n" "${error_file}" >&2
-            cat "${error_file}" >&2
-        fi
-        printf "~~~\n" >&2
-
-        log "${error_msg}, check ${error_file}"
-    else
-        printf "\n### %s\n" "${error_msg}" >&2
-
-        log "${error_msg}"
-    fi
-
-}
-# Remove all temporary file created during the execution
-# shellcheck disable=SC2317
-clean_temp_files() {
-    # shellcheck disable=SC2086
-    rm -f "${temp_files[@]}"
-}
-main() {
-    START_EPOCH=$(/bin/date +%s)
-    START_TIME=$(/bin/date +"%Y%m%d%H%M%S")
-
-    log "START GLOBAL - VERSION=${VERSION} LOCAL_TASKS=${LOCAL_TASKS} SYNC_TASKS=${SYNC_TASKS}"
-
-    # shellcheck disable=SC2174
-    mkdir -p -m 700 "${LOCAL_BACKUP_DIR}"
-
-    ERRORS_DIR="${LOCAL_BACKUP_DIR}/${PROGNAME}.errors-${START_TIME}"
-    # shellcheck disable=SC2174
-    mkdir -p -m 700 "${ERRORS_DIR}"
-
-    ## Force umask
-    umask 077
-
-    ## Initialize variable to store SSH connection errors
-    SERVERS_SSH_ERRORS=""
-
-    ## Verify other evobackup process and kill if needed
-    if [ -e "${PIDFILE}" ]; then
-        pid=$(cat "${PIDFILE}")
-        # Does process still exist ?
-        if kill -0 "${pid}" 2> /dev/null; then
-            # Killing the childs of evobackup.
-            for ppid in $(pgrep -P "${pid}"); do
-                kill -9 "${ppid}";
-            done
-            # Then kill the main PID.
-            kill -9 "${pid}"
-            printf "%s is still running (PID %s). Process has been killed" "$0" "${pid}\\n" >&2
-        else
-            rm -f "${PIDFILE}"
-        fi
-    fi
-    echo "$$" > "${PIDFILE}"
-
-    # Initialize a list of files to delete at exit
-    # Any file added to the list will also be deleted at exit
-    temp_files=("${PIDFILE}")
-
-    trap clean_temp_files EXIT
-
-    # Update canary to keep track of each run
-    update-evobackup-canary --who "${PROGNAME}" --file "${CANARY_FILE}"
-
-    if [ "${LOCAL_TASKS}" = "1" ]; then
-        local_tasks
-    fi
-
-    if [ "${SYNC_TASKS}" = "1" ]; then
-        sync_tasks
-    fi
-
-    STOP_EPOCH=$(/bin/date +%s)
-
-    if [ "${SYSTEM}" = "openbsd" ]; then
-        start_time=$(/bin/date -f "%s" -j "${START_EPOCH}" +"${DATE_FORMAT}")
-        stop_time=$(/bin/date -f "%s" -j "${STOP_EPOCH}" +"${DATE_FORMAT}")
-    else
-        start_time=$(/bin/date --date="@${START_EPOCH}" +"${DATE_FORMAT}")
-        stop_time=$(/bin/date --date="@${STOP_EPOCH}" +"${DATE_FORMAT}")
-    fi
-    duration=$(( STOP_EPOCH - START_EPOCH ))
-
-    log "STOP GLOBAL - start='${start_time}' stop='${stop_time}' duration=${duration}s"
-
-    tail -20 "${LOGFILE}" | mail -s "[info] EvoBackup - Client ${HOSTNAME}" ${MAIL}
-}
-
-# set all programs to C language (english)
-export LC_ALL=C
-
-# If expansion is attempted on an unset variable or parameter, the shell prints an
-# error message, and, if not interactive, exits with a non-zero status.
-set -u
-# The pipeline's return status is the value of the last (rightmost) command
-# to exit with a non-zero status, or zero if all commands exit successfully.
-set -o pipefail
-
-# Default return-code (0 == succes)
-rc=0
-
-# Possible error codes
-E_NOSRVAVAIL=21 # No server is available
-E_SYNCFAILED=20 # Faild sync task
-E_DUMPFAILED=10 # Faild dump task
-
-# explicit PATH
-PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/sbin:/usr/local/bin
-
-# You can set "linux" or "bsd" manually or let it choose automatically
-SYSTEM=$(uname | tr '[:upper:]' '[:lower:]')
-
-# Hostname reported in the mail subject
-HOSTNAME=$(hostname)
-
-# Store pid in a file named after this program's name
-PROGNAME=$(basename "$0")
-PIDFILE="/var/run/${PROGNAME}.pid"
-
-# Customize the log path if you want multiple scripts to have separate log files
-LOGFILE="/var/log/evobackup.log"
-# Rsync complete log file for the current run
-RSYNC_LOGFILE="/var/log/${PROGNAME}.rsync.log"
-# Rsync stats for the current run
-RSYNC_STATSFILE="/var/log/${PROGNAME}.rsync-stats.log"
-# Canary file to update before executing tasks
-CANARY_FILE="/zzz_evobackup_canary"
-
-DATE_FORMAT="%Y-%m-%d %H:%M:%S"
-
-# Should we fallback on other servers when the first one is unreachable?
-SERVERS_FALLBACK=${SERVERS_FALLBACK:-1}
-# timeout (in seconds) for SSH connections
-SSH_CONNECT_TIMEOUT=${SSH_CONNECT_TIMEOUT:-90}
-
-# execute main function
 main
-
-exit ${rc}
