@@ -53,9 +53,9 @@ dump_mysql_global() {
     local option_port="3306"
     # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
     while :; do
-        case $1 in
+        case ${1:-''} in
             --masterdata)
-                option_masterdata=1
+                option_masterdata="--masterdata"
                 ;;
             --port)
                 # port options, with value separated by space
@@ -95,14 +95,17 @@ dump_mysql_global() {
     done
 
     declare -a options
-    options+=("${option_masterdata}")
+    options=()
     options+=(--defaults-extra-file=/etc/mysql/debian.cnf)
     options+=(--port="${option_port}")
     options+=(--opt)
-    options+=(--all-databases)
     options+=(--force)
     options+=(--events)
     options+=(--hex-blob)
+    options+=(--all-databases)
+    if [ -n "${option_masterdata}" ]; then
+        options+=("${option_masterdata}")
+    fi
 
     mysqldump "${options[@]}" 2> "${error_file}" | gzip --best > "${dump_file}"
 
@@ -133,7 +136,7 @@ dump_mysql_per_base() {
     local option_port="3306"
     # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
     while :; do
-        case $1 in
+        case ${1:-''} in
             --port)
                 # port options, with value separated by space
                 if [ -n "$2" ]; then
@@ -172,6 +175,7 @@ dump_mysql_per_base() {
     done
 
     declare -a options
+    options=()
     options+=(--defaults-extra-file=/etc/mysql/debian.cnf)
     options+=(--port="${option_port}")
     options+=(--force)
@@ -214,7 +218,7 @@ dump_mysql_meta() {
     local option_port="3306"
     # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
     while :; do
-        case $1 in
+        case ${1:-''} in
             --port)
                 # port options, with value separated by space
                 if [ -n "$2" ]; then
@@ -258,6 +262,7 @@ dump_mysql_meta() {
     log "LOCAL_TASKS - start ${dump_file}"
 
     declare -a options
+    options=()
     options+=(--port "${option_port}")
     options+=(--flush)
     options+=(--no-header)
@@ -280,8 +285,9 @@ dump_mysql_meta() {
     log "LOCAL_TASKS - start ${dump_file}"
 
     declare -a options
+    options=()
     options+=(--port="${option_port}")
-    options+=(-A)
+    options+=(--no-auto-rehash)
     options+=(-e "SHOW GLOBAL VARIABLES;")
 
     mysql "${options[@]}" 2> "${error_file}" > "${dump_file}"
@@ -304,6 +310,7 @@ dump_mysql_meta() {
         log "LOCAL_TASKS - start ${dump_file}"
 
         declare -a options
+        options=()
         options+=(--defaults-extra-file=/etc/mysql/debian.cnf)
         options+=(--port="${option_port}")
         options+=(--force)
@@ -346,7 +353,7 @@ dump_mysql_tabs() {
         local option_port="3306"
         # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
         while :; do
-            case $1 in
+            case ${1:-''} in
                 --port)
                     # port options, with value separated by space
                     if [ -n "$2" ]; then
@@ -386,6 +393,7 @@ dump_mysql_tabs() {
         done
 
         declare -a options
+        options=()
         options+=(--defaults-extra-file=/etc/mysql/debian.cnf)
         options+=(--port="${option_port}")
         options+=(--force)
@@ -434,7 +442,7 @@ dump_mysql_instance() {
     local option_password=""
     # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
     while :; do
-        case $1 in
+        case ${1:-''} in
             --port)
                 # port options, with value separated by space
                 if [ -n "$2" ]; then
@@ -511,6 +519,7 @@ dump_mysql_instance() {
     done
 
     declare -a options
+    options=()
     options+=(--port="${option_port}")
     options+=(--user="${option_user}")
     options+=(--password="${option_password}")
@@ -660,7 +669,7 @@ dump_redis() {
     local option_instances=""
     # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
     while :; do
-        case $1 in
+        case ${1:-''} in
             --instances)
                 # instances options, with key and value separated by space
                 if [ -n "$2" ]; then
@@ -761,7 +770,7 @@ dump_mongodb() {
     local option_password=""
     # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
     while :; do
-        case $1 in
+        case ${1:-''} in
             --user)
                 # user options, with value separated by space
                 if [ -n "$2" ]; then
@@ -819,6 +828,7 @@ dump_mongodb() {
     done
 
     declare -a options
+    options=()
     options+=(--username="${option_user}")
     options+=(--password="${option_password}")
     options+=(--out="${dump_dir}/")
@@ -881,7 +891,7 @@ dump_traceroute() {
     local option_targets=""
     # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
     while :; do
-        case $1 in
+        case ${1:-''} in
             --targets)
                 # targets options, with key and value separated by space
                 if [ -n "$2" ]; then
@@ -947,10 +957,9 @@ dump_traceroute() {
 #######################################################################
 # Save many system information, using dump_server_state
 #
-# Arguments: <none>
-#
-# TODO: pass arguments to the dump_server_state command
-# with defaults and overrides (incuding "dump-dir")
+# Arguments:
+# any option for dump-server-state (except --dump-dir) is usable
+# (default: --all)
 #######################################################################
 dump_server_state() {
     local dump_dir="${LOCAL_BACKUP_DIR}/server-state"
@@ -961,27 +970,26 @@ dump_server_state() {
 
     log "LOCAL_TASKS - start ${dump_dir}"
 
+    # pass all options
+    read -a options <<< "${@}"
+    # if no option is given, use "--all" as fallback
+    if [ ${#options[@]} -le 0 ]; then
+        options=(--all)
+    fi
+    # add "--dump-dir" in case it is missing (as it should)
+    options+=(--dump-dir "${dump_dir}")
+
     dump_server_state_bin=$(command -v dump-server-state)
     if [ -z "${dump_server_state_bin}" ]; then
         log_error "LOCAL_TASKS - dump-server-state is missing"
         rc=1
     else
-        if [ "${SYSTEM}" = "linux" ]; then
-            ${dump_server_state_bin} --all --dump-dir "${dump_dir}"
-            local last_rc=$?
-            # shellcheck disable=SC2086
-            if [ ${last_rc} -ne 0 ]; then
-                log_error "LOCAL_TASKS - dump-server-state returned an error ${last_rc}, check ${dump_dir}"
-                GLOBAL_RC=${E_DUMPFAILED}
-            fi
-        else
-            ${dump_server_state_bin} --all --dump-dir "${dump_dir}"
-            local last_rc=$?
-            # shellcheck disable=SC2086
-            if [ ${last_rc} -ne 0 ]; then
-                log_error "LOCAL_TASKS - dump-server-state returned an error ${last_rc}, check ${dump_dir}"
-                GLOBAL_RC=${E_DUMPFAILED}
-            fi
+        ${dump_server_state_bin} "${options[@]}"
+        local last_rc=$?
+        # shellcheck disable=SC2086
+        if [ ${last_rc} -ne 0 ]; then
+            log_error "LOCAL_TASKS - dump-server-state returned an error ${last_rc}, check ${dump_dir}"
+            GLOBAL_RC=${E_DUMPFAILED}
         fi
     fi
     log "LOCAL_TASKS - stop  ${dump_dir}"
@@ -1064,7 +1072,7 @@ dump_elasticsearch_snapshot_singlenode() {
     local option_snapshot="snapshot.daily"
     # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
     while :; do
-        case $1 in
+        case ${1:-''} in
             --protocol)
                 # protocol options, with value separated by space
                 if [ -n "$2" ]; then
@@ -1271,7 +1279,7 @@ dump_elasticsearch_snapshot_multinode() {
     local option_nfs_server=""
     # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
     while :; do
-        case $1 in
+        case ${1:-''} in
             --protocol)
                 # protocol options, with value separated by space
                 if [ -n "$2" ]; then
