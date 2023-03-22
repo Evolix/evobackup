@@ -261,7 +261,7 @@ setup_custom() {
 ########## Libraries ##################################################
 
 # Change this to wherever you install the libraries
-LIBDIR="./lib"
+LIBDIR="/usr/local/lib/evobackup"
 
 source "${LIBDIR}/main.sh"
 
