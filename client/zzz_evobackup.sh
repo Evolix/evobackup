@@ -191,11 +191,13 @@ local_tasks() {
     ########## Network ################
 
     # Dump network routes with mtr and traceroute (warning: could be long with aggressive firewalls)
+    ### dump_traceroute --targets=host_or_ip[,host_or_ip]
     dump_traceroute --targets=8.8.8.8,www.evolix.fr,travaux.evolix.net
 
     ########## Server state ###########
 
     # Run dump-server-state to extract system information
+    ### dump-server-state [any dump-server-state option]
     dump_server_state
 
     # Dump file access control lists
