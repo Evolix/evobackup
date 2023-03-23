@@ -1,5 +1,5 @@
 #!/bin/bash
-# shellcheck disable=SC2034,SC2317
+# shellcheck disable=SC2034,SC2317,SC2155
 
 mysql_list_databases() {
     port=${1:-"3306"}
@@ -39,7 +39,6 @@ dump_ldap() {
 # --port=[Integer] (default: 3306)
 #######################################################################
 dump_mysql_global() {
-
     local option_masterdata=""
     local option_port="3306"
     # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
@@ -85,16 +84,17 @@ dump_mysql_global() {
         shift
     done
 
-    local dump_dir="${LOCAL_BACKUP_DIR}/mysql-${option_port}"
+    local dump_dir="${LOCAL_BACKUP_DIR}/mysql-global-${option_port}"
     local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
     rm -rf "${dump_dir}" "${errors_dir}"
     # shellcheck disable=SC2174
     mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
 
-    local error_file="${errors_dir}/mysql-global.err"
-    local dump_file="${dump_dir}/mysql-global.sql.gz"
+    local error_file="${errors_dir}/mysqldump.err"
+    local dump_file="${dump_dir}/mysqldump.sql.gz"
     log "LOCAL_TASKS - start ${dump_file}"
 
+    ## Global all databases in one file
     declare -a options
     options=()
     options+=(--defaults-extra-file=/etc/mysql/debian.cnf)
@@ -119,6 +119,82 @@ dump_mysql_global() {
         rm -f "${error_file}"
     fi
     log "LOCAL_TASKS - stop  ${dump_file}"
+
+    ## Dump all grants (requires 'percona-toolkit' package)
+    if command -v pt-show-grants > /dev/null; then
+        local error_file="${errors_dir}/all_grants.err"
+        local dump_file="${dump_dir}/all_grants.sql"
+        log "LOCAL_TASKS - start ${dump_file}"
+
+        declare -a options
+        options=()
+        options+=(--port "${option_port}")
+        options+=(--flush)
+        options+=(--no-header)
+
+        pt-show-grants "${options[@]}" 2> "${error_file}" > "${dump_file}"
+
+        local last_rc=$?
+        # shellcheck disable=SC2086
+        if [ ${last_rc} -ne 0 ]; then
+            log_error "LOCAL_TASKS - pt-show-grants to ${dump_file} returned an error ${last_rc}" "${error_file}"
+            GLOBAL_RC=${E_DUMPFAILED}
+        else
+            rm -f "${error_file}"
+        fi
+        log "LOCAL_TASKS - stop  ${dump_file}"
+    fi
+
+    ## Dump all variables
+    local error_file="${errors_dir}/variables.err"
+    local dump_file="${dump_dir}/variables.txt"
+    log "LOCAL_TASKS - start ${dump_file}"
+
+    declare -a options
+    options=()
+    options+=(--port="${option_port}")
+    options+=(--no-auto-rehash)
+    options+=(-e "SHOW GLOBAL VARIABLES;")
+
+    mysql "${options[@]}" 2> "${error_file}" > "${dump_file}"
+
+    local last_rc=$?
+    # shellcheck disable=SC2086
+    if [ ${last_rc} -ne 0 ]; then
+        log_error "LOCAL_TASKS - mysql 'show variables' returned an error ${last_rc}" "${error_file}"
+        GLOBAL_RC=${E_DUMPFAILED}
+    else
+        rm -f "${error_file}"
+    fi
+    log "LOCAL_TASKS - stop  ${dump_file}"
+
+    ## Schema only (no data) for each databases
+    databases=$(mysql_list_databases "${option_port}")
+    for database in ${databases}; do
+        local error_file="${errors_dir}/${database}.schema.err"
+        local dump_file="${dump_dir}/${database}.schema.sql"
+        log "LOCAL_TASKS - start ${dump_file}"
+
+        declare -a options
+        options=()
+        options+=(--defaults-extra-file=/etc/mysql/debian.cnf)
+        options+=(--port="${option_port}")
+        options+=(--force)
+        options+=(--no-data)
+        options+=(--databases "${database}")
+
+        mysqldump "${options[@]}" 2> "${error_file}" > "${dump_file}"
+
+        local last_rc=$?
+        # shellcheck disable=SC2086
+        if [ ${last_rc} -ne 0 ]; then
+            log_error "LOCAL_TASKS - mysqldump to ${dump_file} returned an error ${last_rc}" "${error_file}"
+            GLOBAL_RC=${E_DUMPFAILED}
+        else
+            rm -f "${error_file}"
+        fi
+        log "LOCAL_TASKS - stop  ${dump_file}"
+    done
 }
 
 #######################################################################
@@ -169,12 +245,6 @@ dump_mysql_per_base() {
         shift
     done
 
-    local dump_dir="${LOCAL_BACKUP_DIR}/mysql-${option_port}"
-    local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
-    rm -rf "${dump_dir}" "${errors_dir}"
-    # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
-
     declare -a options
     options=()
     options+=(--defaults-extra-file=/etc/mysql/debian.cnf)
@@ -183,142 +253,19 @@ dump_mysql_per_base() {
     options+=(--events)
     options+=(--hex-blob)
 
-    databases=$(mysql_list_databases ${option_port})
+    databases=$(mysql_list_databases "${option_port}")
     for database in ${databases}; do
+        local dump_dir="${LOCAL_BACKUP_DIR}/mysql-per-base-${option_port}"
+        local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
+        rm -rf "${dump_dir}" "${errors_dir}"
+        # shellcheck disable=SC2174
+        mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
+
         local error_file="${errors_dir}/${database}.err"
         local dump_file="${dump_dir}/${database}.sql.gz"
         log "LOCAL_TASKS - start ${dump_file}"
 
         mysqldump "${options[@]}" "${database}" 2> "${error_file}" | gzip --best > "${dump_file}"
-
-        local last_rc=$?
-        # shellcheck disable=SC2086
-        if [ ${last_rc} -ne 0 ]; then
-            log_error "LOCAL_TASKS - mysqldump to ${dump_file} returned an error ${last_rc}" "${error_file}"
-            GLOBAL_RC=${E_DUMPFAILED}
-        else
-            rm -f "${error_file}"
-        fi
-        log "LOCAL_TASKS - stop  ${dump_file}"
-    done
-}
-
-#######################################################################
-# Dump grants, variables and databases schemas for an instance
-#
-# Arguments:
-# --port=[Integer] (default: 3306)
-#######################################################################
-dump_mysql_meta() {
-    local option_port="3306"
-    # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
-    while :; do
-        case ${1:-''} in
-            --port)
-                # port options, with value separated by space
-                if [ -n "$2" ]; then
-                    option_port="${2}"
-                    shift
-                else
-                    log_error "LOCAL_TASKS - '--port' requires a non-empty option argument."
-                    exit 1
-                fi
-                ;;
-            --port=?*)
-                # port options, with value separated by =
-                option_port="${1#*=}"
-                ;;
-            --port=)
-                # port options, without value
-                log_error "LOCAL_TASKS - '--port' requires a non-empty option argument."
-                exit 1
-                ;;
-            --)
-                # End of all options.
-                shift
-                break
-                ;;
-            -?*|[[:alnum:]]*)
-                # ignore unknown options
-                log_error "LOCAL_TASKS - unkwnown option (ignored): '${1}'"
-                ;;
-            *)
-                # Default case: If no more options then break out of the loop.
-                break
-                ;;
-        esac
-
-        shift
-    done
-
-    local dump_dir="${LOCAL_BACKUP_DIR}/mysql-${option_port}"
-    local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
-    rm -rf "${dump_dir}" "${errors_dir}"
-    # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
-
-    ## Dump all grants (requires 'percona-toolkit' package)
-    local error_file="${errors_dir}/all_grants.err"
-    local dump_file="${dump_dir}/all_grants.sql"
-    log "LOCAL_TASKS - start ${dump_file}"
-
-    declare -a options
-    options=()
-    options+=(--port "${option_port}")
-    options+=(--flush)
-    options+=(--no-header)
-
-    pt-show-grants "${options[@]}" 2> "${error_file}" > "${dump_file}"
-
-    local last_rc=$?
-    # shellcheck disable=SC2086
-    if [ ${last_rc} -ne 0 ]; then
-        log_error "LOCAL_TASKS - pt-show-grants to ${dump_file} returned an error ${last_rc}" "${error_file}"
-        GLOBAL_RC=${E_DUMPFAILED}
-    else
-        rm -f "${error_file}"
-    fi
-    log "LOCAL_TASKS - stop  ${dump_file}"
-
-    ## Dump all variables
-    local error_file="${errors_dir}/variables.err"
-    local dump_file="${dump_dir}/variables.txt"
-    log "LOCAL_TASKS - start ${dump_file}"
-
-    declare -a options
-    options=()
-    options+=(--port="${option_port}")
-    options+=(--no-auto-rehash)
-    options+=(-e "SHOW GLOBAL VARIABLES;")
-
-    mysql "${options[@]}" 2> "${error_file}" > "${dump_file}"
-
-    local last_rc=$?
-    # shellcheck disable=SC2086
-    if [ ${last_rc} -ne 0 ]; then
-        log_error "LOCAL_TASKS - mysql 'show variables' returned an error ${last_rc}" "${error_file}"
-        GLOBAL_RC=${E_DUMPFAILED}
-    else
-        rm -f "${error_file}"
-    fi
-    log "LOCAL_TASKS - stop  ${dump_file}"
-
-    ## Schema only (no data) for each databases
-    databases=$(mysql_list_databases "${option_port}")
-    for database in ${databases}; do
-        local error_file="${errors_dir}/${database}.schema.err"
-        local dump_file="${dump_dir}/${database}.schema.sql"
-        log "LOCAL_TASKS - start ${dump_file}"
-
-        declare -a options
-        options=()
-        options+=(--defaults-extra-file=/etc/mysql/debian.cnf)
-        options+=(--port="${option_port}")
-        options+=(--force)
-        options+=(--no-data)
-        options+=(--databases "${database}")
-
-        mysqldump "${options[@]}" 2> "${error_file}" > "${dump_file}"
 
         local last_rc=$?
         # shellcheck disable=SC2086
@@ -380,9 +327,9 @@ dump_mysql_tabs() {
         shift
     done
 
-    databases=$(mysql_list_databases ${option_port})
+    databases=$(mysql_list_databases "${option_port}")
     for database in ${databases}; do
-        local dump_dir="${LOCAL_BACKUP_DIR}/mysql-${option_port}/${database}"
+        local dump_dir="${LOCAL_BACKUP_DIR}/mysql-tabs-${option_port}/${database}"
         local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
         rm -rf "${dump_dir}" "${errors_dir}"
         # shellcheck disable=SC2174
@@ -512,7 +459,7 @@ dump_mysql_instance() {
         shift
     done
 
-    local dump_dir="${LOCAL_BACKUP_DIR}/mysql-${option_port}"
+    local dump_dir="${LOCAL_BACKUP_DIR}/mysql-instance-${option_port}"
     local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
     rm -rf "${dump_dir}" "${errors_dir}"
     # shellcheck disable=SC2174
@@ -552,14 +499,15 @@ dump_mysql_instance() {
 # Arguments: <none>
 #######################################################################
 dump_postgresql_global() {
-    local dump_dir="${LOCAL_BACKUP_DIR}/postgresql"
+    local dump_dir="${LOCAL_BACKUP_DIR}/postgresql-global"
     local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
     rm -rf "${dump_dir}" "${errors_dir}"
     # shellcheck disable=SC2174
     mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
 
     ## example with pg_dumpall and with compression
-    local dump_file="${dump_dir}/pg.dump.bak.gz"
+    local error_file="${errors_dir}/pg_dumpall.err"
+    local dump_file="${dump_dir}/pg_dumpall.sql.gz"
     log "LOCAL_TASKS - start ${dump_file}"
 
     (sudo -u postgres pg_dumpall) 2> "${error_file}" | gzip --best > "${dump_file}"
@@ -577,7 +525,8 @@ dump_postgresql_global() {
 
     ## example with pg_dumpall and without compression
     ## WARNING: you need space in ~postgres
-    # local dump_file="${dump_dir}/pg.dump.bak"
+    # local error_file="${errors_dir}/pg_dumpall.err"
+    # local dump_file="${dump_dir}/pg_dumpall.sql"
     # log "LOCAL_TASKS - start ${dump_file}"
     # 
     # (su - postgres -c "pg_dumpall > ~/pg.dump.bak") 2> "${error_file}"
@@ -592,7 +541,7 @@ dump_postgresql_global() {
 # Arguments: <none>
 #######################################################################
 dump_postgresql_per_base() {
-    local dump_dir="${LOCAL_BACKUP_DIR}/postgresql"
+    local dump_dir="${LOCAL_BACKUP_DIR}/postgresql-per-base"
     local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
     rm -rf "${dump_dir}" "${errors_dir}"
     # shellcheck disable=SC2174
@@ -630,7 +579,7 @@ dump_postgresql_per_base() {
 # TODO: add arguments to include/exclude tables
 #######################################################################
 dump_postgresql_filtered() {
-    local dump_dir="${LOCAL_BACKUP_DIR}/postgresql"
+    local dump_dir="${LOCAL_BACKUP_DIR}/postgresql-filtered"
     local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
     rm -rf "${dump_dir}" "${errors_dir}"
     # shellcheck disable=SC2174
