@@ -136,16 +136,14 @@ local_tasks() {
 
     ########## MySQL ##################
 
-    # Dump all grants (permissions), config variables and schema of databases
-    ### dump_mysql_meta [--port=3306]
-
-    # Dump all databases in a single compressed file
+    # Dump all databases in a single compressed file,
+    # all grants (permissions), config variables and schema of databases
     ### dump_mysql_global [--port=3306] [--masterdata]
     
     # Dump each database separately, in a compressed file
     ### dump_mysql_per_base [--port=3306]
  
-    # Dump multiples instances, each in a single compressed file
+    # Dump specific instances, each in a single compressed file
     ### dump_mysql_instance [--port=3306]
 
     # Dump each table in schema/data files, for all databases
