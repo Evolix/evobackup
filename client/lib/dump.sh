@@ -169,32 +169,29 @@ dump_mysql_global() {
     log "LOCAL_TASKS - stop  ${dump_file}"
 
     ## Schema only (no data) for each databases
-    databases=$(mysql_list_databases "${option_port}")
-    for database in ${databases}; do
-        local error_file="${errors_dir}/${database}.schema.err"
-        local dump_file="${dump_dir}/${database}.schema.sql"
-        log "LOCAL_TASKS - start ${dump_file}"
+    local error_file="${errors_dir}/mysqldump.schema.err"
+    local dump_file="${dump_dir}/mysqldump.schema.sql"
+    log "LOCAL_TASKS - start ${dump_file}"
 
-        declare -a options
-        options=()
-        options+=(--defaults-extra-file=/etc/mysql/debian.cnf)
-        options+=(--port="${option_port}")
-        options+=(--force)
-        options+=(--no-data)
-        options+=(--databases "${database}")
+    declare -a options
+    options=()
+    options+=(--defaults-extra-file=/etc/mysql/debian.cnf)
+    options+=(--port="${option_port}")
+    options+=(--force)
+    options+=(--no-data)
+    options+=(--all-databases)
 
-        mysqldump "${options[@]}" 2> "${error_file}" > "${dump_file}"
+    mysqldump "${options[@]}" 2> "${error_file}" > "${dump_file}"
 
-        local last_rc=$?
-        # shellcheck disable=SC2086
-        if [ ${last_rc} -ne 0 ]; then
-            log_error "LOCAL_TASKS - mysqldump to ${dump_file} returned an error ${last_rc}" "${error_file}"
-            GLOBAL_RC=${E_DUMPFAILED}
-        else
-            rm -f "${error_file}"
-        fi
-        log "LOCAL_TASKS - stop  ${dump_file}"
-    done
+    local last_rc=$?
+    # shellcheck disable=SC2086
+    if [ ${last_rc} -ne 0 ]; then
+        log_error "LOCAL_TASKS - mysqldump to ${dump_file} returned an error ${last_rc}" "${error_file}"
+        GLOBAL_RC=${E_DUMPFAILED}
+    else
+        rm -f "${error_file}"
+    fi
+    log "LOCAL_TASKS - stop  ${dump_file}"
 }
 
 #######################################################################
@@ -245,6 +242,12 @@ dump_mysql_per_base() {
         shift
     done
 
+    local dump_dir="${LOCAL_BACKUP_DIR}/mysql-per-base-${option_port}"
+    local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
+    rm -rf "${dump_dir}" "${errors_dir}"
+    # shellcheck disable=SC2174
+    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
+
     declare -a options
     options=()
     options+=(--defaults-extra-file=/etc/mysql/debian.cnf)
@@ -255,17 +258,39 @@ dump_mysql_per_base() {
 
     databases=$(mysql_list_databases "${option_port}")
     for database in ${databases}; do
-        local dump_dir="${LOCAL_BACKUP_DIR}/mysql-per-base-${option_port}"
-        local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
-        rm -rf "${dump_dir}" "${errors_dir}"
-        # shellcheck disable=SC2174
-        mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
-
         local error_file="${errors_dir}/${database}.err"
         local dump_file="${dump_dir}/${database}.sql.gz"
         log "LOCAL_TASKS - start ${dump_file}"
 
         mysqldump "${options[@]}" "${database}" 2> "${error_file}" | gzip --best > "${dump_file}"
+
+        local last_rc=$?
+        # shellcheck disable=SC2086
+        if [ ${last_rc} -ne 0 ]; then
+            log_error "LOCAL_TASKS - mysqldump to ${dump_file} returned an error ${last_rc}" "${error_file}"
+            GLOBAL_RC=${E_DUMPFAILED}
+        else
+            rm -f "${error_file}"
+        fi
+        log "LOCAL_TASKS - stop  ${dump_file}"
+    done
+
+    ## Schema only (no data) for each databases
+    databases=$(mysql_list_databases "${option_port}")
+    for database in ${databases}; do
+        local error_file="${errors_dir}/${database}.schema.err"
+        local dump_file="${dump_dir}/${database}.schema.sql"
+        log "LOCAL_TASKS - start ${dump_file}"
+
+        declare -a options
+        options=()
+        options+=(--defaults-extra-file=/etc/mysql/debian.cnf)
+        options+=(--port="${option_port}")
+        options+=(--force)
+        options+=(--no-data)
+        options+=(--databases "${database}")
+
+        mysqldump "${options[@]}" 2> "${error_file}" > "${dump_file}"
 
         local last_rc=$?
         # shellcheck disable=SC2086
