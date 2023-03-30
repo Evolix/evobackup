@@ -273,7 +273,7 @@ local_tasks() {
     # (
     #    cd /var/lib/postgresql
     #    dbs=$(sudo -u postgres psql -U postgres -lt | awk -F\| '{print $1}' |grep -v template*)
-    #    for databases in $dbs ; do sudo -u postgres /usr/bin/pg_dump --create -s -U postgres -d $databases | gzip --best -c > ${LOCAL_BACKUP_DIR}/postgresql/$databases.sql.gz ; done
+    #    for databases in $dbs ; do sudo -u postgres /usr/bin/pg_dump --create -U postgres -d $databases | gzip --best -c > ${LOCAL_BACKUP_DIR}/postgresql/$databases.sql.gz ; done
     # )
 
     ## MongoDB
