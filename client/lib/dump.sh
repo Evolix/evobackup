@@ -581,7 +581,7 @@ dump_postgresql_per_base() {
             local dump_file="${dump_dir}/${database}.sql.gz"
             log "LOCAL_TASKS - start ${dump_file}"
 
-            (sudo -u postgres /usr/bin/pg_dump --create -s -U postgres -d "${database}") 2> "${error_file}" | gzip --best > "${dump_file}"
+            (sudo -u postgres /usr/bin/pg_dump --create -U postgres -d "${database}") 2> "${error_file}" | gzip --best > "${dump_file}"
 
             local last_rc=$?
             # shellcheck disable=SC2086
