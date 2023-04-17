@@ -295,7 +295,7 @@ local_tasks() {
     # rm -rf ${LOCAL_BACKUP_DIR}/redis/
     # rm -rf ${LOCAL_BACKUP_DIR}/redis-*
     ## Copy dump.rdb file for each found instance
-    # for instance in $(find /var/lib/ -mindepth 1 -maxdepth 1 -type d -name 'redis*'); do
+    # for instance in $(find /var/lib/ -mindepth 1 -maxdepth 1 '(' -type d -o -type l ')' -name 'redis*'); do
     #     if [ -f "${instance}/dump.rdb" ]; then
     #         name=$(basename $instance)
     #         mkdir -p ${LOCAL_BACKUP_DIR}/${name}
