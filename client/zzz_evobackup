@@ -300,7 +300,7 @@ local_tasks() {
     #         name=$(basename $instance)
     #         mkdir -p ${LOCAL_BACKUP_DIR}/${name}
     #         cp -a "${instance}/dump.rdb" "${LOCAL_BACKUP_DIR}/${name}"
-    #         gzip "${LOCAL_BACKUP_DIR}/${name}"
+    #         gzip "${LOCAL_BACKUP_DIR}/${name}/dump.rdb"
     #     fi
     # done
 
