@@ -51,15 +51,15 @@ if dry_run; then
 else
     mv "${jail_path}" "${new_jail_path}"
 fi
-if dry_run; then
-    if [ -d "${incs_path}" ]; then
+
+if [ -d "${incs_path}" ]; then
+    if dry_run; then
         echo "[dry-run] rename ${incs_path} to ${new_incs_path}"
-    fi
-else
-    if [ -d "${incs_path}" ]; then
+    else
         mv "${incs_path}" "${new_incs_path}"
     fi
 fi
+
 if [ -d "${jail_config_dir}" ]; then
     if dry_run; then
         echo "[dry-run] rename ${jail_config_dir} to ${new_jail_config_dir}"
