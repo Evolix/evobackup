@@ -86,6 +86,7 @@ sync_tasks_wrapper() {
         /var/db/munin/*.tmp
         /var/lib/amavis/amavisd.sock
         /var/lib/amavis/tmp
+        /var/lib/amavis/virusmails
         /var/lib/clamav/*.tmp
         /var/lib/elasticsearch
         /var/lib/metche
