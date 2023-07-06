@@ -1,7 +1,7 @@
 #!/bin/bash
 # shellcheck disable=SC2034,SC2317
 
-readonly VERSION="23.1-pre"
+readonly VERSION="23.07-pre"
 
 # set all programs to C language (english)
 export LC_ALL=C
