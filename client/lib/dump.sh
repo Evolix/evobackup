@@ -701,7 +701,7 @@ dump_redis() {
             local error_file="${errors_dir}/${instance}.err"
             log "LOCAL_TASKS - start ${dump_dir}"
 
-            cp -a "${instance}/dump.rdb" "${dump_dir}/" 2> "${error_file}"
+            cp -a "${instance}/dump.rdb" "${dump_dir}/dump.rdb" 2> "${error_file}"
 
             local last_rc=$?
             # shellcheck disable=SC2086
@@ -711,6 +711,18 @@ dump_redis() {
             else
                 rm -f "${error_file}"
             fi
+
+            gzip "${dump_dir}/dump.rdb"
+
+            local last_rc=$?
+            # shellcheck disable=SC2086
+            if [ ${last_rc} -ne 0 ]; then
+                log_error "LOCAL_TASKS - gzip ${dump_dir}/dump.rdb returned an error ${last_rc}" "${error_file}"
+                GLOBAL_RC=${E_DUMPFAILED}
+            else
+                rm -f "${error_file}"
+            fi
+
             log "LOCAL_TASKS - stop  ${dump_dir}"
         else
             log_error "LOCAL_TASKS - '${instance}/dump.rdb' not found."
