@@ -251,15 +251,13 @@ local_tasks() {
 ########## Optional configuration #####################################
 
 setup_custom() {
-    # If you set a value (like "linux", "openbsd"…) it will be used,
-    # Default: uname(1) in lowercase.
-    ### SYSTEM="linux"
+    # System name ("linux" and "openbsd" currently supported)
+    ### SYSTEM="$(uname)"
 
-    # If you set a value it will be used,
-    # Default: hostname(1).
-    ### HOSTNAME="example-host"
+    # Host name for logs and notifications
+    ### HOSTNAME="$(hostname)"
 
-    # Email subect for notifications
+    # Email subject for notifications
     ### MAIL_SUBJECT="[info] EvoBackup - Client ${HOSTNAME}"
 
     # No-op in case nothing is executed
