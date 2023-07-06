@@ -31,6 +31,158 @@ dump_ldap() {
     log "LOCAL_TASKS - stop  dump_ldap"
 }
 
+
+
+#######################################################################
+# Dump config variables of an instance
+#
+# Arguments:
+# --port=[Integer] (default: 3306)
+#######################################################################
+dump_mysql_variables() {
+    local option_port="3306"
+    # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
+    while :; do
+        case ${1:-''} in
+            --port)
+                # port options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_port="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - '--port' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --port=?*)
+                # port options, with value separated by =
+                option_port="${1#*=}"
+                ;;
+            --port=)
+                # port options, without value
+                log_error "LOCAL_TASKS - '--port' requires a non-empty option argument."
+                exit 1
+                ;;
+            --)
+                # End of all options.
+                shift
+                break
+                ;;
+            -?*|[[:alnum:]]*)
+                # ignore unknown options
+                log_error "LOCAL_TASKS - unkwnown option (ignored): '${1}'"
+                ;;
+            *)
+                # Default case: If no more options then break out of the loop.
+                break
+                ;;
+        esac
+
+        shift
+    done
+
+    ## Dump all variables
+    local error_file="${errors_dir}/variables.err"
+    local dump_file="${dump_dir}/variables.txt"
+    log "LOCAL_TASKS - start ${dump_file}"
+
+    declare -a options
+    options=()
+    options+=(--port="${option_port}")
+    options+=(--no-auto-rehash)
+    options+=(-e "SHOW GLOBAL VARIABLES;")
+
+    mysql "${options[@]}" 2> "${error_file}" > "${dump_file}"
+
+    local last_rc=$?
+    # shellcheck disable=SC2086
+    if [ ${last_rc} -ne 0 ]; then
+        log_error "LOCAL_TASKS - mysql 'show variables' returned an error ${last_rc}" "${error_file}"
+        GLOBAL_RC=${E_DUMPFAILED}
+    else
+        rm -f "${error_file}"
+    fi
+    log "LOCAL_TASKS - stop  ${dump_file}"
+}
+
+#######################################################################
+# Dump grants of an instance
+#
+# Arguments:
+# --port=[Integer] (default: 3306)
+#######################################################################
+dump_mysql_grants() {
+    local option_port="3306"
+    # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
+    while :; do
+        case ${1:-''} in
+            --port)
+                # port options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_port="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - '--port' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --port=?*)
+                # port options, with value separated by =
+                option_port="${1#*=}"
+                ;;
+            --port=)
+                # port options, without value
+                log_error "LOCAL_TASKS - '--port' requires a non-empty option argument."
+                exit 1
+                ;;
+            --)
+                # End of all options.
+                shift
+                break
+                ;;
+            -?*|[[:alnum:]]*)
+                # ignore unknown options
+                log_error "LOCAL_TASKS - unkwnown option (ignored): '${1}'"
+                ;;
+            *)
+                # Default case: If no more options then break out of the loop.
+                break
+                ;;
+        esac
+
+        shift
+    done
+
+    ## Dump all grants (requires 'percona-toolkit' package)
+    if command -v pt-show-grants > /dev/null; then
+        local error_file="${errors_dir}/all_grants.err"
+        local dump_file="${dump_dir}/all_grants.sql"
+        log "LOCAL_TASKS - start ${dump_file}"
+
+        declare -a options
+        options=()
+        options+=(--port "${option_port}")
+        options+=(--flush)
+        options+=(--no-header)
+
+        pt-show-grants "${options[@]}" 2> "${error_file}" > "${dump_file}"
+
+        local last_rc=$?
+        # shellcheck disable=SC2086
+        if [ ${last_rc} -ne 0 ]; then
+            log_error "LOCAL_TASKS - pt-show-grants to ${dump_file} returned an error ${last_rc}" "${error_file}"
+            GLOBAL_RC=${E_DUMPFAILED}
+        else
+            rm -f "${error_file}"
+        fi
+        log "LOCAL_TASKS - stop  ${dump_file}"
+    else
+        log "LOCAL_TASKS - pt-show-grants not found, unable to dump grants"
+    fi
+}
+
+
+
 #######################################################################
 # Dump a single compressed file of all databases of an instance
 #
@@ -120,54 +272,6 @@ dump_mysql_global() {
     fi
     log "LOCAL_TASKS - stop  ${dump_file}"
 
-    ## Dump all grants (requires 'percona-toolkit' package)
-    if command -v pt-show-grants > /dev/null; then
-        local error_file="${errors_dir}/all_grants.err"
-        local dump_file="${dump_dir}/all_grants.sql"
-        log "LOCAL_TASKS - start ${dump_file}"
-
-        declare -a options
-        options=()
-        options+=(--port "${option_port}")
-        options+=(--flush)
-        options+=(--no-header)
-
-        pt-show-grants "${options[@]}" 2> "${error_file}" > "${dump_file}"
-
-        local last_rc=$?
-        # shellcheck disable=SC2086
-        if [ ${last_rc} -ne 0 ]; then
-            log_error "LOCAL_TASKS - pt-show-grants to ${dump_file} returned an error ${last_rc}" "${error_file}"
-            GLOBAL_RC=${E_DUMPFAILED}
-        else
-            rm -f "${error_file}"
-        fi
-        log "LOCAL_TASKS - stop  ${dump_file}"
-    fi
-
-    ## Dump all variables
-    local error_file="${errors_dir}/variables.err"
-    local dump_file="${dump_dir}/variables.txt"
-    log "LOCAL_TASKS - start ${dump_file}"
-
-    declare -a options
-    options=()
-    options+=(--port="${option_port}")
-    options+=(--no-auto-rehash)
-    options+=(-e "SHOW GLOBAL VARIABLES;")
-
-    mysql "${options[@]}" 2> "${error_file}" > "${dump_file}"
-
-    local last_rc=$?
-    # shellcheck disable=SC2086
-    if [ ${last_rc} -ne 0 ]; then
-        log_error "LOCAL_TASKS - mysql 'show variables' returned an error ${last_rc}" "${error_file}"
-        GLOBAL_RC=${E_DUMPFAILED}
-    else
-        rm -f "${error_file}"
-    fi
-    log "LOCAL_TASKS - stop  ${dump_file}"
-
     ## Schema only (no data) for each databases
     local error_file="${errors_dir}/mysqldump.schema.err"
     local dump_file="${dump_dir}/mysqldump.schema.sql"
@@ -192,6 +296,10 @@ dump_mysql_global() {
         rm -f "${error_file}"
     fi
     log "LOCAL_TASKS - stop  ${dump_file}"
+
+    dump_mysql_grants --port="${option_port}"
+
+    dump_mysql_variables --port="${option_port}"
 }
 
 #######################################################################
@@ -302,6 +410,10 @@ dump_mysql_per_base() {
         fi
         log "LOCAL_TASKS - stop  ${dump_file}"
     done
+
+    dump_mysql_grants --port="${option_port}"
+
+    dump_mysql_variables --port="${option_port}"
 }
 
 #######################################################################
