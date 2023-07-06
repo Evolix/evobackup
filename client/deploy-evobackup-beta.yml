@@ -1,8 +1,12 @@
+###
+# ansible-playbook deploy-evobackup-beta.yml -K --diff -l HOSTNAME --check
+#
 ---
 
-- hosts: all
-  gather_facts: yes
-  become: yes
+- name: Deploy a beta version of evobackup
+  hosts: all
+  gather_facts: true
+  become: true
 
   vars:
     evobackup_script_path: /etc/cron.daily/zzz_evobackup_beta
@@ -13,37 +17,40 @@
     - name: LIBDIR is present
       file:
         path: "{{ evobackup_libdir }}"
+        owner: root
+        group: root
+        mode: "0755"
         state: directory
 
     - name: libraries are installed
       copy:
         src: "{{ item }}"
         dest: "{{ evobackup_libdir }}/"
-        remote_src: False
+        remote_src: false
         owner: root
         group: root
-        mode: "0640"
-        force: yes
+        mode: "0644"
+        force: true
       loop: "{{ lookup('fileglob', 'lib/*.sh', wantlist=True) }}"
 
     - name: script is present
       copy:
-        src: zzz_evobackup.sh
+        src: zzz_evobackup
         dest: "{{ evobackup_script_path }}"
-        remote_src: False
+        remote_src: false
         owner: root
         group: root
         mode: "0750"
-        force: no
+        force: false
 
     - name: Email is customized
       replace:
-        dest: /etc/cron.daily/zzz_evobackup
+        dest: "{{ evobackup_script_path }}"
         regexp: "^MAIL=.*"
         replace: "MAIL={{ evobackup_mail }}"
 
     - name: LIBDIR is customized
       replace:
-        dest: /etc/cron.daily/zzz_evobackup
+        dest: "{{ evobackup_script_path }}"
         regexp: "^LIBDIR=.*"
         replace: "LIBDIR=\"{{ evobackup_libdir }}\""
