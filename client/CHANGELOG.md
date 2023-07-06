@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 ## [22.12]
+
 ### Changed
 
 * Use --dump-dir instead of --backup-dir to suppress dump-server-state warning
