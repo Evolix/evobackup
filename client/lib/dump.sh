@@ -810,7 +810,7 @@ dump_redis() {
         mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
 
         if [ -f "${instance}/dump.rdb" ]; then
-            local error_file="${errors_dir}/${instance}.err"
+            local error_file="${errors_dir}/${name}.err"
             log "LOCAL_TASKS - start ${dump_dir}"
 
             cp -a "${instance}/dump.rdb" "${dump_dir}/dump.rdb" 2> "${error_file}"
