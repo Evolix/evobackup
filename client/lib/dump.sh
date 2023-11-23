@@ -19,8 +19,8 @@ dump_ldap() {
     ## OpenLDAP : example with slapcat
     local dump_dir="${LOCAL_BACKUP_DIR}/ldap"
     rm -rf "${dump_dir}"
-    # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}"
+    mkdir -p "${dump_dir}"
+    chmod -R 700 "${dump_dir}"
 
     log "LOCAL_TASKS - start dump_ldap to ${dump_dir}"
 
@@ -239,8 +239,8 @@ dump_mysql_global() {
     local dump_dir="${LOCAL_BACKUP_DIR}/mysql-global-${option_port}"
     local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
     rm -rf "${dump_dir}" "${errors_dir}"
-    # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
+    mkdir -p "${dump_dir}" "${errors_dir}"
+    chmod -R 700 "${dump_dir}" "${errors_dir}"
 
     local error_file="${errors_dir}/mysqldump.err"
     local dump_file="${dump_dir}/mysqldump.sql.gz"
@@ -353,8 +353,8 @@ dump_mysql_per_base() {
     local dump_dir="${LOCAL_BACKUP_DIR}/mysql-per-base-${option_port}"
     local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
     rm -rf "${dump_dir}" "${errors_dir}"
-    # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
+    mkdir -p "${dump_dir}" "${errors_dir}"
+    chmod -R 700 "${dump_dir}" "${errors_dir}"
 
     declare -a options
     options=()
@@ -469,8 +469,8 @@ dump_mysql_tabs() {
         local dump_dir="${LOCAL_BACKUP_DIR}/mysql-tabs-${option_port}/${database}"
         local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
         rm -rf "${dump_dir}" "${errors_dir}"
-        # shellcheck disable=SC2174
-        mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
+        mkdir -p "${dump_dir}" "${errors_dir}"
+        chmod -R 700 "${dump_dir}" "${errors_dir}"
         chown -RL mysql "${dump_dir}"
 
         local error_file="${errors_dir}.err"
@@ -599,8 +599,8 @@ dump_mysql_instance() {
     local dump_dir="${LOCAL_BACKUP_DIR}/mysql-instance-${option_port}"
     local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
     rm -rf "${dump_dir}" "${errors_dir}"
-    # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
+    mkdir -p "${dump_dir}" "${errors_dir}"
+    chmod -R 700 "${dump_dir}" "${errors_dir}"
 
     declare -a options
     options=()
@@ -639,8 +639,8 @@ dump_postgresql_global() {
     local dump_dir="${LOCAL_BACKUP_DIR}/postgresql-global"
     local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
     rm -rf "${dump_dir}" "${errors_dir}"
-    # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
+    mkdir -p "${dump_dir}" "${errors_dir}"
+    chmod -R 700 "${dump_dir}" "${errors_dir}"
 
     ## example with pg_dumpall and with compression
     local error_file="${errors_dir}/pg_dumpall.err"
@@ -681,8 +681,8 @@ dump_postgresql_per_base() {
     local dump_dir="${LOCAL_BACKUP_DIR}/postgresql-per-base"
     local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
     rm -rf "${dump_dir}" "${errors_dir}"
-    # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
+    mkdir -p "${dump_dir}" "${errors_dir}"
+    chmod -R 700 "${dump_dir}" "${errors_dir}"
 
     (
         # shellcheck disable=SC2164
@@ -719,8 +719,8 @@ dump_postgresql_filtered() {
     local dump_dir="${LOCAL_BACKUP_DIR}/postgresql-filtered"
     local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
     rm -rf "${dump_dir}" "${errors_dir}"
-    # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
+    mkdir -p "${dump_dir}" "${errors_dir}"
+    chmod -R 700 "${dump_dir}" "${errors_dir}"
 
     local error_file="${errors_dir}/pg-backup.err"
     local dump_file="${dump_dir}/pg-backup.tar"
@@ -806,8 +806,8 @@ dump_redis() {
         local dump_dir="${LOCAL_BACKUP_DIR}/${name}"
         local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
         rm -rf "${dump_dir}" "${errors_dir}"
-        # shellcheck disable=SC2174
-        mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
+        mkdir -p "${dump_dir}" "${errors_dir}"
+        chmod -R 700 "${dump_dir}" "${errors_dir}"
 
         if [ -f "${instance}/dump.rdb" ]; then
             local error_file="${errors_dir}/${name}.err"
@@ -858,8 +858,8 @@ dump_mongodb() {
     local dump_dir="${LOCAL_BACKUP_DIR}/mongodump"
     local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
     rm -rf "${dump_dir}" "${errors_dir}"
-    # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
+    mkdir -p "${dump_dir}" "${errors_dir}"
+    chmod -R 700 "${dump_dir}" "${errors_dir}"
 
     local error_file="${errors_dir}.err"
     log "LOCAL_TASKS - start ${dump_dir}"
@@ -953,8 +953,8 @@ dump_megacli_config() {
     local dump_dir="${LOCAL_BACKUP_DIR}/megacli"
     local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
     rm -rf "${dump_dir}" "${errors_dir}"
-    # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
+    mkdir -p "${dump_dir}" "${errors_dir}"
+    chmod -R 700 "${dump_dir}" "${errors_dir}"
 
     local dump_file="${dump_dir}/megacli.cfg"
     local error_file="${errors_dir}/megacli.err"
@@ -983,8 +983,8 @@ dump_traceroute() {
     local dump_dir="${LOCAL_BACKUP_DIR}/traceroute"
     local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
     rm -rf "${dump_dir}" "${errors_dir}"
-    # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
+    mkdir -p "${dump_dir}" "${errors_dir}"
+    chmod -R 700 "${dump_dir}" "${errors_dir}"
 
     local option_targets=""
     # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
@@ -1063,7 +1063,6 @@ dump_server_state() {
     local dump_dir="${LOCAL_BACKUP_DIR}/server-state"
     rm -rf "${dump_dir}"
     # Do not create the directory
-    # shellcheck disable=SC2174
     # mkdir -p -m 700 "${dump_dir}"
 
     log "LOCAL_TASKS - start ${dump_dir}"
@@ -1104,8 +1103,8 @@ dump_rabbitmq() {
     local dump_dir="${LOCAL_BACKUP_DIR}/rabbitmq"
     local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
     rm -rf "${dump_dir}" "${errors_dir}"
-    # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
+    mkdir -p "${dump_dir}" "${errors_dir}"
+    chmod -R 700 "${dump_dir}" "${errors_dir}"
 
     local error_file="${errors_dir}.err"
     local dump_file="${dump_dir}/config"
@@ -1133,8 +1132,8 @@ dump_facl() {
     local dump_dir="${LOCAL_BACKUP_DIR}/facl"
     local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
     rm -rf "${dump_dir}" "${errors_dir}"
-    # shellcheck disable=SC2174
-    mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
+    mkdir -p "${dump_dir}" "${errors_dir}"
+    chmod -R 700 "${dump_dir}" "${errors_dir}"
 
     log "LOCAL_TASKS - start ${dump_dir}"
 
