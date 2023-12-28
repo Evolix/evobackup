@@ -44,6 +44,8 @@ sync_tasks_wrapper() {
 
     case "${SYSTEM}" in
         linux)
+            # NOTE: remember to single-quote paths if they contain globs (*)
+            #       and you want to defer expansion
             declare -a rsync_default_includes=(
                 /bin
                 /boot
@@ -54,6 +56,8 @@ sync_tasks_wrapper() {
             )
             ;;
         *bsd)
+            # NOTE: remember to single-quote paths if they contain globs (*)
+            #       and you want to defer expansion
             declare -a rsync_default_includes=(
                 /bin
                 /bsd
@@ -71,6 +75,8 @@ sync_tasks_wrapper() {
     fi
     readonly rsync_default_includes
 
+    # NOTE: remember to single-quote paths if they contain globs (*)
+    #       and you want to defer expansion
     declare -a rsync_default_excludes=(
         /dev
         /proc
@@ -83,15 +89,15 @@ sync_tasks_wrapper() {
         /usr/src
         /var/apt
         /var/cache
-        /var/db/munin/*.tmp
+        '/var/db/munin/*.tmp'
         /var/lib/amavis/amavisd.sock
         /var/lib/amavis/tmp
         /var/lib/amavis/virusmails
-        /var/lib/clamav/*.tmp
+        '/var/lib/clamav/*.tmp'
         /var/lib/elasticsearch
         /var/lib/metche
         /var/lib/mongodb
-        /var/lib/munin/*tmp*
+        '/var/lib/munin/*tmp*'
         /var/lib/mysql
         /var/lib/php/sessions
         /var/lib/php5
@@ -106,20 +112,20 @@ sync_tasks_wrapper() {
         /var/state
         /var/tmp
         lost+found
-        .nfs.*
-        lxc/*/rootfs/tmp
-        lxc/*/rootfs/usr/doc
-        lxc/*/rootfs/usr/obj
-        lxc/*/rootfs/usr/share/doc
-        lxc/*/rootfs/usr/src
-        lxc/*/rootfs/var/apt
-        lxc/*/rootfs/var/cache
-        lxc/*/rootfs/var/lib/php5
-        lxc/*/rootfs/var/lib/php/sessions
-        lxc/*/rootfs/var/lock
-        lxc/*/rootfs/var/run
-        lxc/*/rootfs/var/state
-        lxc/*/rootfs/var/tmp
+        '.nfs.*'
+        'lxc/*/rootfs/tmp'
+        'lxc/*/rootfs/usr/doc'
+        'lxc/*/rootfs/usr/obj'
+        'lxc/*/rootfs/usr/share/doc'
+        'lxc/*/rootfs/usr/src'
+        'lxc/*/rootfs/var/apt'
+        'lxc/*/rootfs/var/cache'
+        'lxc/*/rootfs/var/lib/php5'
+        'lxc/*/rootfs/var/lib/php/sessions'
+        'lxc/*/rootfs/var/lock'
+        'lxc/*/rootfs/var/run'
+        'lxc/*/rootfs/var/state'
+        'lxc/*/rootfs/var/tmp'
         /home/mysqltmp
     )
     readonly rsync_default_excludes

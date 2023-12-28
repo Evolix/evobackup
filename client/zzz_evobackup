@@ -94,6 +94,8 @@ sync_tasks() {
 
     # What to include in your sync task
     # Add or remove paths if you need
+    # NOTE: remember to single-quote paths if they contain globs (*)
+    #       and you want to defer expansion
     # shellcheck disable=SC2034
     RSYNC_INCLUDES=(
         "${rsync_default_includes[@]}"
@@ -106,6 +108,8 @@ sync_tasks() {
 
     # What to exclude from your sync task
     # Add or remove paths if you need
+    # NOTE: remember to single-quote paths if they contain globs (*)
+    #       and you want to defer expansion
     # shellcheck disable=SC2034
     RSYNC_EXCLUDES=(
         "${rsync_default_excludes[@]}"
