@@ -14,7 +14,9 @@ set -u
 set -o pipefail
 
 source "${LIBDIR}/utilities.sh"
-source "${LIBDIR}/dump.sh"
+source "${LIBDIR}/dump-mysql.sh"
+source "${LIBDIR}/dump-postgresql.sh"
+source "${LIBDIR}/dump-misc.sh"
 
 # Called from main, it is wrapping the local_tasks function defined in the real script
 local_tasks_wrapper() {
@@ -184,7 +186,7 @@ sync() {
     rsync_server=$(echo "${server}" | cut -d':' -f1)
     rsync_port=$(echo "${server}" | cut -d':' -f2)
 
-    log "START SYNC_TASKS - \"${sync_name}\" : server=${server}"
+    log "START SYNC_TASKS - ${sync_name}: server=${server}"
     
     # Rsync complete log file for the current run
     RSYNC_LOGFILE="/var/log/${PROGNAME}.${sync_name}.rsync.log"
@@ -208,7 +210,7 @@ sync() {
 
         if [ -n "${mtree_bin}" ]; then
             # Dump filesystem stats with mtree
-            log "SYNC_TASKS - start mtree"
+            log "SYNC_TASKS - ${sync_name}: start mtree"
 
             # Loop over Rsync includes
             for i in "${!rsync_includes[@]}"; do
@@ -232,15 +234,15 @@ sync() {
             done
 
             if [ "${#mtree_files[@]}" -le 0 ]; then
-                log_error "SYNC_TASKS - ERROR: mtree didn't produce any file"
+                log_error "SYNC_TASKS - ${sync_name}: ERROR: mtree didn't produce any file"
             fi
 
-            log "SYNC_TASKS - stop  mtree (files: ${mtree_files[*]})"
+            log "SYNC_TASKS - ${sync_name}: stop  mtree (files: ${mtree_files[*]})"
         else
-            log "SYNC_TASKS - skip mtree (missing)"
+            log "SYNC_TASKS - ${sync_name}: skip mtree (missing)"
         fi
     else
-        log "SYNC_TASKS - skip mtree (disabled)"
+        log "SYNC_TASKS - ${sync_name}: skip mtree (disabled)"
     fi
 
     rsync_bin=$(command -v rsync)
@@ -274,7 +276,7 @@ sync() {
     rsync_main_args+=("root@${rsync_server}:${REMOTE_BACKUP_DIR}/")
 
     # … log it
-    log "SYNC_TASKS - \"${sync_name}\" Rsync main command : ${rsync_bin} ${rsync_main_args[*]}"
+    log "SYNC_TASKS - ${sync_name}: Rsync main command : ${rsync_bin} ${rsync_main_args[*]}"
 
     # … execute it
     ${rsync_bin} "${rsync_main_args[@]}"
@@ -288,7 +290,7 @@ sync() {
 
     # We ignore rc=24 (vanished files)
     if [ ${rsync_main_rc} -ne 0 ] && [ ${rsync_main_rc} -ne 24 ]; then
-        log_error "SYNC_TASKS - ${sync_name} Rsync main command returned an error ${rsync_main_rc}" "${LOGFILE}"
+        log_error "SYNC_TASKS - ${sync_name}: Rsync main command returned an error ${rsync_main_rc}" "${LOGFILE}"
         GLOBAL_RC=${E_SYNCFAILED}
     else
         # Build the report Rsync command
@@ -317,13 +319,13 @@ sync() {
         rsync_report_args+=("root@${rsync_server}:${REMOTE_LOG_DIR}/")
 
         # … log it
-        log "SYNC_TASKS - ${sync_name} Rsync report command : ${rsync_bin} ${rsync_report_args[*]}"
+        log "SYNC_TASKS - ${sync_name}: Rsync report command : ${rsync_bin} ${rsync_report_args[*]}"
 
         # … execute it
         ${rsync_bin} "${rsync_report_args[@]}"
     fi
 
-    log "STOP SYNC_TASKS - ${sync_name} server=${server}"
+    log "STOP SYNC_TASKS - ${sync_name}: server=${server}"
 }
 
 setup() {

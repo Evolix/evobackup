@@ -125,7 +125,7 @@ sync_tasks() {
 # The "local_tasks" function will be called by the main function. 
 #
 # You can call any available "dump_xxx" function
-# (usually installed at /usr/local/lib/evobackup/dump.sh)
+# (usually installed at /usr/local/lib/evobackup/dump-*.sh)
 #
 # You can also write some custom functions and call them.
 # A "dump_custom" example is available further down.
@@ -134,42 +134,111 @@ sync_tasks() {
 
 local_tasks() {
 
-    ########## OpenLDAP ###############
+    ########## Server state ###########
 
-    ### dump_ldap
+    # Run dump-server-state to extract system information
+    #
+    # Options : any dump-server-state option (see 'dump-server-state -h')
+    #
+    dump_server_state
 
     ########## MySQL ##################
 
+    # Very common strategy for a single instance server with default configuration :
+    #
+    ### dump_mysql_global; dump_mysql_grants; dump_mysql_summary
+
     # Dump all databases in a single compressed file
-    # and all grants (permissions), config variables and schema of databases
-    ### dump_mysql_global [--port=3306] [--masterdata]
+    #
+    # Options :
+    #   --masterdata (default: <absent>)
+    #   --port=[Integer] (default: <blank>)
+    #   --socket=[String] (default: <blank>)
+    #   --user=[String] (default: <blank>)
+    #   --password=[String] (default: <blank>)
+    #   --defaults-file=[String] (default: <blank>)
+    #   --defaults-extra-file=[String] (default: <blank>)
+    #   --defaults-group-suffix=[String] (default: <blank>)
+    #   --dump-label=[String] (default: "default")
+    #     used as suffix of the dump dir to differenciate multiple instances
+    #
+    ### dump_mysql_global
     
     # Dump each database separately, in a compressed file
-    # and all grants (permissions), config variables and schema of databases
-    ### dump_mysql_per_base [--port=3306]
- 
-    # Dump a specific instance, in a single compressed file
-    # This is similar to "dump_mysql_global", but will custom authentication
-    ### dump_mysql_instance [--port=3306] [--user=foo] [--password=123456789]
+    #
+    # Options :
+    #   --port=[Integer] (default: <blank>)
+    #   --socket=[String] (default: <blank>)
+    #   --user=[String] (default: <blank>)
+    #   --password=[String] (default: <blank>)
+    #   --defaults-file=[String] (default: <blank>)
+    #   --defaults-extra-file=[String] (default: <blank>)
+    #   --defaults-group-suffix=[String] (default: <blank>)
+    #   --dump-label=[String] (default: "default")
+    #     used as suffix of the dump dir to differenciate multiple instances
+    #
+    ### dump_mysql_per_base
 
-    # Dump only grants of an instance
-    ### dump_mysql_grants [--port=3306]
+    # Dump permissions of an instance (using pt-show-grants)
+    #
+    # Options :
+    #   --port=[Integer] (default: <blank>)
+    #   --socket=[String] (default: <blank>)
+    #   --user=[String] (default: <blank>)
+    #   --password=[String] (default: <blank>)
+    #   --defaults-file=[String] (default: <blank>)
+    #   --dump-label=[String] (default: "default")
+    #     used as suffix of the dump dir to differenciate multiple instances
+    #
+    # WARNING - unsupported options :
+    #   --defaults-extra-file
+    #   --defaults-group-suffix
+    # You have to provide credentials manually
+    #
+    ### dump_mysql_grants
 
-    # Dump only variables of an instance
-    ### dump_mysql_variables [--port=3306]
+    # Dump complete summary of an instance (using pt-mysql-summary)
+    #
+    # Options :
+    #   --port=[Integer] (default: <blank>)
+    #   --socket=[String] (default: <blank>)
+    #   --user=[String] (default: <blank>)
+    #   --password=[String] (default: <blank>)
+    #   --defaults-file=[String] (default: <blank>)
+    #   --defaults-extra-file=[String] (default: <blank>)
+    #   --defaults-group-suffix=[String] (default: <blank>)
+    #   --dump-label=[String] (default: "default")
+    #     used as suffix of the dump dir to differenciate multiple instances
+    #
+    ### dump_mysql_summary
 
-    # Dump each table in schema/data files
-    ### dump_mysql_tabs [--port=3306] [--user=foo] [--password=123456789]
+    # Dump each table in separate schema/data files
+    #
+    # Options :
+    #   --port=[Integer] (default: <blank>)
+    #   --socket=[String] (default: <blank>)
+    #   --user=[String] (default: <blank>)
+    #   --password=[String] (default: <blank>)
+    #   --defaults-file=[String] (default: <blank>)
+    #   --defaults-extra-file=[String] (default: <blank>)
+    #   --defaults-group-suffix=[String] (default: <blank>)
+    #   --dump-label=[String] (default: "default")
+    #     used as suffix of the dump dir to differenciate multiple instances
+    #
+    ### dump_mysql_tabs
 
     ########## PostgreSQL #############
 
     # Dump all databases in a single file (compressed or not)
+    #
     ### dump_postgresql_global
 
     # Dump a specific databse with only some tables, or all but some tables (must be configured)
+    #
     ### dump_postgresql_filtered
 
     # Dump each database separately, in a compressed file
+    #
     ### dump_postgresql_per_base
 
     ########## MongoDB ################
@@ -179,14 +248,17 @@ local_tasks() {
     ########## Redis ##################
 
     # Copy data file for all instances
+    #
     ### dump_redis [--instances=<all|instance1|instance2>]
 
     ########## Elasticsearch ##########
 
     # Snapshot data for a single-node cluster
+    #
     ### dump_elasticsearch_snapshot_singlenode [--protocol=http] [--host=localhost] [--port=9200] [--user=foo] [--password=123456789] [--repository=snaprepo] [--snapshot=snapshot.daily]
 
     # Snapshot data for a multi-node cluster
+    #
     ### dump_elasticsearch_snapshot_multinode [--protocol=http] [--host=localhost] [--port=9200] [--user=foo] [--password=123456789] [--repository=snaprepo] [--snapshot=snapshot.daily] [--nfs-server=192.168.2.1]
 
     ########## RabbitMQ ###############
@@ -196,22 +268,23 @@ local_tasks() {
     ########## MegaCli ################
 
     # Copy RAID config
+    #
     ### dump_megacli_config
+
+    # Dump file access control lists
+    #
+    ### dump_facl
+
+    ########## OpenLDAP ###############
+
+    ### dump_ldap
 
     ########## Network ################
 
     # Dump network routes with mtr and traceroute (warning: could be long with aggressive firewalls)
+    #
     ### dump_traceroute --targets=host_or_ip[,host_or_ip]
     dump_traceroute --targets=8.8.8.8,www.evolix.fr,travaux.evolix.net
-
-    ########## Server state ###########
-
-    # Run dump-server-state to extract system information
-    ### dump-server-state [any dump-server-state option]
-    dump_server_state
-
-    # Dump file access control lists
-    ### dump_facl
 
     # No-op, in case nothing is enabled
     :
@@ -232,7 +305,7 @@ local_tasks() {
 ###     mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
 ###
 ###     # Log the start of the command
-###     log "LOCAL_TASKS - start ${dump_file}"
+###     log "LOCAL_TASKS - ${FUNCNAME[0]}: start ${dump_file}"
 ###
 ###     # Execute your dump command
 ###     # Send errors to the error file and the data to the dump file
@@ -242,14 +315,14 @@ local_tasks() {
 ###     local last_rc=$?
 ###     # shellcheck disable=SC2086
 ###     if [ ${last_rc} -ne 0 ]; then
-###         log_error "LOCAL_TASKS - my-dump-command to ${dump_file} returned an error ${last_rc}" "${error_file}"
+###         log_error "LOCAL_TASKS - ${FUNCNAME[0]}: my-dump-command to ${dump_file} returned an error ${last_rc}" "${error_file}"
 ###         GLOBAL_RC=${E_DUMPFAILED}
 ###     else
 ###         rm -f "${error_file}"
 ###     fi
 ###
 ###     # Log the end of the command
-###     log "LOCAL_TASKS - stop  ${dump_file}"
+###     log "LOCAL_TASKS - ${FUNCNAME[0]}: stop  ${dump_file}"
 ### }
 
 ########## Optional configuration #####################################
