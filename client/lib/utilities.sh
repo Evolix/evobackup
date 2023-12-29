@@ -37,9 +37,10 @@ add_to_temp_files() {
     TEMP_FILES+=("${1}")
 }
 # Remove all temporary file created during the execution
-clean_temp_files() {
+cleanup() {
     # shellcheck disable=SC2086
     rm -f "${TEMP_FILES[@]}"
+    find "${ERRORS_DIR}" -type d -empty -delete
 }
 enforce_single_process() {
     local pidfile=$1

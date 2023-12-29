@@ -401,7 +401,7 @@ setup() {
     # Initialize a list of temporary files
     declare -a TEMP_FILES=()
     # Any file in this list will be deleted when the program exits
-    trap "clean_temp_files" EXIT
+    trap "cleanup" EXIT
 }
 
 

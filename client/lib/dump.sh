@@ -101,6 +101,7 @@ dump_mysql_variables() {
         GLOBAL_RC=${E_DUMPFAILED}
     else
         rm -f "${error_file}"
+        rmdir --ignore-fail-on-non-empty "${errors_dir}"
     fi
     log "LOCAL_TASKS - stop  ${dump_file}"
 }
@@ -174,6 +175,7 @@ dump_mysql_grants() {
             GLOBAL_RC=${E_DUMPFAILED}
         else
             rm -f "${error_file}"
+            rmdir --ignore-fail-on-non-empty "${errors_dir}"
         fi
         log "LOCAL_TASKS - stop  ${dump_file}"
     else
@@ -294,6 +296,7 @@ dump_mysql_global() {
         GLOBAL_RC=${E_DUMPFAILED}
     else
         rm -f "${error_file}"
+        rmdir --ignore-fail-on-non-empty "${errors_dir}"
     fi
     log "LOCAL_TASKS - stop  ${dump_file}"
 
@@ -500,6 +503,7 @@ dump_mysql_tabs() {
             GLOBAL_RC=${E_DUMPFAILED}
         else
             rm -f "${error_file}"
+            rmdir --ignore-fail-on-non-empty "${errors_dir}"
         fi
         log "LOCAL_TASKS - stop  ${dump_dir}"
     done
@@ -626,6 +630,7 @@ dump_mysql_instance() {
         GLOBAL_RC=${E_DUMPFAILED}
     else
         rm -f "${error_file}"
+        rmdir --ignore-fail-on-non-empty "${errors_dir}"
     fi
     log "LOCAL_TASKS - stop  ${dump_file}"
 }
@@ -702,6 +707,7 @@ dump_postgresql_per_base() {
                 GLOBAL_RC=${E_DUMPFAILED}
             else
                 rm -f "${error_file}"
+                rmdir --ignore-fail-on-non-empty "${errors_dir}"
             fi
             log "LOCAL_TASKS - stop  ${dump_file}"
         done
@@ -739,6 +745,7 @@ dump_postgresql_filtered() {
         GLOBAL_RC=${E_DUMPFAILED}
     else
         rm -f "${error_file}"
+        rmdir --ignore-fail-on-non-empty "${errors_dir}"
     fi
     log "LOCAL_TASKS - stop  ${dump_file}"
 }
@@ -822,6 +829,7 @@ dump_redis() {
                 GLOBAL_RC=${E_DUMPFAILED}
             else
                 rm -f "${error_file}"
+                rmdir --ignore-fail-on-non-empty "${errors_dir}"
             fi
 
             gzip "${dump_dir}/dump.rdb"
@@ -833,6 +841,7 @@ dump_redis() {
                 GLOBAL_RC=${E_DUMPFAILED}
             else
                 rm -f "${error_file}"
+                rmdir --ignore-fail-on-non-empty "${errors_dir}"
             fi
 
             log "LOCAL_TASKS - stop  ${dump_dir}"
@@ -940,6 +949,7 @@ dump_mongodb() {
         GLOBAL_RC=${E_DUMPFAILED}
     else
         rm -f "${error_file}"
+        rmdir --ignore-fail-on-non-empty "${errors_dir}"
     fi
     log "LOCAL_TASKS - stop  ${dump_dir}"
 }
@@ -969,6 +979,7 @@ dump_megacli_config() {
         GLOBAL_RC=${E_DUMPFAILED}
     else
         rm -f "${error_file}"
+        rmdir --ignore-fail-on-non-empty "${errors_dir}"
     fi
     log "LOCAL_TASKS - stop  ${dump_file}"
 }
@@ -1119,6 +1130,7 @@ dump_rabbitmq() {
         GLOBAL_RC=${E_DUMPFAILED}
     else
         rm -f "${error_file}"
+        rmdir --ignore-fail-on-non-empty "${errors_dir}"
     fi
     log "LOCAL_TASKS - stop  ${dump_file}"
 }
