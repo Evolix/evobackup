@@ -407,7 +407,7 @@ setup() {
 }
 
 
-main() {
+run_evobackup() {
     # Start timer
     START_EPOCH=$(/bin/date +%s)
     START_TIME=$(/bin/date +"%Y%m%d%H%M%S")

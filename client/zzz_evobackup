@@ -1,18 +1,7 @@
 #!/bin/bash
 #
-# Script Evobackup client
+# Evobackup client
 # See https://gitea.evolix.org/evolix/evobackup
-#
-# Authors: Evolix <info@evolix.fr>,
-#          Gregory Colpart <reg@evolix.fr>,
-#          Romain Dessort <rdessort@evolix.fr>,
-#          Benoit Série <bserie@evolix.fr>,
-#          Tristan Pilat <tpilat@evolix.fr>,
-#          Victor Laborie <vlaborie@evolix.fr>,
-#          Jérémy Lecour <jlecour@evolix.fr>
-#          and others.
-#
-# Licence: AGPLv3
 
 #######################################################################
 #
@@ -21,9 +10,6 @@
 # There is some optional configuration that you can do
 # at the end of this script.
 #
-# The library (usually installed at /usr/local/lib/evobackup/main.sh)
-# also has many variables that you can override for fine-tuning.
-#
 #######################################################################
 
 # Email adress for notifications
@@ -31,98 +17,73 @@ MAIL=jdoe@example.com
 
 #######################################################################
 #
-# The "sync_tasks" function will be called by the main function. 
+# The "sync_tasks" function will be called by the "main" function. 
 #
 # You can customize the variables:
-# * "sync_name"      (String)
+# * "SYNC_NAME"      (String)
 # * "SERVERS"        (Array of HOST:PORT)
 # * "RSYNC_INCLUDES" (Array of paths to include)
 # * "RSYNC_EXCLUDES" (Array of paths to exclude)
+#
+# WARNING: remember to single-quote paths if they contain globs (*)
+# and you want to pass them as-is to Rsync.
 #
 # The "sync" function can be called multiple times
 # with a different set of variables.
 # That way you can to sync to various destinations.
 #
+# Default includes/excludes are defined in the "main" library,
+# referenced at this end of this file.
+#
 #######################################################################
 
+# shellcheck disable=SC2034
 sync_tasks() {
 
     ########## System-only backup (to Evolix servers) #################
 
-    # Name your sync task, for logs
-    sync_name="evolix-system"
-
-    # List of host/port for your sync task
-    # shellcheck disable=SC2034
+    SYNC_NAME="evolix-system"
     SERVERS=(
         node0.backup.evolix.net:2234
         node1.backup.evolix.net:2234
     )
-
-    # What to include in your sync task
-    # Add or remove paths if you need
-    # shellcheck disable=SC2034
     RSYNC_INCLUDES=(
         "${rsync_default_includes[@]}"
         /etc
         /root
         /var
     )
-
-    # What to exclude from your sync task
-    # Add or remove paths if you need
-    # shellcheck disable=SC2034
     RSYNC_EXCLUDES=(
         "${rsync_default_excludes[@]}"
     )
-
-    # Call the sync task
-    sync "${sync_name}" "SERVERS[@]" "RSYNC_INCLUDES[@]" "RSYNC_EXCLUDES[@]"
+    sync "${SYNC_NAME}" "SERVERS[@]" "RSYNC_INCLUDES[@]" "RSYNC_EXCLUDES[@]"
 
 
     ########## Full backup (to client servers) ########################
 
-    # Name your sync task, for logs
-    sync_name="client-full"
-
-    # List of host/port for your sync task
-    # shellcheck disable=SC2034
-    SERVERS=(
-        client-backup00.evolix.net:2221
-        client-backup01.evolix.net:2221
-    )
-
-    # What to include in your sync task
-    # Add or remove paths if you need
-    # NOTE: remember to single-quote paths if they contain globs (*)
-    #       and you want to defer expansion
-    # shellcheck disable=SC2034
-    RSYNC_INCLUDES=(
-        "${rsync_default_includes[@]}"
-        /etc
-        /root
-        /var
-        /home
-        /srv
-    )
-
-    # What to exclude from your sync task
-    # Add or remove paths if you need
-    # NOTE: remember to single-quote paths if they contain globs (*)
-    #       and you want to defer expansion
-    # shellcheck disable=SC2034
-    RSYNC_EXCLUDES=(
-        "${rsync_default_excludes[@]}"
-    )
-
-    # Call the sync task
-    sync "${sync_name}" "SERVERS[@]" "RSYNC_INCLUDES[@]" "RSYNC_EXCLUDES[@]"
+    ### SYNC_NAME="client-full"
+    ### SERVERS=(
+    ###     client-backup00.evolix.net:2221
+    ###     client-backup01.evolix.net:2221
+    ### )
+    ### RSYNC_INCLUDES=(
+    ###     "${rsync_default_includes[@]}"
+    ###     /etc
+    ###     /root
+    ###     /var
+    ###     /home
+    ###     /srv
+    ### )
+    ### RSYNC_EXCLUDES=(
+    ###     "${rsync_default_excludes[@]}"
+    ### )
+    ### sync "${SYNC_NAME}" "SERVERS[@]" "RSYNC_INCLUDES[@]" "RSYNC_EXCLUDES[@]"
 
 }
 
 #######################################################################
 #
-# The "local_tasks" function will be called by the main function. 
+# The "local_tasks" function will be called by the "main" function. 
 #
 # You can call any available "dump_xxx" function
 # (usually installed at /usr/local/lib/evobackup/dump-*.sh)
@@ -354,4 +315,4 @@ source "${LIBDIR}/main.sh"
 
 ########## Let's go! ##################################################
 
-main
+run_evobackup
