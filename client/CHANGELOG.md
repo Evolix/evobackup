@@ -11,10 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * split functions into libraries
+* add evobackupctl script
+* change the "zzz_evobackup" script to a template, easy to copy with evobackupctl
 
 ### Deprecated
 
 ### Removed
+
+* update-evobackup-canary is managed by ansible-roles.git
+* deployment by Ansible is managed elsewhere (now in evolix-private.git, later in ansible-roles.git)
 
 ### Fixed
 
