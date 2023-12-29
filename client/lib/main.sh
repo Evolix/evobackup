@@ -18,6 +18,25 @@ source "${LIBDIR}/dump-mysql.sh"
 source "${LIBDIR}/dump-postgresql.sh"
 source "${LIBDIR}/dump-misc.sh"
 
+show_version() {
+    cat <<END
+evobackup version ${VERSION}
+
+Copyright 2023 Evolix <info@evolix.fr>,
+               Gregory Colpart <reg@evolix.fr>,
+               Romain Dessort <rdessort@evolix.fr>,
+               Benoit Série <bserie@evolix.fr>,
+               Tristan Pilat <tpilat@evolix.fr>,
+               Victor Laborie <vlaborie@evolix.fr>,
+               Jérémy Lecour <jlecour@evolix.fr>
+               and others.
+
+evobackup comes with ABSOLUTELY NO WARRANTY.  This is free software,
+and you are welcome to redistribute it under certain conditions.
+See the GNU General Public License v3.0 for details.
+END
+}
+
 # Called from main, it is wrapping the local_tasks function defined in the real script
 local_tasks_wrapper() {
     log "START LOCAL_TASKS"
