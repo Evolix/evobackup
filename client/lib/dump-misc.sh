@@ -129,24 +129,15 @@ dump_redis() {
 # Arguments:
 # --user=[String] (default: <blank>)
 # --password=[String] (default: <blank>)
+#
+# don't forget to create use with read-only access
+# > use admin
+# > db.createUser( { user: "mongobackup", pwd: "PASS", roles: [ "backup", ] } )
 #######################################################################
 dump_mongodb() {
-    ## don't forget to create use with read-only access
-    ## > use admin
-    ## > db.createUser( { user: "mongobackup", pwd: "PASS", roles: [ "backup", ] } )
-
-    local dump_dir="${LOCAL_BACKUP_DIR}/mongodump"
-    local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
-    rm -rf "${dump_dir}" "${errors_dir}"
-    mkdir -p "${dump_dir}" "${errors_dir}"
-    # No need to change recursively, the top directory is enough
-    chmod 700 "${dump_dir}" "${errors_dir}"
-
-    local error_file="${errors_dir}.err"
-    log "LOCAL_TASKS - ${FUNCNAME[0]}: start ${dump_dir}"
-
     local option_user=""
     local option_password=""
+
     # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
     while :; do
         case ${1:-''} in
@@ -205,6 +196,16 @@ dump_mongodb() {
 
         shift
     done
+
+    local dump_dir="${LOCAL_BACKUP_DIR}/mongodump"
+    local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
+    rm -rf "${dump_dir}" "${errors_dir}"
+    mkdir -p "${dump_dir}" "${errors_dir}"
+    # No need to change recursively, the top directory is enough
+    chmod 700 "${dump_dir}" "${errors_dir}"
+
+    local error_file="${errors_dir}.err"
+    log "LOCAL_TASKS - ${FUNCNAME[0]}: start ${dump_dir}"
 
     declare -a options
     options=()
@@ -270,14 +271,8 @@ dump_megacli_config() {
 # --targets=[IP,HOST] (default: <none>)
 #######################################################################
 dump_traceroute() {
-    local dump_dir="${LOCAL_BACKUP_DIR}/traceroute"
-    local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
-    rm -rf "${dump_dir}" "${errors_dir}"
-    mkdir -p "${dump_dir}" "${errors_dir}"
-    # No need to change recursively, the top directory is enough
-    chmod 700 "${dump_dir}" "${errors_dir}"
-
     local option_targets=""
+
     # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
     while :; do
         case ${1:-''} in
@@ -317,6 +312,14 @@ dump_traceroute() {
 
         shift
     done
+
+    local dump_dir="${LOCAL_BACKUP_DIR}/traceroute"
+    local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
+    rm -rf "${dump_dir}" "${errors_dir}"
+    mkdir -p "${dump_dir}" "${errors_dir}"
+    # No need to change recursively, the top directory is enough
+    chmod 700 "${dump_dir}" "${errors_dir}"
+
 
     mtr_bin=$(command -v mtr)
     if [ -n "${mtr_bin}" ]; then
@@ -400,6 +403,7 @@ dump_rabbitmq() {
 
     local error_file="${errors_dir}.err"
     local dump_file="${dump_dir}/config"
+
     log "LOCAL_TASKS - ${FUNCNAME[0]}: start ${dump_file}"
 
     rabbitmqadmin export "${dump_file}" 2> "${error_file}" >> "${LOGFILE}"
@@ -451,8 +455,6 @@ dump_facl() {
 # --snapshot=[String] (default: snapshot.daily)
 #######################################################################
 dump_elasticsearch_snapshot_singlenode() {
-    log "LOCAL_TASKS - ${FUNCNAME[0]}: start dump_elasticsearch_snapshot_singlenode"
-
     local option_protocol="http"
     local option_host="localhost"
     local option_port="9200"
@@ -460,6 +462,7 @@ dump_elasticsearch_snapshot_singlenode() {
     local option_password=""
     local option_repository="snaprepo"
     local option_snapshot="snapshot.daily"
+
     # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
     while :; do
         case ${1:-''} in
@@ -614,6 +617,8 @@ dump_elasticsearch_snapshot_singlenode() {
         shift
     done
 
+    log "LOCAL_TASKS - ${FUNCNAME[0]}: start ${option_snapshot}"
+
     ## Take a snapshot as a backup.
     ## Warning: You need to have a path.repo configured.
     ## See: https://wiki.evolix.org/HowtoElasticsearch#snapshots-et-sauvegardes
@@ -640,7 +645,7 @@ dump_elasticsearch_snapshot_singlenode() {
     #     echo 'Cannot make a snapshot of elasticsearch, at least one node is not mounting the repository.'
     # fi
 
-    log "LOCAL_TASKS - ${FUNCNAME[0]}: stop  dump_elasticsearch_snapshot_singlenode"
+    log "LOCAL_TASKS - ${FUNCNAME[0]}: stop  ${option_snapshot}"
 }
 
 #######################################################################
@@ -657,8 +662,6 @@ dump_elasticsearch_snapshot_singlenode() {
 # --nfs-server=[IP|HOST] (default: <none>)
 #######################################################################
 dump_elasticsearch_snapshot_multinode() {
-    log "LOCAL_TASKS - ${FUNCNAME[0]}: start dump_elasticsearch_snapshot_multinode"
-
     local option_protocol="http"
     local option_host="localhost"
     local option_port="9200"
@@ -667,6 +670,7 @@ dump_elasticsearch_snapshot_multinode() {
     local option_repository="snaprepo"
     local option_snapshot="snapshot.daily"
     local option_nfs_server=""
+
     # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
     while :; do
         case ${1:-''} in
@@ -840,6 +844,8 @@ dump_elasticsearch_snapshot_multinode() {
         shift
     done
 
+    log "LOCAL_TASKS - ${FUNCNAME[0]}: start ${option_snapshot}"
+
     ## Take a snapshot as a backup.
     ## Warning: You need to have a path.repo configured.
     ## See: https://wiki.evolix.org/HowtoElasticsearch#snapshots-et-sauvegardes
@@ -862,5 +868,5 @@ dump_elasticsearch_snapshot_multinode() {
         echo 'Cannot make a snapshot of elasticsearch, at least one node is not mounting the repository.'
     fi
 
-    log "LOCAL_TASKS - ${FUNCNAME[0]}: stop  dump_elasticsearch_snapshot_multinode"
+    log "LOCAL_TASKS - ${FUNCNAME[0]}: stop  ${option_snapshot}"
 }

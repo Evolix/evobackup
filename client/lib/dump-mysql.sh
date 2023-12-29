@@ -31,6 +31,7 @@ dump_mysql_summary() {
     local option_user=""
     local option_password=""
     local option_dump_label=""
+
     # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
     while :; do
         case ${1:-''} in
@@ -294,6 +295,7 @@ dump_mysql_grants() {
     local option_user=""
     local option_password=""
     local option_dump_label=""
+
     # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
     while :; do
         case ${1:-''} in
@@ -512,6 +514,7 @@ dump_mysql_global() {
     local option_user=""
     local option_password=""
     local option_dump_label=""
+
     # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
     while :; do
         case ${1:-''} in
@@ -802,6 +805,7 @@ dump_mysql_per_base() {
     local option_port=""
     local option_socket=""
     local option_dump_label=""
+
     # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
     while :; do
         case ${1:-''} in
@@ -965,6 +969,7 @@ dump_mysql_tabs() {
     local option_port=""
     local option_socket=""
     local option_dump_label=""
+
     # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
     while :; do
         case ${1:-''} in

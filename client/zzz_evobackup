@@ -138,7 +138,9 @@ local_tasks() {
 
     # Run dump-server-state to extract system information
     #
-    # Options : any dump-server-state option (see 'dump-server-state -h')
+    # Options : any dump-server-state supported option
+    # (except --dump-dir that will be overwritten)
+    # See 'dump-server-state -h' for details.
     #
     dump_server_state
 
