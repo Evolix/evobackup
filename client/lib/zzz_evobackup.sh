@@ -2,6 +2,11 @@
 #
 # Evobackup client
 # See https://gitea.evolix.org/evolix/evobackup
+#
+# This is a generated backup script made by:
+#   command: @COMMAND@
+#   version: @VERSION@
+#   date:    @DATE@
 
 #######################################################################
 #
