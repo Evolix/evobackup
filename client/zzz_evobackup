@@ -149,7 +149,9 @@ local_tasks() {
     # Very common strategy for a single instance server with default configuration :
     #
     ### dump_mysql_global; dump_mysql_grants; dump_mysql_summary
-
+    #
+    # See below for details regarding dump functions for MySQL/MariaDB
+ 
     # Dump all databases in a single compressed file
     #
     # Options :
