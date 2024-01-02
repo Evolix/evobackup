@@ -1,7 +1,5 @@
 #!/bin/bash
 
-readonly VERSION="23.12-pre"
-
 # shellcheck disable=SC2155
 readonly PROGNAME=$(basename "${0}")
 # shellcheck disable=SC2155
@@ -11,6 +9,8 @@ readonly ARGS=$@
 
 # Change this to wherever you install the libraries
 readonly LIBDIR="/usr/local/lib/evobackup"
+
+source "${LIBDIR}/main.sh"
 
 show_version() {
     cat <<END
