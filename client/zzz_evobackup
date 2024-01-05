@@ -629,7 +629,7 @@ main() {
 
     # Initialize a list of files to delete at exit
     # Any file added to the list will also be deleted at exit
-    temp_files="${temp_files} ${PIDFILE}"
+    temp_files="${PIDFILE}"
 
     # shellcheck disable=SC2064
     trap "rm -f ${temp_files}" EXIT
