@@ -632,7 +632,7 @@ main() {
     temp_files="${PIDFILE}"
 
     # shellcheck disable=SC2064
-    trap "rm -f ${temp_files}" EXIT
+    trap 'rm -f ${temp_files}' EXIT
 
     # Update canary to keep track of each run
     update-evobackup-canary --who "${PROGNAME}"
