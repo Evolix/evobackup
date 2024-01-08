@@ -1,0 +1,49 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Load ~/.VagrantFile if exist, permit local config provider
+vagrantfile = File.join(Dir.home, ".VagrantFile")
+load File.expand_path(vagrantfile) if File.exist?(vagrantfile)
+
+Vagrant.configure("2") do |config|
+  # Run "vagrant rsync-auto" to sync after each change
+  config.vm.synced_folder ".", "/vagrant", type: "rsync", disabled: true
+  config.vm.synced_folder "bin", "/usr/local/bin", type: "rsync"
+  config.vm.synced_folder "lib", "/usr/local/lib/evobackup", type: "rsync"
+
+  config.ssh.shell = "/bin/sh"
+
+  config.vm.provider :libvirt do |libvirt|
+    # libvirt.storage :file, :size => '10G', :device => 'vdb'
+    libvirt.memory = 1024
+    libvirt.cpus = 1
+  end
+
+  config_script = <<~SCRIPT
+    set -e
+    sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/; s/# fr_FR.UTF-8 UTF-8/fr_FR.UTF-8 UTF-8/' /etc/locale.gen && \
+        echo 'LANG="fr_FR.UTF-8"'>/etc/default/locale && \
+        dpkg-reconfigure --frontend=noninteractive locales && \
+        update-locale LANG=fr_FR.UTF-8
+    exit 0
+  SCRIPT
+
+  [
+    {version: "buster"},
+    {version: "bullseye"},
+    {version: "bookworm"}
+  ].each do |i|
+    config.vm.define(i[:version].to_s) do |node|
+      node.vm.hostname = "evobackup-#{i[:version]}"
+      node.vm.box = "debian/#{i[:version]}64"
+
+      node.vm.provision "config", type: "shell", inline: config_script
+
+      node.vm.provision :ansible do |ansible|
+        ansible.playbook = "vagrant.yml"
+      end
+
+    end
+  end
+
+end

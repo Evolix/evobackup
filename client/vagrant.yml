@@ -1,0 +1,76 @@
+# To be used through "vagrant up" or "vagrant provision".
+---
+- hosts: bookworm,bullseye,buster
+  gather_facts: yes
+  become: yes
+
+  vars_files:
+    - '~/GIT/evolix-private/vars/evolinux-secrets.yml'
+
+  vars:
+    evolinux_hostname: "localhost"
+    evolinux_domain: "localdomain.tld"
+    evomaintenance_alert_email: "evomaintenance-{{ evolinux_hostname }}@evolix.fr"
+    evomaintenance_install_vendor: True
+    client_number: "XXX"
+    monitoring_mode: "everytime"
+    evocheck_force_install: "local"
+    evoadmin_host: "evoadmin.{{ evolinux_hostname }}.evolix.eu"
+    evoadmin_contact_email: root@localhost
+    postfix_slow_transport_include: True
+
+    evolinux_ssh_allow_current_user: True
+
+    minifirewall_additional_trusted_ips: ["192.168.0.0/16", "10.0.0.0/8"]
+    minifirewall_http_sites: ["0.0.0.0/0"]
+
+    packweb_enable_evoadmin_vhost: True
+    packweb_phpmyadmin_suffix: "uE34swx9"
+
+    evolinux_apt_include: True
+    evolinux_etcgit_include: True
+    evolinux_hostname_include: True
+    evolinux_kernel_include: True
+    evolinux_fstab_include: True
+    evolinux_packages_include: True
+    evolinux_system_include: True
+    evolinux_evomaintenance_include: True
+    evolinux_ssh_include: True
+    evolinux_users_include: False
+    evolinux_root_include: True
+    evolinux_postfix_include: True
+    evolinux_logs_include: True
+    evolinux_default_www_include: True
+    evolinux_hardware_include: True
+    evolinux_provider_online_include: False
+    evolinux_provider_orange_fce_include: False
+    evolinux_log2mail_include: True
+    evolinux_minifirewall_include: True
+    evolinux_munin_include: True
+    evolinux_nagios_nrpe_include: True
+    evolinux_fail2ban_include: False
+    mysql_custom_datadir: '/home/mysql'
+    mysql_custom_tmpdir: '/home/tmpmysql'
+    mysql_custom_logdir: '/home/mysql-logs'
+    # evolinux_apt_public_sources: False
+    apt_upgrade: True
+
+    # TODO Try to to make it work without the following line
+    # packweb_multiphp_versions:
+    #   - php74
+    #   - php82
+    
+    # autosysadmin_config:
+    #   repair_http: "on"
+    #   repair_mysql: off
+    #   repair_all: 'off'
+
+  roles:
+    - mysql
+    # - evolinux-base
+    # # - evolinux-users
+    # - ./ansible/roles/autosysadmin-agent
+    # - packweb-apache
+    # # - redis
+    # - { role: redis,     redis_instance_name:     foo,      redis_port: 6380 }
+    # - { role: redis,     redis_instance_name:     bar,      redis_port: 6381 }
