@@ -137,8 +137,5 @@ send_mail() {
 }
 
 path_to_str() {
-    local path=$1
-    local str="${path}"
-
-    echo "${path}" | sed -e 's|^/||; s|/$||; s|/|:|g'
+    echo "${1}" | sed -e 's|^/||; s|/$||; s|/|:|g'
 }
