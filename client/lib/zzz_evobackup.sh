@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Evobackup client
 # See https://gitea.evolix.org/evolix/evobackup

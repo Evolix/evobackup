@@ -20,6 +20,7 @@ The **patch** part changes is incremented if multiple releases happen the same m
 * split functions into libraries
 * add evobackupctl script
 * change the "zzz_evobackup" script to a template, easy to copy with evobackupctl
+* use env-based shebang for shell scripts
 
 ### Deprecated
 

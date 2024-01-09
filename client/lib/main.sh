@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # shellcheck disable=SC2034,SC2317
 
 readonly VERSION="23.12-pre"
