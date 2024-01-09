@@ -15,9 +15,17 @@ dump_ldap() {
 
     log "LOCAL_TASKS - ${FUNCNAME[0]}: start ${FUNCNAME[0]} to ${dump_dir}"
 
-    slapcat -n 0 -l "${dump_dir}/config.bak"
-    slapcat -n 1 -l "${dump_dir}/data.bak"
-    slapcat      -l "${dump_dir}/all.bak"
+    dump_cmd="slapcat -n 0 -l ${dump_dir}/config.bak"
+    log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
+    ${dump_cmd}
+
+    dump_cmd="slapcat -n 1 -l ${dump_dir}/data.bak"
+    log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
+    ${dump_cmd}
+
+    dump_cmd="slapcat -l ${dump_dir}/all.bak"
+    log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
+    ${dump_cmd}
 
     log "LOCAL_TASKS - ${FUNCNAME[0]}: stop  ${FUNCNAME[0]}"
 }
@@ -93,7 +101,10 @@ dump_redis() {
             local error_file="${errors_dir}/${name}.err"
             log "LOCAL_TASKS - ${FUNCNAME[0]}: start ${dump_dir}"
 
-            cp -a "${instance}/dump.rdb" "${dump_dir}/dump.rdb" 2> "${error_file}"
+            # Copy the Redis database
+            dump_cmd="cp -a ${instance}/dump.rdb ${dump_dir}/dump.rdb 2> ${error_file}"
+            log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
+            ${dump_cmd}
 
             local last_rc=$?
             # shellcheck disable=SC2086
@@ -104,7 +115,10 @@ dump_redis() {
                 rm -f "${error_file}"
             fi
 
-            gzip "${dump_dir}/dump.rdb"
+            # Compress the Redis database
+            dump_cmd="gzip ${dump_dir}/dump.rdb"
+            log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
+            ${dump_cmd}
 
             local last_rc=$?
             # shellcheck disable=SC2086
@@ -213,7 +227,9 @@ dump_mongodb() {
     options+=(--password="${option_password}")
     options+=(--out="${dump_dir}/")
 
-    mongodump "${options[@]}" 2> "${error_file}" > /dev/null
+    dump_cmd=" mongodump ${options[*]} 2> ${error_file} > /dev/null"
+    log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
+    ${dump_cmd}
 
     local last_rc=$?
     # shellcheck disable=SC2086
@@ -244,7 +260,9 @@ dump_megacli_config() {
         local dump_file="${dump_dir}/megacli.err"
         log "LOCAL_TASKS - ${FUNCNAME[0]}: start ${dump_file}"
 
-        megacli -CfgSave -f "${dump_file}" -a0 2> "${error_file}" > /dev/null
+        dump_cmd="megacli -CfgSave -f ${dump_file} -a0 2> ${error_file}"
+        log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
+        ${dump_cmd}
 
         local last_rc=$?
         # shellcheck disable=SC2086
@@ -375,7 +393,10 @@ dump_server_state() {
         log_error "LOCAL_TASKS - ${FUNCNAME[0]}: dump-server-state is missing"
         rc=1
     else
-        ${dump_server_state_bin} "${options[@]}"
+        dump_cmd="${dump_server_state_bin} ${options[*]}"
+        log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
+        ${dump_cmd}
+
         local last_rc=$?
         # shellcheck disable=SC2086
         if [ ${last_rc} -ne 0 ]; then
@@ -406,7 +427,9 @@ dump_rabbitmq() {
 
     log "LOCAL_TASKS - ${FUNCNAME[0]}: start ${dump_file}"
 
-    rabbitmqadmin export "${dump_file}" 2> "${error_file}" >> "${LOGFILE}"
+    dump_cmd="rabbitmqadmin export ${dump_file} 2> ${error_file}"
+    log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
+    ${dump_cmd}
 
     local last_rc=$?
     # shellcheck disable=SC2086
@@ -434,10 +457,21 @@ dump_facl() {
 
     log "LOCAL_TASKS - ${FUNCNAME[0]}: start ${dump_dir}"
 
-    getfacl -R /etc  > "${dump_dir}/etc.txt"
-    getfacl -R /home > "${dump_dir}/home.txt"
-    getfacl -R /usr  > "${dump_dir}/usr.txt"
-    getfacl -R /var  > "${dump_dir}/var.txt"
+    dump_cmd="getfacl -R /etc  > ${dump_dir}/etc.txt"
+    log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
+    ${dump_cmd}
+
+    dump_cmd="getfacl -R /home  > ${dump_dir}/home.txt"
+    log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
+    ${dump_cmd}
+
+    dump_cmd="getfacl -R /usr  > ${dump_dir}/usr.txt"
+    log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
+    ${dump_cmd}
+
+    dump_cmd="getfacl -R /var  > ${dump_dir}/var.txt"
+    log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
+    ${dump_cmd}
 
     log "LOCAL_TASKS - ${FUNCNAME[0]}: stop  ${dump_dir}"
 }

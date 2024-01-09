@@ -279,7 +279,9 @@ local_tasks() {
 ###
 ###     # Execute your dump command
 ###     # Send errors to the error file and the data to the dump file
-###     my-dump-command 2> "${error_file}" > "${dump_file}"
+###     dump_cmd="my-dump-command 2> ${error_file} > ${dump_file}"
+###     log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
+###     ${dump_cmd}
 ###
 ###     # Check result and deal with potential errors
 ###     local last_rc=$?

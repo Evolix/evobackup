@@ -254,7 +254,9 @@ dump_mysql_summary() {
         options=()
         options+=(--sleep=0)
 
-        pt-mysql-summary "${options[@]}" -- "${connect_options[@]}" 2> "${error_file}" > "${dump_file}"
+        dump_cmd="pt-mysql-summary ${options[*]} -- ${connect_options[*]} > ${dump_file}"
+        log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
+        ${dump_cmd} 2> "${error_file}"
 
         local last_rc=$?
         # shellcheck disable=SC2086
@@ -468,7 +470,9 @@ dump_mysql_grants() {
         options+=(--flush)
         options+=(--no-header)
 
-        pt-show-grants "${options[@]}" 2> "${error_file}" > "${dump_file}"
+        dump_cmd="pt-show-grants ${options[*]} > ${dump_file}"
+        log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
+        ${dump_cmd} 2> "${error_file}"
 
         local last_rc=$?
         # shellcheck disable=SC2086
@@ -798,9 +802,9 @@ dump_mysql_global() {
         dump_options+=(${option_others})
     fi
 
-    dump_cmd="mysqldump ${connect_options[*]} ${dump_options[*]}"
-    log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd} | ${compress_cmd} > ${dump_file}"
-    ${dump_cmd} 2> "${error_file}" | ${compress_cmd} > "${dump_file}"
+    dump_cmd="mysqldump ${connect_options[*]} ${dump_options[*]} 2> ${error_file}| ${compress_cmd} > ${dump_file}"
+    log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
+    ${dump_cmd}
 
     local last_rc=$?
     # shellcheck disable=SC2086
@@ -830,9 +834,9 @@ dump_mysql_global() {
         dump_options+=(${option_others})
     fi
 
-    dump_cmd="mysqldump ${connect_options[*]} ${dump_options[*]}"
-    log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd} > ${dump_file}"
-    ${dump_cmd} 2> "${error_file}" > "${dump_file}"
+    dump_cmd="mysqldump ${connect_options[*]} ${dump_options[*]} 2> ${error_file} > ${dump_file}"
+    log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
+    ${dump_cmd}
 
     local last_rc=$?
     # shellcheck disable=SC2086
@@ -1153,9 +1157,9 @@ dump_mysql_per_base() {
             dump_options+=(${option_others})
         fi
 
-        dump_cmd="mysqldump ${connect_options[*]} ${dump_options[*]}"
-        log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd} | ${compress_cmd} > ${dump_file}"
-        ${dump_cmd} 2> "${error_file}" | ${compress_cmd} > "${dump_file}"
+        dump_cmd="mysqldump ${connect_options[*]} ${dump_options[*]} 2> ${error_file} | ${compress_cmd} > ${dump_file}"
+        log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
+        ${dump_cmd}
 
         local last_rc=$?
         # shellcheck disable=SC2086
@@ -1185,9 +1189,9 @@ dump_mysql_per_base() {
             dump_options+=(${option_others})
         fi
 
-        dump_cmd="mysqldump ${connect_options[*]} ${dump_options[*]}"
-        log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd} > ${dump_file}"
-        ${dump_cmd} 2> "${error_file}" > "${dump_file}"
+        dump_cmd="mysqldump ${connect_options[*]} ${dump_options[*]} 2> ${error_file} > ${dump_file}"
+        log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
+        ${dump_cmd}
 
         local last_rc=$?
         # shellcheck disable=SC2086
@@ -1320,9 +1324,9 @@ dump_mysql_tabs() {
 
         mysqldump "${options[@]}" 2> "${error_file}"
 
-        dump_cmd="mysqldump ${connect_options[*]} ${dump_options[*]}"
-        log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd} > ${dump_file}"
-        ${dump_cmd} 2> "${error_file}" > "${dump_file}"
+        dump_cmd="mysqldump ${connect_options[*]} ${dump_options[*]} 2> ${error_file} > ${dump_file}"
+        log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
+        ${dump_cmd}
  
         local last_rc=$?
         # shellcheck disable=SC2086
