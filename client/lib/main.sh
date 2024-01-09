@@ -8,7 +8,7 @@ export LC_ALL=C
 
 # If expansion is attempted on an unset variable or parameter, the shell prints an
 # error message, and, if not interactive, exits with a non-zero status.
-set -u
+set -o nounset
 # The pipeline's return status is the value of the last (rightmost) command
 # to exit with a non-zero status, or zero if all commands exit successfully.
 set -o pipefail
