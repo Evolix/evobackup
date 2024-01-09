@@ -135,3 +135,10 @@ pick_server() {
 send_mail() {
     tail -20 "${LOGFILE}" | mail -s "${MAIL_SUBJECT}" "${MAIL}"
 }
+
+path_to_str() {
+    local path=$1
+    local str="${path}"
+
+    echo "${path}" | sed -e 's|^/||; s|/$||; s|/|:|g'
+}
