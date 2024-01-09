@@ -1209,7 +1209,6 @@ dump_mysql_per_base() {
 # Dump "tabs style" separate schema/data for each database of an instance
 #
 # Arguments:
-# --masterdata (default: <absent>)
 # --port=[Integer] (default: <blank>)
 # --socket=[String] (default: <blank>)
 # --user=[String] (default: <blank>)
@@ -1219,15 +1218,81 @@ dump_mysql_per_base() {
 # --defaults-group-suffix=[String] (default: <blank>)
 # --dump-label=[String] (default: "default")
 #   used as suffix of the dump dir to differenciate multiple instances
+# --compress=<gzip|bzip2|xz|none> (default: "gzip")
+# Other options after -- are passed as-is to mysqldump
 #######################################################################
 dump_mysql_tabs() {
     local option_port=""
     local option_socket=""
+    local option_defaults_file=""
+    local option_defaults_extra_file=""
+    local option_defaults_group_suffix=""
+    local option_user=""
+    local option_password=""
     local option_dump_label=""
+    local option_compress=""
+    local option_others=""
 
     # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
     while :; do
         case ${1:-''} in
+            --defaults-file)
+                # defaults-file options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_defaults_file="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - ${FUNCNAME[0]}: '--defaults-file' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --defaults-file=?*)
+                # defaults-file options, with value separated by =
+                option_defaults_file="${1#*=}"
+                ;;
+            --defaults-file=)
+                # defaults-file options, without value
+                log_error "LOCAL_TASKS - ${FUNCNAME[0]}: '--defaults-file' requires a non-empty option argument."
+                exit 1
+                ;;
+            --defaults-extra-file)
+                # defaults-file options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_defaults_extra_file="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - ${FUNCNAME[0]}: '--defaults-file' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --defaults-extra-file=?*)
+                # defaults-extra-file options, with value separated by =
+                option_defaults_extra_file="${1#*=}"
+                ;;
+            --defaults-extra-file=)
+                # defaults-extra-file options, without value
+                log_error "LOCAL_TASKS - ${FUNCNAME[0]}: '--defaults-extra-file' requires a non-empty option argument."
+                exit 1
+                ;;
+            --defaults-group-suffix)
+                # defaults-group-suffix options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_defaults_group_suffix="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - ${FUNCNAME[0]}: '--defaults-group-suffix' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --defaults-group-suffix=?*)
+                # defaults-group-suffix options, with value separated by =
+                option_defaults_group_suffix="${1#*=}"
+                ;;
+            --defaults-group-suffix=)
+                # defaults-group-suffix options, without value
+                log_error "LOCAL_TASKS - ${FUNCNAME[0]}: '--defaults-group-suffix' requires a non-empty option argument."
+                exit 1
+                ;;
             --port)
                 # port options, with value separated by space
                 if [ -n "$2" ]; then
@@ -1266,9 +1331,86 @@ dump_mysql_tabs() {
                 log_error "LOCAL_TASKS - ${FUNCNAME[0]}: '--socket' requires a non-empty option argument."
                 exit 1
                 ;;
+            --user)
+                # user options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_user="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - ${FUNCNAME[0]}: '--user' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --user=?*)
+                # user options, with value separated by =
+                option_user="${1#*=}"
+                ;;
+            --user=)
+                # user options, without value
+                log_error "LOCAL_TASKS - ${FUNCNAME[0]}: '--user' requires a non-empty option argument."
+                exit 1
+                ;;
+            --password)
+                # password options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_password="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - ${FUNCNAME[0]}: '--password' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --password=?*)
+                # password options, with value separated by =
+                option_password="${1#*=}"
+                ;;
+            --password=)
+                # password options, without value
+                log_error "LOCAL_TASKS - ${FUNCNAME[0]}: '--password' requires a non-empty option argument."
+                exit 1
+                ;;
+            --dump-label)
+                # dump-label options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_dump_label="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - ${FUNCNAME[0]}: '--dump-label' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --dump-label=?*)
+                # dump-label options, with value separated by =
+                option_dump_label="${1#*=}"
+                ;;
+            --dump-label=)
+                # dump-label options, without value
+                log_error "LOCAL_TASKS - ${FUNCNAME[0]}: '--dump-label' requires a non-empty option argument."
+                exit 1
+                ;;
+            --compress)
+                # compress options, with value separated by space
+                if [ -n "$2" ]; then
+                    option_compress="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - ${FUNCNAME[0]}: '--compress' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --compress=?*)
+                # compress options, with value separated by =
+                option_compress="${1#*=}"
+                ;;
+            --compress=)
+                # compress options, without value
+                log_error "LOCAL_TASKS - ${FUNCNAME[0]}: '--compress' requires a non-empty option argument."
+                exit 1
+                ;;
             --)
                 # End of all options.
                 shift
+                option_others=${*}
                 break
                 ;;
             -?*|[[:alnum:]]*)
@@ -1284,7 +1426,63 @@ dump_mysql_tabs() {
         shift
     done
 
-    option_dump_label="${option_dump_label:-default}"
+    case "${option_compress}" in
+        none)
+            compress_cmd="cat"
+            dump_ext=""
+            ;;
+        bzip2|bz|bz2)
+            compress_cmd="bzip2 --best"
+            dump_ext=".bz"
+            ;;
+        xz)
+            compress_cmd="xz --best"
+            dump_ext=".xz"
+            ;;
+        gz|gzip|*)
+            compress_cmd="gzip --best"
+            dump_ext=".gz"
+            ;;
+    esac
+
+    if [ -z "${option_dump_label}" ]; then
+        if [ -n "${option_defaults_group_suffix}" ]; then
+            option_dump_label="${option_defaults_group_suffix}"
+        elif [ -n "${option_port}" ]; then
+            option_dump_label="${option_port}"
+        elif [ -n "${option_socket}" ]; then
+            option_dump_label=$(path_to_str "${option_socket}")
+        else
+            option_dump_label="default"
+        fi
+    fi
+
+    ## Connection options
+    declare -a connect_options
+    connect_options=()
+    if [ -n "${option_defaults_file}" ]; then
+        connect_options+=(--defaults-file="${option_defaults_file}")
+    fi
+    if [ -n "${option_defaults_extra_file}" ]; then
+        connect_options+=(--defaults-extra-file="${option_defaults_extra_file}")
+    fi
+    if [ -n "${option_defaults_group_suffix}" ]; then
+        connect_options+=(--defaults-group-suffix="${option_defaults_group_suffix}")
+    fi
+    if [ -n "${option_port}" ]; then
+        connect_options+=(--protocol=tcp)
+        connect_options+=(--port="${option_port}")
+    fi
+    if [ -n "${option_socket}" ]; then
+        connect_options+=(--protocol=socket)
+        connect_options+=(--socket="${option_socket}")
+    fi
+    if [ -n "${option_user}" ]; then
+        connect_options+=(--user="${option_user}")
+    fi
+    if [ -n "${option_password}" ]; then
+        connect_options+=(--password="${option_password}")
+    fi
 
     databases=$(mysql "${connect_options[@]}" --execute="show databases" --silent --skip-column-names \
         | grep --extended-regexp --invert-match "^(Database|information_schema|performance_schema|sys)")
@@ -1301,30 +1499,25 @@ dump_mysql_tabs() {
         local error_file="${errors_dir}.err"
         log "LOCAL_TASKS - ${FUNCNAME[0]}: start ${dump_dir}"
 
-        declare -a options
-        options=()
-        options+=(--defaults-extra-file=/etc/mysql/debian.cnf)
-        if [ -n "${option_port}" ]; then
-            options+=(--port="${option_port}")
+        declare -a dump_options
+        dump_options=()
+        dump_options+=(--force)
+        dump_options+=(--quote-names)
+        dump_options+=(--opt)
+        dump_options+=(--events)
+        dump_options+=(--hex-blob)
+        dump_options+=(--skip-comments)
+        dump_options+=(--fields-enclosed-by='\"')
+        dump_options+=(--fields-terminated-by=',')
+        dump_options+=(--tab="${dump_dir}")
+        if [ -n "${option_others}" ]; then
+            # word splitting is deliberate here
+            # shellcheck disable=SC2206
+            dump_options+=(${option_others})
         fi
-        if [ -n "${option_socket}" ]; then
-            options+=(--protocol=socket)
-            options+=(--socket="${option_socket}")
-        fi
-        options+=(--force)
-        options+=(--quote-names)
-        options+=(--opt)
-        options+=(--events)
-        options+=(--hex-blob)
-        options+=(--skip-comments)
-        options+=(--fields-enclosed-by='\"')
-        options+=(--fields-terminated-by=',')
-        options+=(--tab="${dump_dir}")
-        options+=("${database}")
+        dump_options+=("${database}")
 
-        mysqldump "${options[@]}" 2> "${error_file}"
-
-        dump_cmd="mysqldump ${connect_options[*]} ${dump_options[*]} 2> ${error_file} > ${dump_file}"
+        dump_cmd="mysqldump ${connect_options[*]} ${dump_options[*]} 2> ${error_file}"
         log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
         ${dump_cmd}
  
