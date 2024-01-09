@@ -12,6 +12,10 @@ set -o nounset
 # The pipeline's return status is the value of the last (rightmost) command
 # to exit with a non-zero status, or zero if all commands exit successfully.
 set -o pipefail
+# Enable trace mode if called with environment variable TRACE=1
+if [[ "${TRACE-0}" == "1" ]]; then
+    set -o xtrace
+fi
 
 source "${LIBDIR}/utilities.sh"
 source "${LIBDIR}/dump-mysql.sh"
