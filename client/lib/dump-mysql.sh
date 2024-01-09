@@ -503,7 +503,7 @@ dump_mysql_grants() {
 # --defaults-group-suffix=[String] (default: <blank>)
 # --dump-label=[String] (default: "default")
 #   used as suffix of the dump dir to differenciate multiple instances
-# --compress=<gzip|bzip2|xz|none> (default: "gzip")
+# --compress=<gzip|pigz|bzip2|xz|none> (default: "gzip")
 # Other options after -- are passed as-is to mysqldump
 #######################################################################
 dump_mysql_global() {
@@ -728,6 +728,10 @@ dump_mysql_global() {
             compress_cmd="xz --best"
             dump_ext=".xz"
             ;;
+        pigz)
+            compress_cmd="pigz --best"
+            dump_ext=".gz"
+            ;;
         gz|gzip|*)
             compress_cmd="gzip --best"
             dump_ext=".gz"
@@ -863,7 +867,7 @@ dump_mysql_global() {
 # --defaults-group-suffix=[String] (default: <blank>)
 # --dump-label=[String] (default: "default")
 #   used as suffix of the dump dir to differenciate multiple instances
-# --compress=<gzip|bzip2|xz|none> (default: "gzip")
+# --compress=<gzip|pigz|bzip2|xz|none> (default: "gzip")
 # Other options after -- are passed as-is to mysqldump
 #######################################################################
 dump_mysql_per_base() {
@@ -1084,6 +1088,10 @@ dump_mysql_per_base() {
             compress_cmd="xz --best"
             dump_ext=".xz"
             ;;
+        pigz)
+            compress_cmd="pigz --best"
+            dump_ext=".gz"
+            ;;
         gz|gzip|*)
             compress_cmd="gzip --best"
             dump_ext=".gz"
@@ -1218,7 +1226,7 @@ dump_mysql_per_base() {
 # --defaults-group-suffix=[String] (default: <blank>)
 # --dump-label=[String] (default: "default")
 #   used as suffix of the dump dir to differenciate multiple instances
-# --compress=<gzip|bzip2|xz|none> (default: "gzip")
+# --compress=<gzip|pigz|bzip2|xz|none> (default: "gzip")
 # Other options after -- are passed as-is to mysqldump
 #######################################################################
 dump_mysql_tabs() {
@@ -1438,6 +1446,10 @@ dump_mysql_tabs() {
         xz)
             compress_cmd="xz --best"
             dump_ext=".xz"
+            ;;
+        pigz)
+            compress_cmd="pigz --best"
+            dump_ext=".gz"
             ;;
         gz|gzip|*)
             compress_cmd="gzip --best"
