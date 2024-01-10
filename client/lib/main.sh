@@ -18,9 +18,7 @@ if [[ "${TRACE-0}" == "1" ]]; then
 fi
 
 source "${LIBDIR}/utilities.sh"
-source "${LIBDIR}/dump-mysql.sh"
-source "${LIBDIR}/dump-postgresql.sh"
-source "${LIBDIR}/dump-misc.sh"
+source "${LIBDIR}"/dump/*.sh
 
 # Called from main, it is wrapping the local_tasks function defined in the real script
 local_tasks_wrapper() {

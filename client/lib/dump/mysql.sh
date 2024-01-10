@@ -254,9 +254,9 @@ dump_mysql_summary() {
         options=()
         options+=(--sleep=0)
 
-        dump_cmd="pt-mysql-summary ${options[*]} -- ${connect_options[*]} > ${dump_file}"
+        dump_cmd="pt-mysql-summary ${options[*]} -- ${connect_options[*]}"
         log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
-        ${dump_cmd} 2> "${error_file}"
+        ${dump_cmd} 2> "${error_file}" > "${dump_file}"
 
         local last_rc=$?
         # shellcheck disable=SC2086
@@ -470,9 +470,9 @@ dump_mysql_grants() {
         options+=(--flush)
         options+=(--no-header)
 
-        dump_cmd="pt-show-grants ${options[*]} > ${dump_file}"
+        dump_cmd="pt-show-grants ${options[*]}"
         log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
-        ${dump_cmd} 2> "${error_file}"
+        ${dump_cmd} 2> "${error_file}" > "${dump_file}"
 
         local last_rc=$?
         # shellcheck disable=SC2086
@@ -806,9 +806,12 @@ dump_mysql_global() {
         dump_options+=(${option_others})
     fi
 
-    dump_cmd="mysqldump ${connect_options[*]} ${dump_options[*]} 2> ${error_file}| ${compress_cmd} > ${dump_file}"
+    ## WARNING : logging and executing the command must be separate
+    ## because otherwise Bash would interpret | and > as strings and not syntax.
+
+    dump_cmd="mysqldump ${connect_options[*]} ${dump_options[*]} 2> ${error_file} | ${compress_cmd} > ${dump_file}"
     log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
-    ${dump_cmd}
+    mysqldump "${connect_options[@]}" "${dump_options[@]}" 2> "${error_file}" | ${compress_cmd} > "${dump_file}"
 
     local last_rc=$?
     # shellcheck disable=SC2086
@@ -838,9 +841,9 @@ dump_mysql_global() {
         dump_options+=(${option_others})
     fi
 
-    dump_cmd="mysqldump ${connect_options[*]} ${dump_options[*]} 2> ${error_file} > ${dump_file}"
+    dump_cmd="mysqldump ${connect_options[*]} ${dump_options[*]}"
     log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
-    ${dump_cmd}
+    ${dump_cmd} 2> "${error_file}" > "${dump_file}"
 
     local last_rc=$?
     # shellcheck disable=SC2086
@@ -1165,9 +1168,11 @@ dump_mysql_per_base() {
             dump_options+=(${option_others})
         fi
 
-        dump_cmd="mysqldump ${connect_options[*]} ${dump_options[*]} 2> ${error_file} | ${compress_cmd} > ${dump_file}"
-        log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
-        ${dump_cmd}
+        ## WARNING : logging and executing the command must be separate
+        ## because otherwise Bash would interpret | and > as strings and not syntax.
+
+        log "LOCAL_TASKS - ${FUNCNAME[0]}: mysqldump ${connect_options[*]} ${dump_options[*]} | ${compress_cmd} > ${dump_file}"
+        mysqldump "${connect_options[@]}" "${dump_options[@]}" 2> "${error_file}" | ${compress_cmd} > "${dump_file}"
 
         local last_rc=$?
         # shellcheck disable=SC2086
@@ -1197,9 +1202,9 @@ dump_mysql_per_base() {
             dump_options+=(${option_others})
         fi
 
-        dump_cmd="mysqldump ${connect_options[*]} ${dump_options[*]} 2> ${error_file} > ${dump_file}"
+        dump_cmd="mysqldump ${connect_options[*]} ${dump_options[*]}"
         log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
-        ${dump_cmd}
+        ${dump_cmd} 2> "${error_file}" > "${dump_file}"
 
         local last_rc=$?
         # shellcheck disable=SC2086
@@ -1529,9 +1534,9 @@ dump_mysql_tabs() {
         fi
         dump_options+=("${database}")
 
-        dump_cmd="mysqldump ${connect_options[*]} ${dump_options[*]} 2> ${error_file}"
+        dump_cmd="mysqldump ${connect_options[*]} ${dump_options[*]}"
         log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
-        ${dump_cmd}
+        ${dump_cmd} 2> "${error_file}"
  
         local last_rc=$?
         # shellcheck disable=SC2086
