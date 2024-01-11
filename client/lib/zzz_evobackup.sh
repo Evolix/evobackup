@@ -22,7 +22,7 @@ MAIL=jdoe@example.com
 
 #######################################################################
 #
-# The "sync_tasks" function will be called by the "main" function. 
+# The "sync_tasks" function will be called by the "run_evobackup" function. 
 #
 # You can customize the variables:
 # * "SYNC_NAME"      (String)
@@ -88,7 +88,7 @@ sync_tasks() {
 
 #######################################################################
 #
-# The "local_tasks" function will be called by the "main" function. 
+# The "local_tasks" function will be called by the "run_evobackup" function. 
 #
 # You can call any available "dump_xxx" function
 # (usually installed at /usr/local/lib/evobackup/dump-*.sh)
