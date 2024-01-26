@@ -105,10 +105,12 @@ test_server() {
 pick_server() {
     local -i increment=${1:-0}
     local -i list_length=${#SERVERS[@]}
+    local sync_name=${2:""}
 
     if (( increment >= list_length )); then
         # We've reached the end of the list
         new_error="No more server available"
+        new_error="${new_error} for sync '${sync_name}'"
         log "${new_error}"
         SSH_ERRORS+=("${new_error}")
 

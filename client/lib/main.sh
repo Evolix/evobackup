@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2034,SC2317
 
-readonly VERSION="23.12-pre"
+readonly VERSION="24.01-pre"
 
 # set all programs to C language (english)
 export LC_ALL=C
@@ -154,6 +154,8 @@ sync() {
     ## Initialize variable to store SSH connection errors
     declare -a SSH_ERRORS=()
 
+    log "START SYNC_TASKS - sync=${sync_name}"
+
     # echo "### sync ###"
 
     # for server in "${rsync_servers[@]}"; do
@@ -173,8 +175,13 @@ sync() {
     if [ "${SERVERS_FALLBACK}" = "1" ]; then
         # We try to find a suitable server
         while :; do
-            server=$(pick_server ${n})
-            test $? = 0 || exit ${E_NOSRVAVAIL}
+            server=$(pick_server ${n} "${sync_name}")
+            rc=$?
+            if [ ${rc} != 0 ]; then
+                GLOBAL_RC=${E_NOSRVAVAIL}
+            log "STOP  SYNC_TASKS - sync=${sync_name}'"
+                return
+            fi
 
             if test_server "${server}"; then
                 break
@@ -185,13 +192,13 @@ sync() {
         done
     else
         # we force the server
-        server=$(pick_server "${n}")
+        server=$(pick_server "${n}" "${sync_name}")
     fi
 
     rsync_server=$(echo "${server}" | cut -d':' -f1)
     rsync_port=$(echo "${server}" | cut -d':' -f2)
 
-    log "START SYNC_TASKS - ${sync_name}: server=${server}"
+    log "SYNC_TASKS - sync=${sync_name}: use ${server}"
     
     # Rsync complete log file for the current run
     RSYNC_LOGFILE="/var/log/${PROGNAME}.${sync_name}.rsync.log"
@@ -215,7 +222,7 @@ sync() {
 
         if [ -n "${mtree_bin}" ]; then
             # Dump filesystem stats with mtree
-            log "SYNC_TASKS - ${sync_name}: start mtree"
+            log "SYNC_TASKS - sync=${sync_name}: start mtree"
 
             # Loop over Rsync includes
             for i in "${!rsync_includes[@]}"; do
@@ -242,12 +249,12 @@ sync() {
                 log_error "SYNC_TASKS - ${sync_name}: ERROR: mtree didn't produce any file"
             fi
 
-            log "SYNC_TASKS - ${sync_name}: stop  mtree (files: ${mtree_files[*]})"
+            log "SYNC_TASKS - sync=${sync_name}: stop  mtree (files: ${mtree_files[*]})"
         else
-            log "SYNC_TASKS - ${sync_name}: skip mtree (missing)"
+            log "SYNC_TASKS - sync=${sync_name}: skip mtree (missing)"
         fi
     else
-        log "SYNC_TASKS - ${sync_name}: skip mtree (disabled)"
+        log "SYNC_TASKS - sync=${sync_name}: skip mtree (disabled)"
     fi
 
     rsync_bin=$(command -v rsync)
@@ -281,7 +288,7 @@ sync() {
     rsync_main_args+=("root@${rsync_server}:${REMOTE_BACKUP_DIR}/")
 
     # … log it
-    log "SYNC_TASKS - ${sync_name}: Rsync main command : ${rsync_bin} ${rsync_main_args[*]}"
+    log "SYNC_TASKS - sync=${sync_name}: Rsync main command : ${rsync_bin} ${rsync_main_args[*]}"
 
     # … execute it
     ${rsync_bin} "${rsync_main_args[@]}"
@@ -295,7 +302,7 @@ sync() {
 
     # We ignore rc=24 (vanished files)
     if [ ${rsync_main_rc} -ne 0 ] && [ ${rsync_main_rc} -ne 24 ]; then
-        log_error "SYNC_TASKS - ${sync_name}: Rsync main command returned an error ${rsync_main_rc}" "${LOGFILE}"
+        log_error "SYNC_TASKS - sync=${sync_name}: Rsync main command returned an error ${rsync_main_rc}" "${LOGFILE}"
         GLOBAL_RC=${E_SYNCFAILED}
     else
         # Build the report Rsync command
@@ -324,13 +331,13 @@ sync() {
         rsync_report_args+=("root@${rsync_server}:${REMOTE_LOG_DIR}/")
 
         # … log it
-        log "SYNC_TASKS - ${sync_name}: Rsync report command : ${rsync_bin} ${rsync_report_args[*]}"
+        log "SYNC_TASKS - sync=${sync_name}: Rsync report command : ${rsync_bin} ${rsync_report_args[*]}"
 
         # … execute it
         ${rsync_bin} "${rsync_report_args[@]}"
     fi
 
-    log "STOP SYNC_TASKS - ${sync_name}: server=${server}"
+    log "STOP  SYNC_TASKS - sync=${sync_name}"
 }
 
 setup() {
