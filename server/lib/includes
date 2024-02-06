@@ -136,7 +136,7 @@ is_btrfs() {
 
     inode=$(stat --format=%i "${path}")
 
-    test $inode -eq 256
+    test "$inode" -eq 256
 }
 
 # Returns the list of jails found in the "jails" directory (default)
