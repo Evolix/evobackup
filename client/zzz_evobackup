@@ -399,10 +399,11 @@ build_rsync_main_cmd() {
     ###################################################################
 
     # Create a temp file for excludes and includes
-    includes_file="$(mktemp "${PROGNAME}.includes.XXXXXX")"
-    excludes_file="$(mktemp "${PROGNAME}.excludes.XXXXXX")"
+    includes_file="$(mktemp --tmpdir "${PROGNAME}.includes.XXXXXX")"
+    excludes_file="$(mktemp --tmpdir "${PROGNAME}.excludes.XXXXXX")"
     # … and add them to the list of files to delete at exit
-    temp_files="${temp_files} ${includes_file} ${excludes_file}"
+    temp_files="${includes_file} ${excludes_file}"
+    trap "rm -f ${temp_files}" EXIT
 
     # Store includes/excludes in files
     # without blank lines of comments (# or ;)
