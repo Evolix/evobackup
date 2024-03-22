@@ -252,15 +252,15 @@ relative_date() {
 new_tmp_file() {
     name=${1:-}
 
-    mktemp --tmpdir=/tmp "bkctld.${$}.${name}.XXXXX"
+    mktemp --tmpdir "bkctld.${$}.${name}.XXXXX"
 }
 new_tmp_dir() {
     name=${1:-}
 
-    mktemp --directory --tmpdir=/tmp "bkctld.${$}.${name}.XXXXX"
+    mktemp --directory --tmpdir "bkctld.${$}.${name}.XXXXX"
 }
 cleanup_tmp() {
-    find /tmp -name "bkctld.${$}.*" -delete
+    find "${TMPDIR:-/tmp}" -name "bkctld.${$}.*" -delete
 }
 new_lock_file() {
     lock_file=${1:-}
