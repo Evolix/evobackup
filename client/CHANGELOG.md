@@ -32,6 +32,8 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ### Fixed
 
+* don't exit the whole program if a sync task can't be done
+
 ### Security
 
 ## [22.12]
