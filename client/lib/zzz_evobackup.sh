@@ -18,7 +18,7 @@
 #######################################################################
 
 # Email adress for notifications
-MAIL=jdoe@example.com
+MAIL=__NOTIFICATION_MAIL__
 
 #######################################################################
 #
@@ -49,8 +49,8 @@ sync_tasks() {
 
     SYNC_NAME="evolix-system"
     SERVERS=(
-        node0.backup.evolix.net:2234
-        node1.backup.evolix.net:2234
+        __SRV0_HOST__:__SRV0_PORT__
+        __SRV1_HOST__:__SRV1_PORT__
     )
     RSYNC_INCLUDES=(
         "${rsync_default_includes[@]}"
