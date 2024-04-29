@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2034,SC2317
 
-readonly VERSION="24.04-pre1"
+readonly VERSION="24.04"
 
 # set all programs to C language (english)
 export LC_ALL=C

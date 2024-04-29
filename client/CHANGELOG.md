@@ -13,6 +13,20 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [24.04]
+
+### Added
+
 * Vagrant definition for manual tests
 
 ### Changed
@@ -23,8 +37,6 @@ The **patch** part changes is incremented if multiple releases happen the same m
 * use env-based shebang for shell scripts
 * use $TMPDIR if available
 
-### Deprecated
-
 ### Removed
 
 * update-evobackup-canary is managed by ansible-roles.git
@@ -33,8 +45,6 @@ The **patch** part changes is incremented if multiple releases happen the same m
 ### Fixed
 
 * don't exit the whole program if a sync task can't be done
-
-### Security
 
 ## [22.12]
 
