@@ -61,6 +61,12 @@ copy_template() {
 }
 
 main() {
+    # If no argument is provided, print help and exit
+    # shellcheck disable=SC2086
+    if [ -z ${1:-''} ]; then
+        show_help
+        exit 0
+    fi
     # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
     while :; do
         case ${1:-''} in
