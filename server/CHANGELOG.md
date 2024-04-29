@@ -1,8 +1,13 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
+
+This project does not follow semantic versioning.
+The **major** part of the version is the year
+The **minor** part changes is the month
+The **patch** part changes is incremented if multiple releases happen the same month
 
 ## [Unreleased]
 
@@ -15,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Fixed
+
+* Test presence of old config file before trying to delete it
 
 ### Security
 

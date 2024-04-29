@@ -1,24 +1,43 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
+
+This project does not follow semantic versioning.
+The **major** part of the version is the year
+The **minor** part changes is the month
+The **patch** part changes is incremented if multiple releases happen the same month
 
 ## [Unreleased]
 
 ### Added
 
+* Vagrant definition for manual tests
+
 ### Changed
+
+* split functions into libraries
+* add evobackupctl script
+* change the "zzz_evobackup" script to a template, easy to copy with evobackupctl
+* use env-based shebang for shell scripts
+* use $TMPDIR if available
 
 ### Deprecated
 
 ### Removed
 
+* update-evobackup-canary is managed by ansible-roles.git
+* deployment by Ansible is managed elsewhere (now in evolix-private.git, later in ansible-roles.git)
+
 ### Fixed
+
+* don't exit the whole program if a sync task can't be done
 
 ### Security
 
 ## [22.12]
+
 ### Changed
 
 * Use --dump-dir instead of --backup-dir to suppress dump-server-state warning
