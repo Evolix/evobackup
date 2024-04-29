@@ -12,6 +12,8 @@ setup() {
     JAILNAME=$(random_jail_name)
     JAILPATH="/backup/jails/${JAILNAME}"
     INCSPATH="/backup/incs/${JAILNAME}"
+    ARCHIVEPATH="/backup/archives/${JAILNAME}"
+    GLACIERPATH="/backup/glacier/${JAILNAME}"
     PORT=$(random_port)
     INC_NAME=$(inc_name_today)
 

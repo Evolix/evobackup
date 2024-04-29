@@ -104,7 +104,7 @@ case "${subcommand}" in
             "${LIBDIR}/bkctld-${subcommand}" "${jail_name}" "${option}"
         fi
     ;;
-    "start" | "stop" | "reload" | "restart" | "sync" | "update" | "remove" | "firewall" | "upgrade-config" | "archive")
+    "start" | "stop" | "reload" | "restart" | "sync" | "update" | "remove" | "firewall" | "upgrade-config")
         jail_name="${2:-}"
         if [ "${jail_name}" = "all" ]; then
             for jail in $("${LIBDIR}/bkctld-list"); do
@@ -115,6 +115,31 @@ case "${subcommand}" in
             exit 1
         else
             "${LIBDIR}/bkctld-${subcommand}" "${jail_name}"
+        fi
+    ;;
+    "archive" | "glacier")
+        if [ "${subcommand}" = "glacier" ]; then
+            command="bkctld-glacier"
+        else
+            if [ "${2:-}" = "--glacier" ]; then
+                command="bkctld-glacier"
+                shift
+            else
+                command="bkctld-archive"
+            fi
+        fi
+        jail_name="${2:-}"
+        if [ "${jail_name}" = "all" ]; then
+            for jail in $("${LIBDIR}/bkctld-list"); do
+                # shellcheck disable=SC2086
+                "${LIBDIR}/${command}" "${jail}"
+            done
+        elif [ -z "${jail_name}" ]; then
+            show_help
+            exit 1
+        else
+            # shellcheck disable=SC2086
+            "${LIBDIR}/${command}" "${jail_name}"
         fi
     ;;
     "status")

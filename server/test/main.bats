@@ -91,9 +91,10 @@ load test_helper
     run test -d "${JAILPATH}"
     assert_failure
 
-    run test -d "/backup/archives/${JAILNAME}"
+    run test -d "${ARCHIVEPATH}"
     assert_success
 }
+
 
 @test "Status should return information" {
     run /usr/lib/bkctld/bkctld-status "${JAILNAME}"

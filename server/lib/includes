@@ -18,6 +18,7 @@ TPLDIR="${TPLDIR:-/usr/share/bkctld}"
 LOCALTPLDIR="${LOCALTPLDIR:-/usr/local/share/bkctld}"
 LOCKDIR="${LOCKDIR:-/run/lock/bkctld}"
 ARCHIVESDIR="${ARCHIVESDIR:-${BACKUP_PARTITION}/archives}"
+GLACIERDIR="${GLACIERDIR:-${BACKUP_PARTITION}/glacier}"
 INDEX_DIR="${INDEX_DIR:-${BACKUP_PARTITION}/index}"
 IDX_FILE="${IDX_FILE:-${INDEX_DIR}/bkctld-jails.idx}"
 CANARY_RELATIVE_FILE="${CANARY_RELATIVE_FILE:-/zzz_evobackup_canary}"
@@ -172,6 +173,12 @@ archive_path() {
     jail_name=${1:?}
 
     echo "${ARCHIVESDIR}/${jail_name}"
+}
+# Returns the complete path of a jail in glacier
+glacier_path() {
+    jail_name=${1:?}
+
+    echo "${GLACIERDIR}/${jail_name}"
 }
 # Returns the path of incs for a jail
 incs_path() {

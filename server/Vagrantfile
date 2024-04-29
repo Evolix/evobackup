@@ -10,7 +10,7 @@ Vagrant.configure('2') do |config|
   config.ssh.shell="/bin/sh"
 
   config.vm.provider :libvirt do |libvirt|
-    libvirt.storage :file, :size => '10G', :device => 'vdb'
+    libvirt.storage :file, :size => '1G', :device => 'vdb'
   end
 
   $install = <<SCRIPT
@@ -44,12 +44,14 @@ mount /dev/vdb /backup
 SCRIPT
 
   nodes = [
-    { :version => "stretch", :fs => "btrfs" },
-    { :version => "stretch", :fs => "ext4" },
-    { :version => "buster", :fs => "btrfs" },
-    { :version => "buster", :fs => "ext4" },
+    { :version => "stretch",  :fs => "btrfs" },
+    { :version => "stretch",  :fs => "ext4" },
+    { :version => "buster",   :fs => "btrfs" },
+    { :version => "buster",   :fs => "ext4" },
     { :version => "bullseye", :fs => "btrfs" },
-    { :version => "bullseye", :fs => "ext4" }
+    { :version => "bullseye", :fs => "ext4" },
+    { :version => "bookworm", :fs => "btrfs" },
+    { :version => "bookworm", :fs => "ext4" }
   ]
 
   nodes.each do |i|
