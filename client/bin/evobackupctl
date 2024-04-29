@@ -31,8 +31,37 @@ ${PROGNAME} helps managing evobackup scripts
 Options
  -h, --help                  print this message and exit
  -V, --version               print version and exit
+     --init-jail-commands    print jail init commands
      --copy-template=PATH    copy the backup template to PATH
 END
+}
+
+init_jail_commands() {
+    if [ ! -f /root/.ssh/id_ed25519.pub ]; then
+        ssh-keygen -t ed25519 -f /root/.ssh/id_ed25519 -N ''
+        echo ""
+    fi
+
+    SSH_KEY=$(cat /root/.ssh/id_ed25519.pub)
+    SERVER_NAME=$(hostname -s)
+    if [ "$(uname -s)" = "OpenBSD" ]; then
+        SERVER_IP=$(ifconfig egress | grep "inet " | head -1 | awk '{ print $2}')
+    else
+        SERVER_IP=$(curl -4 https://ifconfig.me 2> /dev/null || hostname -I | awk '{ print $1}')
+    fi
+
+    echo "Copy-paste those lines on backup server(s) :"
+    echo "----------"
+    echo "SERVER_NAME=${SERVER_NAME}"
+    echo "SERVER_IP=${SERVER_IP}"
+    echo "echo '${SSH_KEY}' > /root/\${SERVER_NAME}.pub"
+    echo "bkctld init \${SERVER_NAME}"
+    echo "bkctld key \${SERVER_NAME} /root/\${SERVER_NAME}.pub"
+    echo "bkctld ip \${SERVER_NAME} \${SERVER_IP}"
+    echo "bkctld start \${SERVER_NAME}"
+    echo "bkctld status \${SERVER_NAME}"
+    echo "grep --quiet --extended-regexp \"^\\s?NODE=\" /etc/default/bkctld && bkctld sync \${SERVER_NAME}"
+    echo "----------"
 }
 
 copy_template() {
@@ -76,6 +105,10 @@ main() {
                 ;;
             -h|--help)
                 show_help
+                exit 0
+                ;;
+            --init-jail-commands)
+                init_jail_commands
                 exit 0
                 ;;
             --copy-template)
