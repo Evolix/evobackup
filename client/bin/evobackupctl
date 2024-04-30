@@ -92,7 +92,7 @@ copy_template() {
 main() {
     # If no argument is provided, print help and exit
     # shellcheck disable=SC2086
-    if [ -z ${ARGS} ]; then
+    if [ -z "${ARGS}" ]; then
         show_help
         exit 0
     fi
