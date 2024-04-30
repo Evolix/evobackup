@@ -21,9 +21,13 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ### Fixed
 
-* evobackupctl: quote ARGS variable for options parsing.
-
 ### Security
+
+## [24.04.1]
+
+### Fixed
+
+* evobackupctl: quote ARGS variable for options parsing.
 
 ## [24.04]
 
