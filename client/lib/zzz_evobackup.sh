@@ -274,13 +274,14 @@ local_tasks() {
 ###     # shellcheck disable=SC2174
 ###     mkdir -p -m 700 "${dump_dir}" "${errors_dir}"
 ###
-###     # Log the start of the command
+###     # Log the start of the function
 ###     log "LOCAL_TASKS - ${FUNCNAME[0]}: start ${dump_file}"
 ###
-###     # Execute your dump command
-###     # Send errors to the error file and the data to the dump file
+###     # Prepare the dump command (errors go to the error file and the data to the dump file)
 ###     dump_cmd="my-dump-command 2> ${error_file} > ${dump_file}"
 ###     log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
+### 
+###     # Execute the dump command
 ###     ${dump_cmd}
 ###
 ###     # Check result and deal with potential errors
@@ -293,7 +294,7 @@ local_tasks() {
 ###         rm -f "${error_file}"
 ###     fi
 ###
-###     # Log the end of the command
+###     # Log the end of the function
 ###     log "LOCAL_TASKS - ${FUNCNAME[0]}: stop  ${dump_file}"
 ### }
 
