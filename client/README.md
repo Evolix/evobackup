@@ -55,7 +55,7 @@ Beware that the default `evolix-system` _sync_ doesn't sync `/home`, `/srv`…
 If you want to sync files to multiple groups of servers, you can add as many _sync_ sections as you want.
 A _sync_ section must contain something like this :
 
-~~~{.bash}
+~~~bash
 # The name of the "sync" (visible in logs)
 SYNC_NAME="evolix-system"
 # List of servers
