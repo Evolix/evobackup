@@ -37,6 +37,8 @@ To install, copy these files :
 
 To update, simply overwrite them, since their content should (must?) not be customized locally.
 
+There is also an [evobackup-client](https://gitea.evolix.org/evolix/ansible-roles/src/branch/unstable/evobackup-client) Ansible role to do this (and some other stuff) automatically.
+
 ## Usage
 
 ### backup script
