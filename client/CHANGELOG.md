@@ -13,11 +13,7 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ### Added
 
-* evobackupctl: update LIBDIR when copying the template
-
 ### Changed
-
-* evobackupctl: simplify the program path retrieval
 
 ### Deprecated
 
@@ -26,6 +22,16 @@ The **patch** part changes is incremented if multiple releases happen the same m
 ### Fixed
 
 ### Security
+
+## [24.05] - 2022-05-02
+
+### Added
+
+* evobackupctl: update LIBDIR when copying the template
+
+### Changed
+
+* evobackupctl: simplify the program path retrieval
 
 ## [24.04.1] - 2022-04-30
 
