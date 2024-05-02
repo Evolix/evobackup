@@ -15,6 +15,8 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ### Changed
 
+* evobackupctl: simplify the program path retrieval
+
 ### Deprecated
 
 ### Removed
