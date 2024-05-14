@@ -21,6 +21,8 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ### Fixed
 
+* client: fix shell syntax error
+
 ### Security
 
 ## [24.05] - 2022-05-02
