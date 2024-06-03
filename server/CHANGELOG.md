@@ -22,6 +22,7 @@ The **patch** part changes is incremented if multiple releases happen the same m
 ### Fixed
 
 * Test presence of old config file before trying to delete it
+* Use correct variable when detecting local sshrc template
 
 ### Security
 

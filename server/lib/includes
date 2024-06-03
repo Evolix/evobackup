@@ -294,7 +294,7 @@ setup_jail_chroot() {
     [ -f "${LOCALTPLDIR}/passwd" ] && passwd="${LOCALTPLDIR}/passwd"
     [ -f "${LOCALTPLDIR}/shadow" ] && shadow="${LOCALTPLDIR}/shadow"
     [ -f "${LOCALTPLDIR}/group" ] && group="${LOCALTPLDIR}/group"
-    [ -f "${LOCALTPLDIR}/sshrc" ] && group="${LOCALTPLDIR}/sshrc"
+    [ -f "${LOCALTPLDIR}/sshrc" ] && sshrc="${LOCALTPLDIR}/sshrc"
 
     cd "${jail_path}" || error "${jail_name}: failed to change directory to ${jail_path}."
     umask 077
