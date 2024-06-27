@@ -13,17 +13,17 @@ keyfile="${2:-}"
 if [ ! -n "${jail_name}" ]; then
     show_help && exit 1
 fi
-jail_path=$(jail_path "${jail_name}")
+jail_rootfs_path=$(jail_rootfs_path "${jail_name}")
 
-test -d "${jail_path}" || error "${jail_name}: jail not found" 2
+test -d "${jail_rootfs_path}" || error "${jail_name}: jail rootfs not found" 2
 
 if [ -z "${keyfile}" ]; then
-    if [ -f "${jail_path}/${AUTHORIZED_KEYS}" ]; then
-        cat "${jail_path}/${AUTHORIZED_KEYS}"
+    if [ -f "${jail_rootfs_path}/${AUTHORIZED_KEYS}" ]; then
+        cat "${jail_rootfs_path}/${AUTHORIZED_KEYS}"
     fi
 else
     test -r "${keyfile}" || error "SSH key \`${keyfile}' for jail \`${jail_name}' is missing or is not readable."
-    cat "${keyfile}" > "${jail_path}/${AUTHORIZED_KEYS}"
-    chmod 600 "${jail_path}/${AUTHORIZED_KEYS}"
+    cat "${keyfile}" > "${jail_rootfs_path}/${AUTHORIZED_KEYS}"
+    chmod 600 "${jail_rootfs_path}/${AUTHORIZED_KEYS}"
     notice "Update SSH key \`${keyfile}' for jail \`${jail_name}' : OK"
 fi
