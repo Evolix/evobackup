@@ -104,7 +104,7 @@ case "${subcommand}" in
             "${LIBDIR}/bkctld-${subcommand}" "${jail_name}" "${option}"
         fi
     ;;
-    "start" | "stop" | "reload" | "restart" | "sync" | "update" | "remove" | "firewall" | "upgrade-config" | "archive")
+    "start" | "stop" | "reload" | "restart" | "sync" | "update" | "remove" | "firewall" | "upgrade-config" | "archive" | "log")
         jail_name="${2:-}"
         if [ "${jail_name}" = "all" ]; then
             for jail in $("${LIBDIR}/bkctld-list"); do
