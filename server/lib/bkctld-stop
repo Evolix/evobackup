@@ -18,7 +18,7 @@ test -d "${jail_path}" || error "${jail_name}: jail not found" 2
 "${LIBDIR}/bkctld-is-on" "${jail_name}" || exit 0
 
 if systemctl stop systemd-nspawn@${jail_name}; then
-    notice "Stopped jail \`${jail_name}\`"
+    notice "Stopped jail \`${jail_name}'"
 else
-    error "Stop jail \`${jail_name}\` : failed"
+    error "Stop jail \`${jail_name}' : failed"
 fi

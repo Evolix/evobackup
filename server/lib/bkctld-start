@@ -19,7 +19,7 @@ test -d "${jail_path}" || error "${jail_name}: jail not found" 2
 
 
 # Start the jail
-notice "Starting jail \`${jail_name}\`"
+notice "Starting jail \`${jail_name}'"
 systemctl start systemd-nspawn@${jail_name}  || error "Failed to start nspawn container for jail \`${jail_name}'"
 
 if systemctl is-active --quiet systemd-nspawn@${jail_name}; then
@@ -45,16 +45,16 @@ if systemctl is-active --quiet systemd-nspawn@${jail_name}; then
     
 
     if [ "${success}" -eq 0 ]; then
-        notice "OK SSH : Started jail \`${jail_name}\`"
+        notice "OK SSH : Started jail \`${jail_name}'"
     else
         if systemctl is-active --quiet systemd-nspawn@${jail_name}; then
-            error "WARNING SSH : Jail is running, but failed to get response from sshd for jail \`${jail_name}\` within 3 seconds"
+            error "WARNING SSH : Jail is running, but failed to get response from sshd for jail \`${jail_name}' within 3 seconds"
         else
-            error "Failed to to start \`${jail_name}\` - Jail terminated. Check \`systemctl status systemd-nspawn@${jail_name}\`"
+            error "Failed to to start \`${jail_name}' - Jail terminated. Check \`systemctl status systemd-nspawn@${jail_name}'"
         fi
         
     fi
 
 else
-    error "Failed to to start \`${jail_name}\` - Jail terminated. Check \`systemctl status systemd-nspawn@${jail_name}\`"
+    error "Failed to to start \`${jail_name}' - Jail terminated. Check \`systemctl status systemd-nspawn@${jail_name}'"
 fi
