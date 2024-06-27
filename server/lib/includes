@@ -495,6 +495,6 @@ read_numerical_variable() {
 get_jail_sshd_pid(){
     jail_name=${1:?}
     
-    jail_init_pid=$(pgrep -P $(systemctl show --property MainPID systemd-nspawn@${jail_name} | cut -d'=' -f2))
+    jail_init_pid=$(pgrep -P $(systemctl show --value --property MainPID systemd-nspawn@${jail_name}))
     pgrep -P $(pgrep -P ${jail_init_pid})
 }
