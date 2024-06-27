@@ -17,10 +17,11 @@ test -d "${jail_path}" || error "${jail_name}: jail not found" 2
 
 "${LIBDIR}/bkctld-is-on" "${jail_name}" || exit 0
 
-pid=$(cat "${jail_path}/${SSHD_PID}")
+pid=$(get_jail_sshd_pid "${jail_name}")
 
 if kill -HUP "${pid}"; then
     notice "Reload jail \`${jail_name}' : OK [${pid}]"
 else
     error "Reload jail \`${jail_name}' : failed [${pid}]"
 fi
+q

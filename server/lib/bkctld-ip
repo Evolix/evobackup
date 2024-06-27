@@ -13,11 +13,11 @@ ip="${2:-}"
 if [ ! -n "${jail_name}" ]; then
     show_help && exit 1
 fi
-jail_path=$(jail_path "${jail_name}")
+jail_rootfs_path=$(jail_rootfs_path "${jail_name}")
 
-test -d "${jail_path}" || error "${jail_name}: jail not found" 2
+test -d "${jail_rootfs_path}" || error "${jail_name}: jail rootfs not found" 2
 
-jail_sshd_config="${jail_path}/${SSHD_CONFIG}"
+jail_sshd_config="${jail_rootfs_path}/${SSHD_CONFIG}"
 
 if [ -z "${ip}" ]; then
     # parse IP addresses from AllowUsers directives in sshd config

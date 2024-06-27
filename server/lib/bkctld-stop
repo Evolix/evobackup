@@ -17,15 +17,8 @@ test -d "${jail_path}" || error "${jail_name}: jail not found" 2
 
 "${LIBDIR}/bkctld-is-on" "${jail_name}" || exit 0
 
-pid=$(cat "${jail_path}/${SSHD_PID}")
-
-pkill --parent "${pid}"
-
-if kill "${pid}"; then
-    notice "Stop jail \`${jail_name}' : OK [${pid}]"
-
-    umount --lazy --recursive "${jail_path}/dev"
-    umount --lazy "${jail_path}/proc/"
+if systemctl stop systemd-nspawn@${jail_name}; then
+    notice "Stoped jail \`${jail_name}\`"
 else
-    error "Stop jail \`${jail_name}' : failed [${pid}]"
+    error "Stop jail \`${jail_name}\` : failed"
 fi

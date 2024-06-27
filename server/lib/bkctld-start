@@ -17,27 +17,44 @@ test -d "${jail_path}" || error "${jail_name}: jail not found" 2
 
 "${LIBDIR}/bkctld-is-on" "${jail_name}" && exit 0
 
-# Prepare the chroot
-mount_jail_fs "${jail_name}"
 
-# Start SSH in the chroot
-chroot "${jail_path}" /usr/sbin/sshd -E /var/log/authlog || error "Failed to start SSH for jail \`${jail_name}'"
-pidfile="${jail_path}/${SSHD_PID}"
+# Start the jail
+notice "Starting jail \`${jail_name}\`"
+systemctl start systemd-nspawn@${jail_name}  || error "Failed to start nspawn container for jail \`${jail_name}'"
 
-# Wait for SSH to be up
-# shellcheck disable=SC2034
-for try in $(seq 1 10); do
-    if [ -f "${pidfile}" ]; then
-        pid=$(cat "${pidfile}")
-        break
+if systemctl is-active --quiet systemd-nspawn@${jail_name}; then
+    port=$("${LIBDIR}/bkctld-port" "${jail_name}")
+    success=1
+
+    for try in $(seq 1 10); do
+        # Is the jail still running?
+        if ! systemctl is-active --quiet systemd-nspawn@${jail_name}; then
+            printf 'x '
+            break
+        fi
+        
+        # Is SSH alive and responding ?
+        if /usr/lib/nagios/plugins/check_ssh  --port=${port} localhost 2>&1 >/dev/null; then
+            success=0
+            break
+        else
+            printf '.'
+            sleep 0.3
+        fi
+    done
+    
+
+    if [ "${success}" -eq 0 ]; then
+        notice "OK SSH : Started jail \`${jail_name}\`"
     else
-        pid=""
-        sleep 0.3
+        if systemctl is-active --quiet systemd-nspawn@${jail_name}; then
+            error "WARNING SSH : Jail is running, but failed to get response from sshd for jail \`${jail_name}\` within 3 seconds"
+        else
+            error "Failed to to start \`${jail_name}\` - Jail terminated. Check \`systemctl status systemd-nspawn@${jail_name}\`"
+        fi
+        
     fi
-done
 
-if [ -n "${pid}" ]; then
-    notice "Start jail \`${jail_name}' : OK [${pid}]"
 else
-    error "Failed to fetch SSH PID for jail \`${jail_name}' within 3 seconds"
+    error "Failed to to start \`${jail_name}\` - Jail terminated. Check \`systemctl status systemd-nspawn@${jail_name}\`"
 fi
