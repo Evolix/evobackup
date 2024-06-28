@@ -407,7 +407,7 @@ setup_jail_chroot() {
 #!/bin/sh
 
 mkdir /run/sshd
-/usr/sbin/sshd -D -e -f /etc/ssh/sshd_config
+exec /usr/sbin/sshd -D -e -f /etc/ssh/sshd_config
 UNLIKELY_EOF
 
     mkdir --parents /etc/systemd/nspawn/
@@ -495,6 +495,11 @@ read_numerical_variable() {
 get_jail_sshd_pid(){
     jail_name=${1:?}
     
+    ## Expected PID hierarchy (ps --forest...)
+    # 62054 ?        Ss     0:00 systemd-nspawn --quiet --keep-unit --boot --link-journal=try-guest --network-veth -U --settings=override --machine=test
+    # 62057 ?        Ss     0:00  \_ (sd-stubinit)
+    # 62059 pts/0    Ss+    0:00      \_ sshd: /usr/sbin/sshd -D -e -f /etc/ssh/sshd_config [listener] 0 of 10-100 startups
+
     jail_init_pid=$(pgrep -P $(systemctl show --value --property MainPID systemd-nspawn@${jail_name}))
-    pgrep -P $(pgrep -P ${jail_init_pid})
+    pgrep -P ${jail_init_pid}
 }
