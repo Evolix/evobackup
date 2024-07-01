@@ -85,7 +85,7 @@ case "${subcommand}" in
             exit 1
         fi
     ;;
-    "init" | "is-on")
+    "init" | "is-on" | "convert-v2")
         jail_name="${2:-}"
         if [ -z "${jail_name}" ]; then
             show_help
