@@ -7,6 +7,7 @@
 [ -f /etc/default/bkctld ] && . /etc/default/bkctld
 
 VERSION="22.11"
+CURRENT_JAIL_VERSION="2"
 
 LIBDIR=${LIBDIR:-/usr/lib/bkctld}
 CONFDIR="${CONFDIR:-/etc/evobackup}"
@@ -316,7 +317,7 @@ setup_jail_chroot() {
     umask 077
 
     info "1 - Creating the jail directories"
-    echo "2" > ./version
+    echo "${CURRENT_JAIL_VERSION}" > ./version
 
     rm -rf ./rootfs/usr
     rm -rf ./rootfs/bin
@@ -503,3 +504,15 @@ get_jail_sshd_pid(){
     jail_init_pid=$(pgrep -P $(systemctl show --value --property MainPID systemd-nspawn@${jail_name}))
     pgrep -P ${jail_init_pid}
 }
+
+get_jail_version(){
+    jail_name=${1:?}
+    jail_path=$(jail_path ${jail_name})
+
+    if [ -e "${jail_path}/version" ]; then 
+        echo $(cat "${jail_path}/version")
+    else
+        echo 1
+    fi
+}
+
