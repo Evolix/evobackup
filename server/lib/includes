@@ -467,6 +467,37 @@ setup_jail_config() {
     "${LIBDIR}/bkctld-port" "${jail_name}" auto
 }
 
+convert_jail_chroot_to_v2() {
+    jail_name=${1:?}
+
+    jail_path=$(jail_path "${jail_name}")
+    jail_rootfs_path=$(jail_rootfs_path "${jail_name}")
+    jail_var_path=$(jail_var_path "${jail_name}")
+
+
+    cd "${jail_path}" || error "${jail_name}: failed to change directory to ${jail_path}."
+    umask 077
+
+    # Create the new jail rootfs path
+    mkdir --parents "${jail_rootfs_path}"
+
+    # Move config & jail data into their new paths
+    mv ./etc ./rootfs/etc
+    mv ./var/backup ./data
+
+    # Cleanup old directories
+    # They will be recreated with the next setup_jail_chroot() call
+    rm -rf ./bin
+    rm -rf ./lib
+    rm -rf ./lib64
+    rm -rf ./run
+    rm -rf ./usr
+    rm -rf ./var/run
+
+    # Mark the jail as version 2
+    echo "2" > ./version
+}
+
 is_mounted_inside_jail() {
     target=${1:?}
 
