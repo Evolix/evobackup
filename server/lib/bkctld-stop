@@ -15,6 +15,9 @@ jail_path=$(jail_path "${jail_name}")
 
 test -d "${jail_path}" || error "${jail_name}: jail not found" 2
 
+# Ensure we manipulate jails in the current/compatible version format
+test $(get_jail_version "${jail_name}") -ne ${CURRENT_JAIL_VERSION} && error "${jail_name}: jail needs to be updated to version ${CURRENT_JAIL_VERSION} (currently $(get_jail_version "${jail_name}")) - Use bkctld convert-v2 <jail>" 3
+
 "${LIBDIR}/bkctld-is-on" "${jail_name}" || exit 0
 
 if systemctl stop systemd-nspawn@${jail_name}; then
