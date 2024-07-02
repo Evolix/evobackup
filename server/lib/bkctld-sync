@@ -18,12 +18,22 @@ test -d "${jail_path}" || error "${jail_name}: jail not found" 2
 
 [ -n "${NODE}" ] || error "Sync need config of \$NODE in /etc/default/bkctld !"
 
+# Ensure the same version of bkctld runs on the other node
+node_version=$(ssh "${NODE}" grep "^VERSION=" "${LIBDIR}/includes" | cut -d'=' -f2 | sed 's/"//g')
+[ "${VERSION}" = "${node_version}" ] || error "bkctld version on the other server is different than ours (local: ${VERSION} -- node: ${node_version}) - Please ensure bkctld versions are the same and up to date."
+
+
 ssh "${NODE}" "${LIBDIR}/bkctld-is-on ${jail_name} 2>/dev/null"
 # return code 2 is for "missing jail" error
 if [ "$?" -eq 2 ]; then
     # Init jail on remote server
     ssh "${NODE}" "${LIBDIR}/bkctld-init ${jail_name}" | debug
 fi
+
+# Ensure jail version is the same
+local_jail_version=$(get_jail_version "${jail_name}")
+remote_jail_version=$(ssh "${NODE}" "${LIBDIR}/bkctld-jail-version ${jail_name}")
+[ "${local_jail_version}" -eq ${remote_jail_version} ] || error "remote jail isn't in the same version (local: ${local_jail_version} -- node: ${remote_jail_version}) - Please update it with bkctld convert-v2."
 
 # Sync jail structure and configuration on remote server
 rsync -a "${jail_path}/" "${NODE}:${jail_path}/" --exclude var/* --exclude data/*
