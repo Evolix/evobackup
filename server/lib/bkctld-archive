@@ -48,4 +48,7 @@ fi
 mkdir -p "$(dirname "${archive_jail_path}")"
 mv "${jail_path}" "${archive_jail_path}"
 
+[ -e "/etc/systemd/nspawn/${jail_name}.nspawn" ] && rm "/etc/systemd/nspawn/${jail_name}.nspawn"
+[ -e "/var/lib/machines/${jail_name}" ] && unlink "/var/lib/machines/${jail_name}"
+
 notice "Archive jail \`${jail_name}' : OK"
