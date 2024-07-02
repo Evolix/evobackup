@@ -77,5 +77,8 @@ if [ -d "${incs_path}" ]; then
     rmdir --ignore-fail-on-non-empty "${incs_path}" | debug
 fi
 
+[ -e "/etc/systemd/nspawn/${jail_name}.nspawn" ] && rm "/etc/systemd/nspawn/${jail_name}.nspawn"
+[ -e "/var/lib/machines/${jail_name}" ] && unlink "/var/lib/machines/${jail_name}"
+
 "${LIBDIR}/bkctld-firewall" "${jail_name}"
 notice "Delete jail \`${jail_name}' : OK"
