@@ -411,27 +411,8 @@ mkdir /run/sshd
 exec /usr/sbin/sshd -D -e -f /etc/ssh/sshd_config
 UNLIKELY_EOF
 
-    mkdir --parents /etc/systemd/nspawn/
-    cat <<UNLIKELY_EOF >/etc/systemd/nspawn/${jail_name}.nspawn
-[Exec]
-ProcessTwo=True
-Parameters=/bin/sh start.sh
-DropCapability=CAP_SYS_ADMIN
-NoNewPrivileges=True
-SystemCallFilter=~@system-service
-PrivateUsers=False
-LinkJournal=no
-
-[Files]
-ReadOnly=True
-Bind=/backup/jails/${jail_name}/var:/var
-Bind=/backup/jails/${jail_name}/data:/data
-Bind=/backup/jails/${jail_name}/data:/var/backup
-
-[Network]
-Private=False
-
-UNLIKELY_EOF
+    
+    generate_jail_nspawn_config "${jail_name}"
 
     [ -e "/var/lib/machines/${jail_name}" ] && unlink "/var/lib/machines/${jail_name}"
     ln -s "${jail_rootfs_path}" "/var/lib/machines/${jail_name}"
@@ -465,6 +446,33 @@ setup_jail_config() {
     install -m 0640 "${check_policy_tpl}" "${jail_check_policy_file}"
 
     "${LIBDIR}/bkctld-port" "${jail_name}" auto
+}
+
+generate_jail_nspawn_config(){
+    jail_name=${1:?}
+
+    mkdir --parents /etc/systemd/nspawn/
+
+    cat <<UNLIKELY_EOF >/etc/systemd/nspawn/${jail_name}.nspawn
+[Exec]
+ProcessTwo=True
+Parameters=/bin/sh start.sh
+DropCapability=CAP_SYS_ADMIN
+NoNewPrivileges=True
+SystemCallFilter=~@system-service
+PrivateUsers=False
+LinkJournal=no
+
+[Files]
+ReadOnly=True
+Bind=/backup/jails/${jail_name}/var:/var
+Bind=/backup/jails/${jail_name}/data:/data
+Bind=/backup/jails/${jail_name}/data:/var/backup
+
+[Network]
+Private=False
+
+UNLIKELY_EOF
 }
 
 convert_jail_chroot_to_v2() {
