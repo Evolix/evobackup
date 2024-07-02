@@ -35,8 +35,9 @@ local_jail_version=$(get_jail_version "${jail_name}")
 remote_jail_version=$(ssh "${NODE}" "${LIBDIR}/bkctld-jail-version ${jail_name}")
 [ "${local_jail_version}" -eq ${remote_jail_version} ] || error "remote jail isn't in the same version (local: ${local_jail_version} -- node: ${remote_jail_version}) - Please update it with bkctld convert-v2."
 
-# Sync jail structure and configuration on remote server
-rsync -a "${jail_path}/" "${NODE}:${jail_path}/" --exclude var/* --exclude data/*
+# Sync jail internal config on remote server
+rsync -a "${jail_path}/rootfs/etc/" "${NODE}:${jail_path}/rootfs/etc/"
+rsync -a "${jail_path}/rootfs/root/" "${NODE}:${jail_path}/rootfs/root/"
 
 # Sync config (new structure)
 if [ -d "${jail_config_dir}" ]; then
