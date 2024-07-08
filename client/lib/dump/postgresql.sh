@@ -11,6 +11,9 @@
 # Other options after -- are passed as-is to pg_dump
 #######################################################################
 dump_postgresql_global() {
+    local option_port=""
+    local option_socket=""
+    local option_defaults_group_suffix=""
     local option_dump_label=""
     local option_compress=""
     local option_others=""
