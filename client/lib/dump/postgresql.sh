@@ -124,7 +124,7 @@ dump_postgresql_global() {
     
     dump_cmd="(sudo -u postgres pg_dumpall ${dump_options[*]}) 2> ${error_file} | ${compress_cmd} > ${dump_file}"
     log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
-    ${dump_cmd}
+    eval "${dump_cmd}"
 
     local last_rc=$?
     # shellcheck disable=SC2086
@@ -275,7 +275,7 @@ dump_postgresql_per_base() {
 
             dump_cmd="(sudo -u postgres /usr/bin/pg_dump ${dump_options[*]}) 2> ${error_file} | ${compress_cmd} > ${dump_file}"
             log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
-            ${dump_cmd}
+            eval "${dump_cmd}"
 
             local last_rc=$?
             # shellcheck disable=SC2086
