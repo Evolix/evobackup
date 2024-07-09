@@ -11,9 +11,6 @@
 # Other options after -- are passed as-is to pg_dump
 #######################################################################
 dump_postgresql_global() {
-    local option_port=""
-    local option_socket=""
-    local option_defaults_group_suffix=""
     local option_dump_label=""
     local option_compress=""
     local option_others=""
@@ -102,15 +99,7 @@ dump_postgresql_global() {
     esac
 
     if [ -z "${option_dump_label}" ]; then
-        if [ -n "${option_defaults_group_suffix}" ]; then
-            option_dump_label="${option_defaults_group_suffix}"
-        elif [ -n "${option_port}" ]; then
-            option_dump_label="${option_port}"
-        elif [ -n "${option_socket}" ]; then
-            option_dump_label=$(path_to_str "${option_socket}")
-        else
-            option_dump_label="default"
-        fi
+        option_dump_label="default"
     fi
 
     local dump_dir="${LOCAL_BACKUP_DIR}/postgresql-${option_dump_label}-global"
@@ -254,15 +243,7 @@ dump_postgresql_per_base() {
     esac
 
     if [ -z "${option_dump_label}" ]; then
-        if [ -n "${option_defaults_group_suffix}" ]; then
-            option_dump_label="${option_defaults_group_suffix}"
-        elif [ -n "${option_port}" ]; then
-            option_dump_label="${option_port}"
-        elif [ -n "${option_socket}" ]; then
-            option_dump_label=$(path_to_str "${option_socket}")
-        else
-            option_dump_label="default"
-        fi
+        option_dump_label="default"
     fi
 
     local dump_dir="${LOCAL_BACKUP_DIR}/postgresql-${option_dump_label}-per-base"
