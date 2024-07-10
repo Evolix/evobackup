@@ -22,7 +22,7 @@ check_jail() {
     jail_name=$1
 
     jail_path=$(jail_path "${jail_name}")
-    canary_absolute_file="${jail_path}/var/backup/${CANARY_RELATIVE_FILE}"
+    canary_absolute_file="${jail_path}/data/${CANARY_RELATIVE_FILE}"
 
     if [ -f "${canary_absolute_file}" ]; then
         if grep --quiet --fixed-string "${date}" "${canary_absolute_file}"; then
