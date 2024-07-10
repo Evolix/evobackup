@@ -4,7 +4,7 @@
 load test_helper
 
 @test "Without SSH key" {
-    run cat "${JAILPATH}/root/.ssh/authorized_keys"
+    run cat "${JAILPATH}/rootfs/root/.ssh/authorized_keys"
     assert_equal "$output" ""
 }
 
@@ -12,7 +12,7 @@ load test_helper
     keyfile=/root/bkctld.key.pub
     /usr/lib/bkctld/bkctld-key "${JAILNAME}" "${keyfile}"
     # The key should be present in the SSH authorized_keys file
-    run cat "${JAILPATH}/root/.ssh/authorized_keys"
+    run cat "${JAILPATH}/rootfs/root/.ssh/authorized_keys"
     assert_equal "$output" "$(cat ${keyfile})"
 }
 
@@ -26,7 +26,7 @@ load test_helper
 
 @test "No IP restriction" {
     # A jail has no IP restriction by default in SSH config
-    run grep "root@0.0.0.0/0" "${JAILPATH}/etc/ssh/sshd_config"
+    run grep "root@0.0.0.0/0" "${JAILPATH}/rootfs/etc/ssh/sshd_config"
     assert_success
 }
 
@@ -34,7 +34,7 @@ load test_helper
     # When an IP is added for a jail
     /usr/lib/bkctld/bkctld-ip "${JAILNAME}" "10.0.0.1"
     # An IP restriction should be present in SSH config
-    run grep "root@10.0.0.1" "${JAILPATH}/etc/ssh/sshd_config"
+    run grep "root@10.0.0.1" "${JAILPATH}/rootfs/etc/ssh/sshd_config"
     assert_success
 }
 
@@ -43,7 +43,7 @@ load test_helper
     /usr/lib/bkctld/bkctld-ip "${JAILNAME}" "10.0.0.1"
     /usr/lib/bkctld/bkctld-ip "${JAILNAME}" "10.0.0.2"
     # The corresponding IP restrictions should be present in SSH config
-    run grep -E -o "root@10.0.0.[0-9]+" "${JAILPATH}/etc/ssh/sshd_config"
+    run grep -E -o "root@10.0.0.[0-9]+" "${JAILPATH}/rootfs/etc/ssh/sshd_config"
 
     assert_line "root@10.0.0.1"
     assert_line "root@10.0.0.2"
@@ -55,13 +55,13 @@ load test_helper
     # Remove IP
     /usr/lib/bkctld/bkctld-ip "${JAILNAME}" "0.0.0.0/0"
     # All IP restrictions should be removed from SSH config
-    run grep "root@0.0.0.0/0" "${JAILPATH}/etc/ssh/sshd_config"
+    run grep "root@0.0.0.0/0" "${JAILPATH}/rootfs/etc/ssh/sshd_config"
     assert_success
 }
 
 @test "Missing AllowUsers" {
     # Remove AllowUsers directive in SSH config
-    sed --follow-symlinks --in-place '/^AllowUsers/d' "${JAILPATH}/etc/ssh/sshd_config"
+    sed --follow-symlinks --in-place '/^AllowUsers/d' "${JAILPATH}/rootfs/etc/ssh/sshd_config"
     # An error should be raised when trying to add an IP restriction
     run /usr/lib/bkctld/bkctld-ip "${JAILNAME}" "10.0.0.1"
     assert_failure

@@ -261,7 +261,7 @@ OUT
 
 @test "Check-canary fails if a canary is missing today's entries" {
     today="$(date +%Y-%m-%d)"
-    touch "${JAILPATH}/var/backup/zzz_evobackup_canary"
+    touch "${JAILPATH}/data/zzz_evobackup_canary"
 
     run /usr/lib/bkctld/bkctld-check-canary "${JAILNAME}"
     assert_equal "$status" "2"
@@ -269,7 +269,7 @@ OUT
 }
 
 @test "Check-canary succeeds if a canary has today's entries" {
-    echo "$(date "+%FT%T%z") bats-test" >> "${JAILPATH}/var/backup/zzz_evobackup_canary"
+    echo "$(date "+%FT%T%z") bats-test" >> "${JAILPATH}/data/zzz_evobackup_canary"
 
     run /usr/lib/bkctld/bkctld-check-canary "${JAILNAME}"
     assert_success
