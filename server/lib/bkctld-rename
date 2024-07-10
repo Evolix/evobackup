@@ -16,7 +16,7 @@ if [ -z "${jail_name}" ] || [ -z "${new_jail_name}" ]; then
 fi
 
 jail_path=$(jail_path "${jail_name}")
-jail_rootfs_path=$(jail_rootfs_path "${jail_name}")
+#jail_rootfs_path=$(jail_rootfs_path "${jail_name}")
 incs_path=$(incs_path "${jail_name}")
 jail_config_dir=$(jail_config_dir "${jail_name}")
 legacy_config_file="${CONFDIR}/${jail_name}"
@@ -42,7 +42,7 @@ case "$?" in
     ;;
     *)
         unset jail_initial_status
-        error "Error evaluating jail \`${jail_name}' state. bkctld-is-on exited with \`$?'"
+        error "Error evaluating jail '${jail_name}' state. bkctld-is-on exited with '$?'"
     ;;
 esac
 
@@ -94,4 +94,4 @@ fi
 
 test "${jail_initial_status}" = "on" && "${LIBDIR}/bkctld-start" "${new_jail_name}"
 
-notice "Rename jail \`${jail_name}' to \`${new_jail_name}' : OK"
+notice "Rename jail '${jail_name}' to '${new_jail_name}' : OK"

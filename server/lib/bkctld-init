@@ -14,7 +14,7 @@ fi
 jail_path=$(jail_path "${jail_name}")
 incs_path=$(incs_path "${jail_name}")
 
-test -d "${jail_path}" && error "Skip jail \`${jail_name}' : it already exists"
+test -d "${jail_path}" && error "Skip jail '${jail_name}' : it already exists"
 
 # Create config, jails and incs directories
 mkdir --parents "${CONFDIR}" "${JAILDIR}" "${INCDIR}"
@@ -34,4 +34,4 @@ mkdir --parents "${incs_path}"
 setup_jail_chroot "${jail_name}"
 setup_jail_config "${jail_name}"
 
-notice "Create jail \`${jail_name}' : OK"
+notice "Create jail '${jail_name}' : OK"

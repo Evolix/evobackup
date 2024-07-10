@@ -28,7 +28,7 @@ case "$?" in
     ;;
     *)
         unset jail_initial_status
-        error "Error evaluating jail \`${jail_name}' state. bkctld-is-on exited with \`$?'"
+        error "Error evaluating jail '${jail_name}' state. bkctld-is-on exited with '$?'"
     ;;
 esac
 
@@ -38,4 +38,4 @@ setup_jail_chroot "${jail_name}"
 
 test "${jail_initial_status}" = "on" && "${LIBDIR}/bkctld-start" "${jail_name}"
 
-notice "Update jail \`${jail_name}' : OK"
+notice "Update jail '${jail_name}' : OK"

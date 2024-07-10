@@ -29,7 +29,7 @@ else
     fi
     sed --follow-symlinks --in-place "s/^Port .*/Port ${port}/" "${jail_sshd_config}"
 
-    notice "Update SSH port \`${port}' for jail \`${jail_name}' : OK"
+    notice "Update SSH port '${port}' for jail '${jail_name}' : OK"
 
     "${LIBDIR}/bkctld-reload" "${jail_name}"
     "${LIBDIR}/bkctld-firewall" "${jail_name}"
