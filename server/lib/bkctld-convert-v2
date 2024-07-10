@@ -17,9 +17,9 @@ test -d "${jail_path}" || error "${jail_name}: jail not found" 2
 
 test $(get_jail_version "${jail_name}") -ne 1 && error "${jail_name}: This command only applies to jails in v1 format (currently $(get_jail_version "${jail_name}"))" 3
 
-notice "Converting jail \`${jail_name}\`"
+notice "Converting jail '${jail_name}'"
 
 convert_jail_chroot_to_v2  "${jail_name}"
 setup_jail_chroot "${jail_name}"
 
-notice "Converted jail \`${jail_name}\` : OK"
+notice "Converted jail '${jail_name}' : OK"

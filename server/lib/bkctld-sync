@@ -71,7 +71,7 @@ if "${LIBDIR}/bkctld-is-on" "${jail_name}"; then
             ssh "${NODE}" "${LIBDIR}/bkctld-start ${jail_name}" | debug
         ;;
         *)
-            error "Error evaluating jail \`${jail_name}' state. bkctld-is-on exited with \`$?'"
+            error "Error evaluating jail '${jail_name}' state. bkctld-is-on exited with '$?'"
         ;;
     esac
 else
