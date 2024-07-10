@@ -24,4 +24,3 @@ if kill -HUP "${pid}"; then
 else
     error "Reload jail \`${jail_name}' : failed [${pid}]"
 fi
-q
