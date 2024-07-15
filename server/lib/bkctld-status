@@ -15,7 +15,7 @@ fi
 
 test "$(get_jail_version "${jail_name}")" -ne "${CURRENT_JAIL_VERSION}" && error "${jail_name}: jail needs to be updated to version ${CURRENT_JAIL_VERSION} (currently $(get_jail_version "${jail_name}")) - Use bkctld convert-v2 <jail>" 3
 
-incs_policy_file=$(current_jail_incs_policy_file ${jail_name})
+incs_policy_file=$(current_jail_incs_policy_file "${jail_name}")
 incs_policy="0"
 if [ -r "${incs_policy_file}" ]; then
     days=$(grep "^\+" "${incs_policy_file}" | grep --count "day")

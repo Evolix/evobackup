@@ -24,19 +24,19 @@ test "$(get_jail_version "${jail_name}")" -ne "${CURRENT_JAIL_VERSION}" && error
 notice "Starting jail '${jail_name}'"
 systemctl start systemd-nspawn@"${jail_name}"  || error "Failed to start nspawn container for jail '${jail_name}'"
 
-if systemctl is-active --quiet systemd-nspawn@${jail_name}; then
+if systemctl is-active --quiet systemd-nspawn@"${jail_name}"; then
     port=$("${LIBDIR}/bkctld-port" "${jail_name}")
     success=1
 
     for try in $(seq 1 10); do
         # Is the jail still running?
-        if ! systemctl is-active --quiet systemd-nspawn@${jail_name}; then
+        if ! systemctl is-active --quiet systemd-nspawn@"${jail_name}"; then
             printf 'x '
             break
         fi
         
         # Is SSH alive and responding ?
-        if /usr/lib/nagios/plugins/check_ssh  --port=${port} localhost 2>&1 >/dev/null; then
+        if /usr/lib/nagios/plugins/check_ssh  --port="${port}" localhost >/dev/null 2>&1; then
             success=0
             break
         else

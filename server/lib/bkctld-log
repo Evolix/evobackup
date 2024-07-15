@@ -17,4 +17,4 @@ jail_path=$(jail_path "${jail_name}")
 
 test -d "${jail_path}" || error "${jail_name}: jail not found" 2
 
-journalctl --reverse --unit systemd-nspawn@${jail_name}
+journalctl --reverse --unit systemd-nspawn@"${jail_name}"
