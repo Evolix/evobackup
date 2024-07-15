@@ -16,7 +16,7 @@ touch "${INDEX_DIR}/.lastrun.duc"
 EOF
 
 [ ! -f "${INDEX_DIR}/.lastrun.duc" ] && notice "First run of DUC still in progress ..." && exit 0
-[ ! -f ${IDX_FILE} ] && error "Index file doesn't exits !"
+[ ! -f "${IDX_FILE}" ] && error "Index file doesn't exits !"
 
 printf "Last update of index file : "
 stat --format=%Y "${INDEX_DIR}/.lastrun.duc" | xargs -i -n1 date -R -d "@{}"
