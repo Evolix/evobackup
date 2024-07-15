@@ -8,7 +8,7 @@
 LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
 
 jail_name="${1:?}"
-if [ ! -n "${jail_name}" ]; then
+if [ -z "${jail_name}" ]; then
     show_help && exit 1
 fi
 [ -d "${JAILDIR}/${jail_name}" ] || error "${jail_name} : jail is missing.\nUse '$0 status [all]' to get the status of all jails."
