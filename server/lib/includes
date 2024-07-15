@@ -66,17 +66,17 @@ EOF
 }
 
 is_quiet() {
-    test ${QUIET} -eq 1
+    test "${QUIET}" -eq 1
 }
 is_verbose() {
-    test ${VERBOSE} -eq 1
+    test "${VERBOSE}" -eq 1
 }
 
 log_date() {
     echo "[$(date +"%Y-%m-%d %H:%M:%S")]"
 }
 process_name() {
-    basename $0
+    basename "$0"
 }
 debug() {
     msg="${1:-$(cat /dev/stdin)}"
@@ -120,7 +120,7 @@ error() {
         tty -s || echo "${msg}" >&2
         logger -t bkctld -p daemon.error "$(process_name) ${msg}"
     fi
-    exit ${rc}
+    exit "${rc}"
 }
 
 dry_run() {
@@ -204,6 +204,7 @@ inc_exists() {
     inc_path=$(inc_path "${jail_name}" "${inc_pattern}")
 
     # inc_path must not be quoted because it can contain globs
+    # shellcheck disable=SC2086
     ls -d ${inc_path} > /dev/null 2>&1
 }
 # Returns the list of all incs for a jail
@@ -258,7 +259,7 @@ relative_date() {
     reference_date=$(date "${format}")
     past_date=$(date --date "${reference_date} ${time_jump}" +"%Y-%m-%d")
 
-    echo ${past_date}
+    echo "${past_date}"
 }
 new_tmp_file() {
     name=${1:-}
@@ -363,7 +364,7 @@ setup_jail_chroot() {
     else
         # Copy SSH host keys from host if missing in jail
         for key in /etc/ssh/*_key; do
-            cp --no-clobber ${key} ${jail_rootfs_path}/${key};
+            cp --no-clobber "${key}" "${jail_rootfs_path}"/"${key}";
         done
     fi
 
@@ -453,7 +454,7 @@ generate_jail_nspawn_config(){
 
     mkdir --parents /etc/systemd/nspawn/
 
-    cat <<UNLIKELY_EOF >/etc/systemd/nspawn/${jail_name}.nspawn
+    cat <<UNLIKELY_EOF >/etc/systemd/nspawn/"${jail_name}".nspawn
 [Exec]
 ProcessTwo=True
 Parameters=/bin/sh start.sh
@@ -540,16 +541,16 @@ get_jail_sshd_pid(){
     # 62057 ?        Ss     0:00  \_ (sd-stubinit)
     # 62059 pts/0    Ss+    0:00      \_ sshd: /usr/sbin/sshd -D -e -f /etc/ssh/sshd_config [listener] 0 of 10-100 startups
 
-    jail_init_pid=$(pgrep -P $(systemctl show --value --property MainPID systemd-nspawn@${jail_name}))
-    pgrep -P ${jail_init_pid}
+    jail_init_pid=$(pgrep -P "$(systemctl show --value --property MainPID systemd-nspawn@"${jail_name}")")
+    pgrep -P "${jail_init_pid}"
 }
 
 get_jail_version(){
     jail_name=${1:?}
-    jail_path=$(jail_path ${jail_name})
+    jail_path=$(jail_path "${jail_name}")
 
     if [ -e "${jail_path}/version" ]; then 
-        echo $(cat "${jail_path}/version")
+        cat "${jail_path}/version"
     else
         echo 1
     fi
