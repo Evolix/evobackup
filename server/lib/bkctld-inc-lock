@@ -38,7 +38,7 @@ unlock_target() {
 }
 
 # this directory test must be quoted,beacause of the probable globbing
-if [ -d ${target_path} ]; then
+if [ -d "${target_path}" ]; then
     if [ "${lock_status}" = "on" ]; then
         lock_target "${target_path}"
     elif [ "${lock_status}" = "off" ]; then

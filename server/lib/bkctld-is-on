@@ -18,7 +18,7 @@ test -d "${jail_path}" || error "${jail_name}: jail not found" 2
 
 # Error codes are references in "includes" file
 return=100
-if systemctl is-active --quiet systemd-nspawn@${jail_name}; then
+if systemctl is-active --quiet systemd-nspawn@"${jail_name}"; then
      return=0
 fi
 exit "${return}"
