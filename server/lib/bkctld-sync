@@ -16,7 +16,7 @@ jail_config_dir=$(jail_config_dir "${jail_name}")
 
 test -d "${jail_path}" || error "${jail_name}: jail not found" 2
 
-[ -n "${NODE}" ] || error "Sync need config of \$NODE in /etc/default/bkctld !"
+[ -n "${NODE}" ] || error "Sync need config for \$NODE variable in /etc/default/bkctld !"
 
 # Ensure the same version of bkctld runs on the other node
 node_version=$(ssh "${NODE}" grep "^VERSION=" "${LIBDIR}/includes" | cut -d'=' -f2 | sed 's/"//g')
@@ -33,7 +33,7 @@ fi
 # Ensure jail version is the same
 local_jail_version=$(get_jail_version "${jail_name}")
 remote_jail_version=$(ssh "${NODE}" "${LIBDIR}/bkctld-jail-version ${jail_name}")
-[ "${local_jail_version}" -eq ${remote_jail_version} ] || error "remote jail isn't in the same version (local: ${local_jail_version} -- node: ${remote_jail_version}) - Please update it with bkctld convert-v2."
+[ "${local_jail_version}" -eq "${remote_jail_version}" ] || error "remote jail isn't in the same version (local: ${local_jail_version} -- node: ${remote_jail_version}) - Please update it with bkctld convert-v2."
 
 # Sync jail internal config on remote server
 rsync -a "${jail_path}/rootfs/etc/" "${NODE}:${jail_path}/rootfs/etc/"
