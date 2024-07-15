@@ -70,9 +70,9 @@ done
 
 printf "%s - %s UNK / %s CRIT / %s WARN / %s OK\n\n" "${header}" "${nb_unkn}" "${nb_crit}" "${nb_warn}" "${nb_ok}"
 
-printf "${output}" | grep -E "^UNKNOWN"
-printf "${output}" | grep -E "^CRITICAL"
-printf "${output}" | grep -E "^WARNING"
-printf "${output}" | grep -E "^OK"
+echo -n "${output}" | grep -E "^UNKNOWN"
+echo -n "${output}" | grep -E "^CRITICAL"
+echo -n "${output}" | grep -E "^WARNING"
+echo -n "${output}" | grep -E "^OK"
 
 exit "${return}"
