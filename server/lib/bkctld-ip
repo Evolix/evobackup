@@ -18,7 +18,7 @@ jail_rootfs_path=$(jail_rootfs_path "${jail_name}")
 test -d "${jail_rootfs_path}" || error "${jail_name}: jail rootfs not found" 2
 
 # Ensure we manipulate jails in the current/compatible version format
-test $(get_jail_version "${jail_name}") -ne ${CURRENT_JAIL_VERSION} && error "${jail_name}: jail needs to be uptated to version ${CURRENT_JAIL_VERSION} (currently $(get_jail_version "${jail_name}")) - Use bkctld convert-v2 <jail>" 3
+test "$(get_jail_version "${jail_name}")" -ne "${CURRENT_JAIL_VERSION}" && error "${jail_name}: jail needs to be uptated to version ${CURRENT_JAIL_VERSION} (currently $(get_jail_version "${jail_name}")) - Use bkctld convert-v2 <jail>" 3
 
 jail_sshd_config="${jail_rootfs_path}/${SSHD_CONFIG}"
 

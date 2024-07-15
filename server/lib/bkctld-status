@@ -13,7 +13,7 @@ if [ -z "${jail_name}" ]; then
 fi
 [ -d "${JAILDIR}/${jail_name}" ] || error "${jail_name} : jail is missing.\nUse '$0 status [all]' to get the status of all jails."
 
-test $(get_jail_version "${jail_name}") -ne ${CURRENT_JAIL_VERSION} && error "${jail_name}: jail needs to be updated to version ${CURRENT_JAIL_VERSION} (currently $(get_jail_version "${jail_name}")) - Use bkctld convert-v2 <jail>" 3
+test "$(get_jail_version "${jail_name}")" -ne "${CURRENT_JAIL_VERSION}" && error "${jail_name}: jail needs to be updated to version ${CURRENT_JAIL_VERSION} (currently $(get_jail_version "${jail_name}")) - Use bkctld convert-v2 <jail>" 3
 
 incs_policy_file=$(current_jail_incs_policy_file ${jail_name})
 incs_policy="0"
