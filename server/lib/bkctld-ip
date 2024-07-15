@@ -34,7 +34,7 @@ else
         new_ips="0.0.0.0/0"
     else
         existing_ips=$("${LIBDIR}/bkctld-ip" "${jail_name}")
-        new_ips=$(echo ${existing_ips} ${ip} | xargs -n1 | grep -v "0.0.0.0/0" | sort | uniq)
+        new_ips=$(echo "${existing_ips}" "${ip}" | xargs -n1 | grep -v "0.0.0.0/0" | sort | uniq)
     fi
     allow_users="AllowUsers"
     for new_ip in ${new_ips}; do
