@@ -15,9 +15,6 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ### Changed
 
-* Allow everybody to "x" on LOCAL_BACKUP_DIR
-* dump/mysql.sh : give write permissions to mysql on tabs directories
-
 ### Deprecated
 
 ### Removed
@@ -25,6 +22,13 @@ The **patch** part changes is incremented if multiple releases happen the same m
 ### Fixed
 
 ### Security
+
+## [24.07] - 2022-07-16
+
+### Changed
+
+* Allow everybody to "x" on LOCAL_BACKUP_DIR
+* dump/mysql.sh : give write permissions to mysql on tabs directories
 
 ## [24.05.1] - 2022-05-14
 
