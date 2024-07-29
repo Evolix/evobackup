@@ -25,6 +25,11 @@ load test_helper
     assert_success
 }
 
+@test "New jail should have a version file" {
+    run test -f "/backup/jails/${JAILNAME}/version"
+    assert_success
+}
+
 @test "A jail should be able to be started" {
     /usr/lib/bkctld/bkctld-start "${JAILNAME}"
     pid=$(systemctl show --value --property MainPID systemd-nspawn@${JAILNAME})
