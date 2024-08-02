@@ -26,7 +26,7 @@ if [ -z "${ip}" ]; then
     # parse IP addresses from AllowUsers directives in sshd config
     grep -E "^AllowUsers" "${jail_sshd_config}" \
     | grep -E -o "root@[^ ]+" \
-    | while read allow; do
+    | while read -r allow; do
         echo "${allow}" | cut -d'@' -f2
     done
 else

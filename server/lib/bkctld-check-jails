@@ -34,8 +34,8 @@ check_jail() {
         unset local_warning
     fi
     # reset to default values if missing local value
-    : ${local_critical:=${CRITICAL}}
-    : ${local_warning:=${WARNING}}
+    : "${local_critical:=${CRITICAL}}"
+    : "${local_warning:=${WARNING}}"
 
     if [ "${local_critical}" -gt "0" ] && [ "${date_diff}" -gt "${local_critical}" ]; then
         nb_crit=$((nb_crit + 1))
