@@ -22,7 +22,7 @@ check_jail() {
     jail_name=$1
 
     jail_path=$(jail_path "${jail_name}")
-    canary_absolute_file="${jail_path}/var/backup/${CANARY_RELATIVE_FILE}"
+    canary_absolute_file="${jail_path}/data/${CANARY_RELATIVE_FILE}"
 
     if [ -f "${canary_absolute_file}" ]; then
         if grep --quiet --fixed-string "${date}" "${canary_absolute_file}"; then
@@ -51,9 +51,9 @@ done
 
 printf "%s - %s UNK / %s CRIT / %s WARN / %s OK\n\n" "${header}" "${nb_unkn}" "${nb_crit}" "${nb_warn}" "${nb_ok}"
 
-printf "${output}" | grep -E "^UNKNOWN"
-printf "${output}" | grep -E "^CRITICAL"
-printf "${output}" | grep -E "^WARNING"
-printf "${output}" | grep -E "^OK"
+echo -n "${output}" | grep -E "^UNKNOWN"
+echo -n "${output}" | grep -E "^CRITICAL"
+echo -n "${output}" | grep -E "^WARNING"
+echo -n "${output}" | grep -E "^OK"
 
 exit "${return}"

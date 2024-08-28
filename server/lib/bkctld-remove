@@ -28,7 +28,7 @@ fi
 if [ "${FORCE}" != "1" ]; then
     answer=""
     while :; do
-        printf "> Are you sure you want to delete jail \`%s'? [Y,n,?] " "${jail_name}"
+        printf "> Are you sure you want to delete jail '%s'? [Y,n,?] " "${jail_name}"
         read -r answer
         case $answer in
             [Yy]|"" )
@@ -71,11 +71,14 @@ if [ -d "${incs_path}" ]; then
         if [ "${inc_inode}" -eq 256 ]; then
             ${btrfs_bin} subvolume delete "${incs_path}/${inc}" | debug
         else
-            warning "You need to purge \`${incs_path}/${inc}' manually"
+            warning "You need to purge '${incs_path}/${inc}' manually"
         fi
     done
     rmdir --ignore-fail-on-non-empty "${incs_path}" | debug
 fi
 
+[ -e "/etc/systemd/nspawn/${jail_name}.nspawn" ] && rm "/etc/systemd/nspawn/${jail_name}.nspawn"
+[ -e "/var/lib/machines/${jail_name}" ] && unlink "/var/lib/machines/${jail_name}"
+
 "${LIBDIR}/bkctld-firewall" "${jail_name}"
-notice "Delete jail \`${jail_name}' : OK"
+notice "Delete jail '${jail_name}' : OK"

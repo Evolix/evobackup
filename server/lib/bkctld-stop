@@ -15,17 +15,13 @@ jail_path=$(jail_path "${jail_name}")
 
 test -d "${jail_path}" || error "${jail_name}: jail not found" 2
 
+# Ensure we manipulate jails in the current/compatible version format
+test "$(get_jail_version "${jail_name}")" -ne "${CURRENT_JAIL_VERSION}" && error "${jail_name}: jail needs to be updated to version ${CURRENT_JAIL_VERSION} (currently $(get_jail_version "${jail_name}")) - Use bkctld convert-v2 <jail>" 3
+
 "${LIBDIR}/bkctld-is-on" "${jail_name}" || exit 0
 
-pid=$(cat "${jail_path}/${SSHD_PID}")
-
-pkill --parent "${pid}"
-
-if kill "${pid}"; then
-    notice "Stop jail \`${jail_name}' : OK [${pid}]"
-
-    umount --lazy --recursive "${jail_path}/dev"
-    umount --lazy "${jail_path}/proc/"
+if systemctl stop systemd-nspawn@"${jail_name}"; then
+    notice "Stopped jail '${jail_name}'"
 else
-    error "Stop jail \`${jail_name}' : failed [${pid}]"
+    error "Stop jail '${jail_name}' : failed"
 fi
