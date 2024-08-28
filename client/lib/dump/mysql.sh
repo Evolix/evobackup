@@ -504,6 +504,7 @@ dump_mysql_grants() {
 # --dump-label=[String] (default: "default")
 #   used as suffix of the dump dir to differenciate multiple instances
 # --compress=<gzip|pigz|bzip2|xz|none> (default: "gzip")
+# --dump-slave=<value> (default: 1)
 # Other options after -- are passed as-is to mysqldump
 #######################################################################
 dump_mysql_global() {
@@ -518,6 +519,7 @@ dump_mysql_global() {
     local option_dump_label=""
     local option_compress=""
     local option_others=""
+    local option_dump_slave=""
 
     # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
     while :; do
@@ -694,6 +696,26 @@ dump_mysql_global() {
             --compress=)
                 # compress options, without value
                 log_error "LOCAL_TASKS - ${FUNCNAME[0]}: '--compress' requires a non-empty option argument."
+                exit 1
+                ;;
+            --dump-slave)
+                # dump-slave options, require value "1" or "2"
+                if [ -n "$2" ]; then
+                    option_dump_slave="${2}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - ${FUNCNAME[0]}: '--dump-slave' requires a non-empty option argument."
+                    exit 1
+                fi
+                ;;
+            --dump-slave=?*)
+                # dump-slave options, require value "1" or "2"
+                log_error "LOCAL_TASKS - ${FUNCNAME[0]}: '--dump-slave' require value "1" or "2"."
+                exit 1
+                ;;
+            --dump-slave=)
+                # dump-slave options, without value
+                log_error "LOCAL_TASKS - ${FUNCNAME[0]}: '--dump-slave' requires a non-empty option argument, value is "1" or "2"."
                 exit 1
                 ;;
             --)
