@@ -345,18 +345,19 @@ dump_postgresql_per_base() {
 
     (
         # shellcheck disable=SC2164
-
-        if [ -n "${option_host}" ]; then
-            dump_options+=(--host ${option_host})
-            if [ -n "${option_port}" ]; then
-                dump_options+=(--port ${option_port})
+        
+        declare -a connect_options
+        if [ -n "${connect_options}" ]; then
+            connect_options+=(--host ${option_host})
+            if [ -n "${connect_options}" ]; then
+                connect_options+=(--port ${option_port})
             else
-                dump_options+=(--port 5432)
+                connect_options+=(--port 5432)
             fi
         fi
 
         cd /var/lib/postgresql
-        databases=$(sudo -u postgres psql -U postgres ${dump_options[*]} -lt | awk -F \| '{print $1}' | grep -v "template.*")
+        databases=$(sudo -u postgres psql -U postgres ${connect_options[*]} -lt | awk -F \| '{print $1}' | grep -v "template.*")
         for database in ${databases} ; do
             local error_file="${errors_dir}/${database}.err"
             local dump_file="${dump_dir}/${database}.sql${dump_ext}"
