@@ -703,7 +703,7 @@ dump_mysql_global() {
                 if [ "$2" = "1" ]; then
                     option_dump_slave="--dump-slave=${2}"
                     shift
-                if [ "$2" = "2" ]; then
+                elif [ "$2" = "2" ]; then
                     option_dump_slave="--dump-slave=${2}"
                     shift
                 else
@@ -716,7 +716,7 @@ dump_mysql_global() {
                 if [ ${value} = "1" ]; then
                     option_dump_slave="${1}"
                     shift
-                if [ ${value} = "2" ]; then
+                elif [ ${value} = "2" ]; then
                     option_dump_slave="${1}"
                     shift
                 else
