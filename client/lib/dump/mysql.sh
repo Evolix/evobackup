@@ -504,7 +504,7 @@ dump_mysql_grants() {
 # --dump-label=[String] (default: "default")
 #   used as suffix of the dump dir to differenciate multiple instances
 # --compress=<gzip|pigz|bzip2|xz|none> (default: "gzip")
-# --dump-slave=<value> (default: 1)
+# --dump-slave=[1|2]
 # Other options after -- are passed as-is to mysqldump
 #######################################################################
 dump_mysql_global() {
@@ -700,22 +700,33 @@ dump_mysql_global() {
                 ;;
             --dump-slave)
                 # dump-slave options, require value "1" or "2"
-                if [ -n "$2" ]; then
-                    option_dump_slave="${2}"
+                if [ "$2" = "1" ]; then
+                    option_dump_slave="--dump-slave=${2}"
+                    shift
+                if [ "$2" = "2" ]; then
+                    option_dump_slave="--dump-slave=${2}"
                     shift
                 else
-                    log_error "LOCAL_TASKS - ${FUNCNAME[0]}: '--dump-slave' requires a non-empty option argument."
+                    log_error "LOCAL_TASKS - ${FUNCNAME[0]}: '--dump-slave' requires a non-empty option argument is \"1\" or \"2\"."
                     exit 1
                 fi
                 ;;
             --dump-slave=?*)
-                # dump-slave options, require value "1" or "2"
-                log_error "LOCAL_TASKS - ${FUNCNAME[0]}: '--dump-slave' require value "1" or "2"."
-                exit 1
+                value="${1#*=}"
+                if [ ${value} = "1" ]; then
+                    option_dump_slave="${1}"
+                    shift
+                if [ ${value} = "2" ]; then
+                    option_dump_slave="${1}"
+                    shift
+                else
+                    log_error "LOCAL_TASKS - ${FUNCNAME[0]}: '--dump-slave' require value \"1\" or \"2\"."
+                    exit 1
+                fi
                 ;;
             --dump-slave=)
                 # dump-slave options, without value
-                log_error "LOCAL_TASKS - ${FUNCNAME[0]}: '--dump-slave' requires a non-empty option argument, value is "1" or "2"."
+                log_error "LOCAL_TASKS - ${FUNCNAME[0]}: '--dump-slave' requires a non-empty option argument, value is \"1\" or \"2\"."
                 exit 1
                 ;;
             --)
@@ -821,6 +832,9 @@ dump_mysql_global() {
     dump_options+=(--all-databases)
     if [ -n "${option_masterdata}" ]; then
         dump_options+=("${option_masterdata}")
+    fi
+    if [ -n "${option_dump_slave}}" ]; then
+        dump_options+=("${option_dump_slave}}")
     fi
     if [ -n "${option_others}" ]; then
         # word splitting is deliberate here
