@@ -833,8 +833,8 @@ dump_mysql_global() {
     if [ -n "${option_masterdata}" ]; then
         dump_options+=("${option_masterdata}")
     fi
-    if [ -n "${option_dump_slave}}" ]; then
-        dump_options+=("${option_dump_slave}}")
+    if [ -n "${option_dump_slave}" ]; then
+        dump_options+=("${option_dump_slave}")
     fi
     if [ -n "${option_others}" ]; then
         # word splitting is deliberate here
