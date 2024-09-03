@@ -492,6 +492,7 @@ convert_jail_chroot_to_v2() {
 
     # Move config & jail data into their new paths
     mv ./etc ./rootfs/etc
+    mv ./root ./rootfs/root
     mv ./var/backup ./data
 
     # Cleanup old directories
@@ -502,6 +503,9 @@ convert_jail_chroot_to_v2() {
     rm -rf ./run
     rm -rf ./usr
     rm -rf ./var/run
+
+    test -d ./proc/ && rmdir ./proc/
+    test -d ./dev/ && rmdir ./dev/
 
     # Mark the jail as version 2
     echo "2" > ./version
