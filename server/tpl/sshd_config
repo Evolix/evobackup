@@ -5,6 +5,13 @@ HostKey /etc/ssh/ssh_host_rsa_key
 HostKey /etc/ssh/ssh_host_ecdsa_key
 HostKey /etc/ssh/ssh_host_ed25519_key
 
+## Uncomment if an old client (Debian <= 8) still uses ssh-rsa key
+#PubkeyAcceptedAlgorithms +ssh-rsa
+
+## Uncomment if an old client (Debian <= 8) only knows the rsa host key
+#HostkeyAlgorithms +ssh-rsa
+
+
 SyslogFacility AUTH
 LogLevel INFO
 LoginGraceTime 120
