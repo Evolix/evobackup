@@ -15,6 +15,7 @@ nb_unkn=0
 output=""
 
 date=$(date +"%Y-%m-%d")
+date_yesterday=$(date -d "1 day ago" +"%Y-%m-%d")
 
 # Check each jail status
 
@@ -27,11 +28,16 @@ check_jail() {
     if [ -f "${canary_absolute_file}" ]; then
         if grep --quiet --fixed-string "${date}" "${canary_absolute_file}"; then
             nb_ok=$((nb_ok + 1))
-            output="${output}OK - ${jail_name} - entries found for ${date} in ${CANARY_RELATIVE_FILE} file\n"
+            output="${output}OK - ${jail_name} - entries found for today (${date}) in ${CANARY_RELATIVE_FILE} file\n"
         else
-            nb_crit=$((nb_crit + 1))
-            output="${output}CRITICAL - ${jail_name} - No entry for ${date} in ${CANARY_RELATIVE_FILE} file\n"
-            [ "${return}" -le 2 ] && return=2
+            if grep --quiet --fixed-string "${date_yesterday}" "${canary_absolute_file}"; then
+                nb_warn=$((nb_warn + 1))   
+                output="${output}WARNING - ${jail_name} - entries found for yesterday (${date_yesterday}) in ${CANARY_RELATIVE_FILE} file\n"
+            else
+                nb_crit=$((nb_crit + 1))
+                output="${output}CRITICAL - ${jail_name} - No entry for today (${date}) nor yesterday (${date_yesterday}) in ${CANARY_RELATIVE_FILE} file\n"
+                [ "${return}" -le 2 ] && return=2
+            fi
         fi
     else
         nb_crit=$((nb_crit + 1))
