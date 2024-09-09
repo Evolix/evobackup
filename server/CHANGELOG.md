@@ -11,9 +11,66 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ## [Unreleased]
 
+### BREAKING
+
+This release change the internals of bkctld. Instead of relying on `chroot`, it now uses `systemd-nspawn`.
+This change required to reorganize the jail the jail folder structure in a new form (called `version 2`). And also brings the possibility to have most of the jail folder read-only
+
+The convertion to this format is required to do any actions on the jail (start/stop) or change any of it's settings
+
+The jail folder structure before : 
+
+```
+# tree -L 2 /backup/jails/old-jail/ 
+/backup/jails/old-jail/   # <--- Jail root 
+├── bin -> ./usr/bin 
+├── dev
+├── etc
+│   ├── ...
+│   └── ssh
+├── ...
+├── usr 
+│   └── ...
+└── var
+     ├── backup   # <--- Where data was expected to be pushed
+     ├── log
+     ├── run -> ../run
+     └── tmp
+```
+
+After :
+
+```
+# tree -L 2 /backup/jails/new-jail/
+/backup/jails/new-jail/
+├── data
+│   └── Things
+├── root        # <--- New jail root (Read-Only)
+│   ├── bin -> ./usr/bin
+│   ├── data    # <- Bind mount from /backup/jails/new-jail/data (Read-Write)
+│   ├── dev
+│   ├── etc
+│   ├── start.sh
+│   ├── ...
+│   └── var    # <- Bind mount from /backup/jails/new-jail/var (Read-Write)
+└── var
+     ├── backup # <- Symbolic link to /data
+     ├── dev
+     ├── log
+     └── run -> ../run
+```
+
+
 ### Added
 
+* New command bkctld logs : Display the logs of the sshd server for a given jail
+* New command bkctld convert-v2 : Convert a given jail in the v2 format for nspawn
+* New command bkctld jail-version : Return the jail format
+
 ### Changed
+
+* Disallow jail actions/configuration commands if the jail is deemed not up-to-date
+* Canary check will raise a `WARNING` instead of a `CRITICAL` if yesterday date was found
 
 ### Deprecated
 
