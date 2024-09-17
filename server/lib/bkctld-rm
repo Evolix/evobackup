@@ -83,7 +83,7 @@ delete_inc_ext4() {
         echo "[dry-run] delete ${inc_path} with rsync from empty directory"
     else
         empty=$(new_tmp_dir "empty")
-        rsync --archive --delete "${empty}/" "${inc_path}/"
+        rsync --max-alloc=0 --archive --delete "${empty}/" "${inc_path}/"
         rmdir "${inc_path}/"
         rmdir "${empty}"
     fi
