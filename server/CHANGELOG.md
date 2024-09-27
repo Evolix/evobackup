@@ -70,7 +70,7 @@ After :
 ### Changed
 
 * Disallow jail actions/configuration commands if the jail is deemed not up-to-date
-* Canary check will raise a `WARNING` instead of a `CRITICAL` if yesterday date was found
+* bkcltd-check-canary: Canary check will raise a `WARNING` instead of a `CRITICAL` if yesterday date was found
 
 ### Deprecated
 
@@ -80,6 +80,7 @@ After :
 
 * Test presence of old config file before trying to delete it
 * Use correct variable when detecting local sshrc template
+* bkcltd-rm: hide over allocation message
 
 ### Security
 
