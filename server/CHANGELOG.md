@@ -1,8 +1,13 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
+
+This project does not follow semantic versioning.
+The **major** part of the version is the year
+The **minor** part changes is the month
+The **patch** part changes is incremented if multiple releases happen the same month
 
 ## [Unreleased]
 
@@ -17,6 +22,94 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+
+## [24.10] - 2024-10-10
+
+### BREAKING
+
+This release change the internals of bkctld. Instead of relying on `chroot`, it now uses `systemd-nspawn`.
+This change required to reorganize the jail the jail folder structure in a new form (called `version 2`). And also brings the possibility to have most of the jail folder read-only.
+
+The convertion to this format is required to do any actions on the jail (start/stop) or change any of it's settings (key, ip...)
+
+The jail folder structure before : 
+
+```
+# tree -L 2 /backup/jails/old-jail/ 
+/backup/jails/old-jail/   # <--- Jail root 
+├── bin -> ./usr/bin 
+├── dev
+├── etc
+│   ├── ...
+│   └── ssh
+├── ...
+├── usr 
+│   └── ...
+└── var
+     ├── backup   # <--- Where data was expected to be pushed
+     ├── log
+     ├── run -> ../run
+     └── tmp
+```
+
+And after the convertion :
+
+```
+# tree -L 2 /backup/jails/new-jail/
+/backup/jails/new-jail/
+├── data
+│   └── Things
+├── root        # <--- New jail root (Read-Only)
+│   ├── bin -> ./usr/bin
+│   ├── data    # <- Bind mount from /backup/jails/new-jail/data (Read-Write)
+│   ├── dev
+│   ├── etc
+│   ├── start.sh
+│   ├── ...
+│   └── var    # <- Bind mount from /backup/jails/new-jail/var (Read-Write)
+└── var
+     ├── backup # <- Bind mount from /backup/jails/new-jail/data (Read-Write) 
+     ├── dev
+     ├── log
+     └── run -> ../run
+```
+
+
+### Added
+
+* New command bkctld logs : Display the logs of the sshd server for a given jail
+* New command bkctld convert-v2 : Convert a given jail in the v2 format for nspawn
+* New command bkctld jail-version : Return the jail format
+
+### Changed
+
+* Disallow jail actions/configuration commands if the jail is deemed not up-to-date
+* bkcltd-check-canary: Canary check will raise a `WARNING` instead of a `CRITICAL` if yesterday date was found
+
+### Fixed
+
+* Test presence of old config file before trying to delete it
+* Use correct variable when detecting local sshrc template
+* bkcltd-rm: hide over allocation message
+
+## [22.11] - 2022-11-28
+
+### Added
+
+* check-canary: new subcommand to check canary files and content
+
+### Changed
+
+* stats: filter active jails and columnize the output
+
+## [22.07] - 2022-07-20
+
+### Changed
+
+* check-setup: check minifirewall version only if minifirewall is present
+* check-setup: get minifirewall version from internal variable (there is no other backward compatible way)
+* check-setup: use findmnt with mountpoint instead of target
 
 ## [22.06] - 2022-06-28
 

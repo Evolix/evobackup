@@ -34,8 +34,8 @@ check_jail() {
         unset local_warning
     fi
     # reset to default values if missing local value
-    : ${local_critical:=${CRITICAL}}
-    : ${local_warning:=${WARNING}}
+    : "${local_critical:=${CRITICAL}}"
+    : "${local_warning:=${WARNING}}"
 
     if [ "${local_critical}" -gt "0" ] && [ "${date_diff}" -gt "${local_critical}" ]; then
         nb_crit=$((nb_crit + 1))
@@ -70,9 +70,9 @@ done
 
 printf "%s - %s UNK / %s CRIT / %s WARN / %s OK\n\n" "${header}" "${nb_unkn}" "${nb_crit}" "${nb_warn}" "${nb_ok}"
 
-printf "${output}" | grep -E "^UNKNOWN"
-printf "${output}" | grep -E "^CRITICAL"
-printf "${output}" | grep -E "^WARNING"
-printf "${output}" | grep -E "^OK"
+echo -n "${output}" | grep -E "^UNKNOWN"
+echo -n "${output}" | grep -E "^CRITICAL"
+echo -n "${output}" | grep -E "^WARNING"
+echo -n "${output}" | grep -E "^OK"
 
 exit "${return}"

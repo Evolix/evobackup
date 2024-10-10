@@ -1,0 +1,65 @@
+#!/bin/sh
+#
+# Description: check canary file
+# Usage: check-canary [<jailname>|all]
+#
+
+# shellcheck source=./includes
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
+
+return=0
+nb_crit=0
+nb_warn=0
+nb_ok=0
+nb_unkn=0
+output=""
+
+date=$(date +"%Y-%m-%d")
+date_yesterday=$(date -d "1 day ago" +"%Y-%m-%d")
+
+# Check each jail status
+
+check_jail() {
+    jail_name=$1
+
+    jail_path=$(jail_path "${jail_name}")
+    canary_absolute_file="${jail_path}/data/${CANARY_RELATIVE_FILE}"
+
+    if [ -f "${canary_absolute_file}" ]; then
+        if grep --quiet --fixed-string "${date}" "${canary_absolute_file}"; then
+            nb_ok=$((nb_ok + 1))
+            output="${output}OK - ${jail_name} - entries found for today (${date}) in ${CANARY_RELATIVE_FILE} file\n"
+        else
+            if grep --quiet --fixed-string "${date_yesterday}" "${canary_absolute_file}"; then
+                nb_warn=$((nb_warn + 1))   
+                output="${output}WARNING - ${jail_name} - entries found for yesterday (${date_yesterday}) in ${CANARY_RELATIVE_FILE} file\n"
+            else
+                nb_crit=$((nb_crit + 1))
+                output="${output}CRITICAL - ${jail_name} - No entry for today (${date}) nor yesterday (${date_yesterday}) in ${CANARY_RELATIVE_FILE} file\n"
+                [ "${return}" -le 2 ] && return=2
+            fi
+        fi
+    else
+        nb_crit=$((nb_crit + 1))
+        output="${output}CRITICAL - ${jail_name} - missing ${CANARY_RELATIVE_FILE} file\n"
+        [ "${return}" -le 2 ] && return=2
+    fi
+}
+
+for jail_name in $(jails_list); do
+    check_jail "${jail_name}"
+done
+
+[ "${return}" -ge 0 ] && header="OK"
+[ "${return}" -ge 1 ] && header="WARNING"
+[ "${return}" -ge 2 ] && header="CRITICAL"
+[ "${return}" -ge 3 ] && header="UNKNOWN"
+
+printf "%s - %s UNK / %s CRIT / %s WARN / %s OK\n\n" "${header}" "${nb_unkn}" "${nb_crit}" "${nb_warn}" "${nb_ok}"
+
+echo -n "${output}" | grep -E "^UNKNOWN"
+echo -n "${output}" | grep -E "^CRITICAL"
+echo -n "${output}" | grep -E "^WARNING"
+echo -n "${output}" | grep -E "^OK"
+
+exit "${return}"

@@ -16,6 +16,7 @@ if [ -z "${jail_name}" ] || [ -z "${new_jail_name}" ]; then
 fi
 
 jail_path=$(jail_path "${jail_name}")
+#jail_rootfs_path=$(jail_rootfs_path "${jail_name}")
 incs_path=$(incs_path "${jail_name}")
 jail_config_dir=$(jail_config_dir "${jail_name}")
 legacy_config_file="${CONFDIR}/${jail_name}"
@@ -23,6 +24,7 @@ legacy_config_file="${CONFDIR}/${jail_name}"
 test -d "${jail_path}" || error "${jail_name}: jail not found" 2
 
 new_jail_path=$(jail_path "${new_jail_name}")
+new_jail_rootfs_path=$(jail_rootfs_path "${new_jail_name}")
 new_incs_path=$(incs_path "${new_jail_name}")
 new_jail_config_dir=$(jail_config_dir "${new_jail_name}")
 new_legacy_config_file="${CONFDIR}/${new_jail_name}"
@@ -40,26 +42,37 @@ case "$?" in
     ;;
     *)
         unset jail_initial_status
-        error "Error evaluating jail \`${jail_name}' state. bkctld-is-on exited with \`$?'"
+        error "Error evaluating jail '${jail_name}' state. bkctld-is-on exited with '$?'"
     ;;
 esac
 
 test "${jail_initial_status}" = "on" && "${LIBDIR}/bkctld-stop" "${jail_name}"
 
+# Rename jail folder
 if dry_run; then
     echo "[dry-run] rename ${jail_path} to ${new_jail_path}"
 else
     mv "${jail_path}" "${new_jail_path}"
+    
+    # Re-create the link in /var/lib/machines/
+    [ -e "/var/lib/machines/${jail_name}" ] && unlink "/var/lib/machines/${jail_name}"
+    ln -s "${new_jail_rootfs_path}" "/var/lib/machines/${new_jail_name}"
+
+    # Generate new nspawn config
+    [ -e "/etc/systemd/nspawn/${jail_name}.nspawn" ] && rm "/etc/systemd/nspawn/${jail_name}.nspawn"
+    generate_jail_nspawn_config "${new_jail_name}"
 fi
-if dry_run; then
-    if [ -d "${incs_path}" ]; then
+
+# Rename incs folder
+if [ -d "${incs_path}" ]; then
+    if dry_run; then
         echo "[dry-run] rename ${incs_path} to ${new_incs_path}"
-    fi
-else
-    if [ -d "${incs_path}" ]; then
+    else
         mv "${incs_path}" "${new_incs_path}"
     fi
 fi
+
+# Rename configs
 if [ -d "${jail_config_dir}" ]; then
     if dry_run; then
         echo "[dry-run] rename ${jail_config_dir} to ${new_jail_config_dir}"
@@ -74,10 +87,11 @@ if [ -f "${legacy_config_file}" ]; then
         echo "[dry-run] rename ${legacy_config_file} to ${new_legacy_config_file}"
     fi
 fi
+
 # Reset firewall for new jail name
 "${LIBDIR}/bkctld-firewall" "${jail_name}"
 "${LIBDIR}/bkctld-firewall" "${new_jail_name}"
 
 test "${jail_initial_status}" = "on" && "${LIBDIR}/bkctld-start" "${new_jail_name}"
 
-notice "Rename jail \`${jail_name}' to \`${new_jail_name}' : OK"
+notice "Rename jail '${jail_name}' to '${new_jail_name}' : OK"

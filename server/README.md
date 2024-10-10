@@ -4,7 +4,7 @@ Bkctld (aka server-side evobackup)
 bkctld helps you manage the receiving side of a backup infrastructure.
 It is licensed under the AGPLv3.
 
-With bkctld you create and manage "jails". They contain a chrooted and dedicated SSH server, with it's own TCP port and optionnaly it's own set of iptables rules.
+With bkctld you create and manage "jails". They contain a chrooted and dedicated SSH server, with its own TCP port and optionally its own set of iptables rules.
 
 With bkctld you can have hundreds of jails, one for each client to push its data (using Rsync/SFTP). Each client can only see its own data.
 
@@ -30,18 +30,12 @@ This volume can also be encrypted with **LUKS**.
 
 ## Security considerations
 
-The client obviously has access to its uploaded data (in the chroot), but the timestamped copies are outside the chroot, to reduce the risk or complete backup erasure from a compromised client.
-
-Since the client connects to the backup server with root, it can mess with the jail and destroy the data. But the timestamped copies are out of reach because outside of the chroot.
+The client obviously has access to its uploaded data (in the chroot), but the timestamped copies are outside the chroot, to reduce the risk of complete backup erasure from a compromised client.
 
 It means that **if the client server is compromised**, an attacker can destroy the latest copy of the backed up data, but not the timestamped copies.
 And **if the backup server is compromised** an attacker has complete access to all the backup data (inside and outside the jails), but they don't have any access to the client.
 
 This architecture is as secure as SSH, Rsync, chroot and iptables are.
-
-## Install
-
-See the [installation guide](docs/install.md) for instructions.
 
 ## Testing
 
@@ -49,6 +43,12 @@ You can deploy test environments with Vagrant :
 
 ~~~
 vagrant up
+~~~
+
+To destroy Vagrant VMs :
+
+~~~
+vagrant destroy
 ~~~
 
 ### Deployment
@@ -77,6 +77,8 @@ vagrant@buster-btrfs $ sudo -i
 root@buster-btrfs # bats /vagrant/test/*.bats
 ~~~
 
+[comment]: <> (* pour vim)
+
 You should shellcheck your bats files, but with shellcheck > 0.4.6, because the 0.4.0 version doesn't support bats syntax.
 
 ## Usage
@@ -99,7 +101,7 @@ pandoc -f markdown \
 #### Client configuration
 
 You can backup various systems in the evobackup jails : Linux, BSD,
-Windows, macOS. The only need Rsync or an SFTP client.
+Windows, macOS. The only need is Rsync or an SFTP client.
 
 ~~~
 rsync -av -e "ssh -p SSH_PORT" /home/ root@SERVER_NAME:/var/backup/home/

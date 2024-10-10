@@ -1,24 +1,15 @@
 pipeline {
-    agent { label 'docker' }
+    agent { label 'sbuild' }
     stages {
         stage('Build Debian package') {
-            agent {
-                docker {
-                    image 'evolix/gbp:bullseye'
-                    args '-u root --privileged -v /tmp:/tmp'
-                }
-            }
             when {
                 branch 'debian'
             }
             steps {
                 script {
-                    sh 'mk-build-deps --install --remove debian/control'
-                    sh 'rm -rf source'
-                    sh "gbp clone --debian-branch=$GIT_BRANCH $GIT_URL source"
-                    sh 'cd source && git checkout $GIT_BRANCH && gbp buildpackage -us -uc'
+                    sh 'gbp buildpackage'
                 }
-                archiveArtifacts allowEmptyArchive: true, artifacts: '*.gz,*.bz2,*.xz,*.deb,*.dsc,*.changes,*.buildinfo,lintian.txt'
+                archiveArtifacts allowEmptyArchive: true, artifacts: 'build-area/*.gz,build-area/*.bz2,build-area/*.xz,build-area/*.deb,build-area/*.dsc,build-area/*.changes,build-area/*.buildinfo,build-area/*.build,build-area/lintian.txt'
             }
         }
 
@@ -28,10 +19,7 @@ pipeline {
             }
             steps {
                 script {
-                    sh 'echo Dummy line to remove once something actually happens.'
-                 /* No crendentials yet
-                    sh 'rsync -avP /tmp/bkctld/ droneci@pub.evolix.net:/home/droneci/bkctld/'
-                  */
+                    sh 'rsync -avP build-area/bkctld*.deb build-area/bkctld*.changes build-area/bkctld*.buildinfo pub.evolix.org:/srv/upload/'
                 }
             }
         }

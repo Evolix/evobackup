@@ -2,15 +2,7 @@
 
 ## Install from package
 
-A Debian package is available in the Evolix repository
-
-~~~
-echo "deb http://pub.evolix.net/ stretch" >> /etc/apt/sources.list
-apt update
-apt install bkctld
-~~~
-
-Then edit `/etc/default/bkctld`
+The install documentation is [here](https://intra.evolix.net/OutilsInternes/bkctld)
 
 ## Instal from sources
 
@@ -19,17 +11,17 @@ Warning: `cp`-ing the files without `-n` or `-i` will replace existing files !
 ~~~
 # git clone https://gitea.evolix.org/evolix/evobackup.git
 # cd evobackup
-# cp bkctld /usr/local/sbin/
+# cp server/bkctld /usr/local/sbin/
 # mkdir -p /usr/local/lib/bkctld
-# cp lib/* /usr/local/lib/bkctld/
+# cp server/lib/* /usr/local/lib/bkctld/
 # mkdir -p /usr/local/share/bkctld
-# cp tpl/* /usr/local/share/bkctld/
-# cp bkctld.service /lib/systemd/system/
+# cp server/tpl/* /usr/local/share/bkctld/
+# cp server/bkctld.service /lib/systemd/system/
 # mkdir -p /usr/local/share/doc/bkctld
-# cp zzz_evobackup /usr/local/share/doc/bkctld/
+# cp client/zzz_evobackup /usr/local/share/doc/bkctld/
 # mkdir -p /usr/local/share/bash_completion/
-# cp bash_completion /usr/local/share/bash_completion/bkctld
-# cp bkctld.conf /etc/default/bkctld
+# cp server/bash_completion /usr/local/share/bash_completion/bkctld
+# cp server/bkctld.conf /etc/default/bkctld
 ~~~
 
 ## Chroot dependencies
