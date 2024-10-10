@@ -1,3 +1,38 @@
+bkctld (24.10-1) stable; urgency=medium
+
+  * New upstream release: 24.10
+
+  [ Jérémy Lecour ]
+  * Add gobal .gitignore
+
+  [ Mathieu Trossevin ]
+  * fix(includes): Avoid breaking is_btrfs if path doesn't exists
+  * Use correct variable when detecting local sshrc template
+
+  [ Will ]
+  * server: fix install.md paths
+  * Add WARNING and CRITICAL values to default conf
+
+  [ Ludovic Poujol ]
+  * server: Remove deprecated sshd config options
+  * server: Move from chroot to systemd-nspawn
+  * server: New command log, to quickly show last logs from journalctl
+  * server: Validate the jail version before trying to change settings/update it
+  * server: New command convert-v2: Convert a given jail in the new format
+  * server: New command jail-version: Return the jail version number
+  * server: bkctld-sync > Ensure that bkctld versions are identical and jail version too
+  * server: bkctld-sync > Only sync /etc and /root from the jail
+  * server: New tests, ensuring the jail has a version file
+  * server: Code lint with shellcheck
+  * server: Add commented config directive in sshd config template for old ssh clients
+  * server: Update check-canary to raise a warning (instead of critical) when yesterday's date is found
+  * server: release 24.10
+
+  [ bwaegeneire ]
+  * bkcltd: bkctld-rm > hide over allocation message
+
+ -- Ludovic Poujol <lpoujol@evolix.fr>  Thu, 10 Oct 2024 15:30:30 +0200
+
 bkctld (22.11-1) stable; urgency=medium
 
   [ Jeremy Lecour ]
