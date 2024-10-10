@@ -16,7 +16,7 @@ touch "${INDEX_DIR}/.lastrun.duc"
 EOF
 
 [ ! -f "${INDEX_DIR}/.lastrun.duc" ] && notice "First run of DUC still in progress ..." && exit 0
-[ ! -f ${IDX_FILE} ] && error "Index file doesn't exits !"
+[ ! -f "${IDX_FILE}" ] && error "Index file doesn't exits !"
 
 printf "Last update of index file : "
 stat --format=%Y "${INDEX_DIR}/.lastrun.duc" | xargs -i -n1 date -R -d "@{}"
@@ -33,7 +33,7 @@ trap "rm ${duc_output} ${incs_output} ${stat_output} ${jail_patterns_list}" 0
 
 jails_list | sed -e "s/^\(.*\)$/\\\\b\1\\\\b/" > "${jail_patterns_list}"
 
-grep -f "${jail_patterns_list}" "${duc_output}" | awk '{ print $2 }' | while read jail_name; do
+grep -f "${jail_patterns_list}" "${duc_output}" | awk '{ print $2 }' | while read -r jail_name; do
     jail_path=$(jail_path "${jail_name}")
     stat --format=%Y "${jail_path}/var/log/lastlog" | xargs -i -n1 date -d "@{}" "+%d-%m-%Y" >> "${stat_output}"
 

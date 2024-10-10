@@ -38,16 +38,16 @@ unlock_target() {
 }
 
 # this directory test must be quoted,beacause of the probable globbing
-if [ -d ${target_path} ]; then
+if [ -d "${target_path}" ]; then
     if [ "${lock_status}" = "on" ]; then
         lock_target "${target_path}"
     elif [ "${lock_status}" = "off" ]; then
         unlock_target "${target_path}"
     else
-        error "Unknown lock status \`${lock_status}'."
+        error "Unknown lock status '${lock_status}'."
         exit 1
     fi
 else
-    error "\`${target_path}': no such file or directory."
+    error "'${target_path}': no such file or directory."
     exit 1
 fi

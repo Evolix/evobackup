@@ -18,7 +18,7 @@ iptables_input_accept() {
     jail_name="${1}"
     port="${2}"
     ip="${3}"
-    debug "Accept \`${ip}:${port}' for jail \`${jail_name}'"
+    debug "Accept '${ip}:${port}' for jail '${jail_name}'"
 
     echo "/sbin/iptables -A INPUT -p tcp --sport 1024: --dport ${port} -s ${ip} -j ACCEPT #${jail_name}"
 }
@@ -35,7 +35,7 @@ if [ -n "${FIREWALL_RULES}" ]; then
         # Restart the firewall
         [ -f /etc/init.d/minifirewall ] && /etc/init.d/minifirewall restart >/dev/null
     fi
-    notice "Firewall updated for jail \`${jail_name}'"
+    notice "Firewall updated for jail '${jail_name}'"
 else
-    notice "Skip jail \`${jail_name}' : FIREWALL_RULES variable is empty."
+    notice "Skip jail '${jail_name}' : FIREWALL_RULES variable is empty."
 fi

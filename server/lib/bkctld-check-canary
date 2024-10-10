@@ -15,6 +15,7 @@ nb_unkn=0
 output=""
 
 date=$(date +"%Y-%m-%d")
+date_yesterday=$(date -d "1 day ago" +"%Y-%m-%d")
 
 # Check each jail status
 
@@ -22,16 +23,21 @@ check_jail() {
     jail_name=$1
 
     jail_path=$(jail_path "${jail_name}")
-    canary_absolute_file="${jail_path}/var/backup/${CANARY_RELATIVE_FILE}"
+    canary_absolute_file="${jail_path}/data/${CANARY_RELATIVE_FILE}"
 
     if [ -f "${canary_absolute_file}" ]; then
         if grep --quiet --fixed-string "${date}" "${canary_absolute_file}"; then
             nb_ok=$((nb_ok + 1))
-            output="${output}OK - ${jail_name} - entries found for ${date} in ${CANARY_RELATIVE_FILE} file\n"
+            output="${output}OK - ${jail_name} - entries found for today (${date}) in ${CANARY_RELATIVE_FILE} file\n"
         else
-            nb_crit=$((nb_crit + 1))
-            output="${output}CRITICAL - ${jail_name} - No entry for ${date} in ${CANARY_RELATIVE_FILE} file\n"
-            [ "${return}" -le 2 ] && return=2
+            if grep --quiet --fixed-string "${date_yesterday}" "${canary_absolute_file}"; then
+                nb_warn=$((nb_warn + 1))   
+                output="${output}WARNING - ${jail_name} - entries found for yesterday (${date_yesterday}) in ${CANARY_RELATIVE_FILE} file\n"
+            else
+                nb_crit=$((nb_crit + 1))
+                output="${output}CRITICAL - ${jail_name} - No entry for today (${date}) nor yesterday (${date_yesterday}) in ${CANARY_RELATIVE_FILE} file\n"
+                [ "${return}" -le 2 ] && return=2
+            fi
         fi
     else
         nb_crit=$((nb_crit + 1))
@@ -51,9 +57,9 @@ done
 
 printf "%s - %s UNK / %s CRIT / %s WARN / %s OK\n\n" "${header}" "${nb_unkn}" "${nb_crit}" "${nb_warn}" "${nb_ok}"
 
-printf "${output}" | grep -E "^UNKNOWN"
-printf "${output}" | grep -E "^CRITICAL"
-printf "${output}" | grep -E "^WARNING"
-printf "${output}" | grep -E "^OK"
+echo -n "${output}" | grep -E "^UNKNOWN"
+echo -n "${output}" | grep -E "^CRITICAL"
+echo -n "${output}" | grep -E "^WARNING"
+echo -n "${output}" | grep -E "^OK"
 
 exit "${return}"

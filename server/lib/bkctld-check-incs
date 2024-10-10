@@ -25,7 +25,7 @@ for jail_name in $("${LIBDIR}/bkctld-list"); do
         jail_config_epoch=$(date --date "$(stat -c %y "${incs_policy_file}")" +"%s")
 
         # read each line in jail configuration
-        while read line; do
+        while read -r line; do
             ## TODO
             # deal with empty lines
 

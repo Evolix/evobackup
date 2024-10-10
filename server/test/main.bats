@@ -25,9 +25,14 @@ load test_helper
     assert_success
 }
 
+@test "New jail should have a version file" {
+    run test -f "/backup/jails/${JAILNAME}/version"
+    assert_success
+}
+
 @test "A jail should be able to be started" {
     /usr/lib/bkctld/bkctld-start "${JAILNAME}"
-    pid=$(cat "${JAILPATH}/${SSHD_PID}")
+    pid=$(systemctl show --value --property MainPID systemd-nspawn@${JAILNAME})
     # A started jail should have an SSH pid file
     run ps --pid "${pid}"
     assert_success
@@ -35,7 +40,7 @@ load test_helper
 
 @test "A jail should be able to be stopped" {
     /usr/lib/bkctld/bkctld-start "${JAILNAME}"
-    pid=$(cat "${JAILPATH}/${SSHD_PID}")
+    pid=$(systemctl show --value --property MainPID systemd-nspawn@${JAILNAME})
     /usr/lib/bkctld/bkctld-stop "${JAILNAME}"
     # A stopped jail should not have an SSH pid file
     run ps --pid "${pid}"
@@ -46,16 +51,17 @@ load test_helper
     /usr/lib/bkctld/bkctld-start "${JAILNAME}"
     /usr/lib/bkctld/bkctld-reload "${JAILNAME}"
     # A reloaded jail should mention the restart in the authlog
-    run grep "Received SIGHUP; restarting." "${JAILPATH}/var/log/authlog"
+    run journalctl --unit systemd-nspawn@${JAILNAME}  --grep "Received SIGHUP; restarting."
     assert_success
 }
 
 @test "A jail should be able to be restarted" {
     /usr/lib/bkctld/bkctld-start "${JAILNAME}"
-    pid_before=$(cat "${JAILPATH}/${SSHD_PID}")
+    pid_before=$(systemctl show --value --property MainPID systemd-nspawn@${JAILNAME})
+    
 
     /usr/lib/bkctld/bkctld-restart "${JAILNAME}"
-    pid_after=$(cat "${JAILPATH}/${SSHD_PID}")
+    pid_after=$(systemctl show --value --property MainPID systemd-nspawn@${JAILNAME})
 
     # A restarted jail should have a different pid
     refute_equal "${pid_before}" "${pid_after}"

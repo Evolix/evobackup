@@ -15,15 +15,13 @@ nb_unkn=0
 output=""
 
 # Verify backup partition is mounted and writable
-
-findmnt -O rw --mountpoint "${BACKUP_PARTITION}" > /dev/null
-if [ "$?" -ne 0 ]; then
+if ! findmnt -O rw --mountpoint "${BACKUP_PARTITION}" > /dev/null; then
     nb_crit=$((nb_crit + 1))
-    output="${output}CRITICAL - Backup disk \`/backup' is not mounted (or read-only) !\n"
+    output="${output}CRITICAL - Backup disk '/backup' is not mounted (or read-only) !\n"
     return=2
 else
     nb_ok=$((nb_ok + 1))
-    output="${output}OK - Backup disk \`/backup' is mounted and writable.\n"
+    output="${output}OK - Backup disk '/backup' is mounted and writable.\n"
 fi
 
 # Check if the firewall file is sourced
@@ -38,14 +36,14 @@ if [ -n "${FIREWALL_RULES}" ] \
     if [ -n "${minifirewall_version}" ] && dpkg --compare-versions "${minifirewall_version}" ge "22.03"; then
         # Minifirewall 22.03+ includes files automatically
         nb_ok=$((nb_ok + 1))
-        output="${output}OK - Firewall file \`${FIREWALL_RULES}' is present.\n"
+        output="${output}OK - Firewall file '${FIREWALL_RULES}' is present.\n"
     else
         if grep -qE "^(\.|source) ${FIREWALL_RULES}" "${minifirewall_config}"; then
             nb_ok=$((nb_ok + 1))
-            output="${output}OK - Firewall file \`${FIREWALL_RULES}' is sourced by \`${minifirewall_config}'.\n"
+            output="${output}OK - Firewall file '${FIREWALL_RULES}' is sourced by '${minifirewall_config}'.\n"
         else
             nb_warn=$((nb_warn + 1))
-            output="${output}WARNING - Firewall file \`${FIREWALL_RULES}' doesn't seem to be sourced by \`${minifirewall_config}'\n"
+            output="${output}WARNING - Firewall file '${FIREWALL_RULES}' doesn't seem to be sourced by '${minifirewall_config}'\n"
             [ "${return}" -le 1 ] && return=1
         fi
     fi
@@ -85,9 +83,9 @@ fi
 
 printf "%s - %s UNK / %s CRIT / %s WARN / %s OK\n\n" "${header}" "${nb_unkn}" "${nb_crit}" "${nb_warn}" "${nb_ok}"
 
-printf "${output}" | grep -E "^UNKNOWN"
-printf "${output}" | grep -E "^CRITICAL"
-printf "${output}" | grep -E "^WARNING"
-printf "${output}" | grep -E "^OK"
+echo -n "${output}" | grep -E "^UNKNOWN"
+echo -n "${output}" | grep -E "^CRITICAL"
+echo -n "${output}" | grep -E "^WARNING"
+echo -n "${output}" | grep -E "^OK"
 
 exit "${return}"
