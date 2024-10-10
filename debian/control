@@ -17,6 +17,7 @@ Depends: cryptsetup,
          openssh-server,
          procps,
          rsync,
+         systemd-container,
          ${misc:Depends}
 Recommends: btrfs-progs
 Description: Tool for manage rsync jail for backup
