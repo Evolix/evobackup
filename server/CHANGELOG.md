@@ -11,12 +11,27 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ## [Unreleased]
 
+### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+
+## [24.10] - 2024-10-10
+
 ### BREAKING
 
 This release change the internals of bkctld. Instead of relying on `chroot`, it now uses `systemd-nspawn`.
-This change required to reorganize the jail the jail folder structure in a new form (called `version 2`). And also brings the possibility to have most of the jail folder read-only
+This change required to reorganize the jail the jail folder structure in a new form (called `version 2`). And also brings the possibility to have most of the jail folder read-only.
 
-The convertion to this format is required to do any actions on the jail (start/stop) or change any of it's settings
+The convertion to this format is required to do any actions on the jail (start/stop) or change any of it's settings (key, ip...)
 
 The jail folder structure before : 
 
@@ -38,7 +53,7 @@ The jail folder structure before :
      └── tmp
 ```
 
-After :
+And after the convertion :
 
 ```
 # tree -L 2 /backup/jails/new-jail/
@@ -54,7 +69,7 @@ After :
 │   ├── ...
 │   └── var    # <- Bind mount from /backup/jails/new-jail/var (Read-Write)
 └── var
-     ├── backup # <- Symbolic link to /data
+     ├── backup # <- Bind mount from /backup/jails/new-jail/data (Read-Write) 
      ├── dev
      ├── log
      └── run -> ../run
@@ -72,17 +87,11 @@ After :
 * Disallow jail actions/configuration commands if the jail is deemed not up-to-date
 * bkcltd-check-canary: Canary check will raise a `WARNING` instead of a `CRITICAL` if yesterday date was found
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 
 * Test presence of old config file before trying to delete it
 * Use correct variable when detecting local sshrc template
 * bkcltd-rm: hide over allocation message
-
-### Security
 
 ## [22.11] - 2022-11-28
 
