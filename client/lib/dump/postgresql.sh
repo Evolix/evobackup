@@ -347,9 +347,9 @@ dump_postgresql_per_base() {
         # shellcheck disable=SC2164
         
         declare -a connect_options
-        if [ -n "${connect_options}" ]; then
+        if [ -n "${option_host}" ]; then
             connect_options+=(--host ${option_host})
-            if [ -n "${connect_options}" ]; then
+            if [ -n "${option_port}" ]; then
                 connect_options+=(--port ${option_port})
             else
                 connect_options+=(--port 5432)
