@@ -34,7 +34,7 @@ dump_ldap() {
 # Copy dump file of Redis instances
 #
 # Arguments:
-# --instances=[Integer] (default: all)
+# --instances=[String] (default: all)
 #######################################################################
 dump_redis() {
     all_instances=$(find /var/lib/ -mindepth 1 -maxdepth 1 '(' -type d -o -type l ')' -name 'redis*')
@@ -87,17 +87,17 @@ dump_redis() {
 
         shift
     done
-    
-    for instance in "${option_instances[@]}"; do
-        name=$(basename "${instance}")
-        local dump_dir="${LOCAL_BACKUP_DIR}/${name}"
-        local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
-        rm -rf "${dump_dir}" "${errors_dir}"
-        mkdir -p "${dump_dir}" "${errors_dir}"
-        # No need to change recursively, the top directory is enough
-        chmod 700 "${dump_dir}" "${errors_dir}"
 
-        if [ -f "${instance}/dump.rdb" ]; then
+    for instance in "${option_instances[@]}"; do
+        if [ -n "${instance}" ] && [ -f "${instance}/dump.rdb" ]; then
+            name=$(basename "${instance}")
+            local dump_dir="${LOCAL_BACKUP_DIR}/${name}"
+            local errors_dir=$(errors_dir_from_dump_dir "${dump_dir}") 
+            rm -rf "${dump_dir}" "${errors_dir}"
+            mkdir -p "${dump_dir}" "${errors_dir}"
+            # No need to change recursively, the top directory is enough
+            chmod 700 "${dump_dir}" "${errors_dir}"
+
             local error_file="${errors_dir}/${name}.err"
             log "LOCAL_TASKS - ${FUNCNAME[0]}: start ${dump_dir}"
 
@@ -371,7 +371,7 @@ dump_raid_config() {
 # --targets=[IP,HOST] (default: <none>)
 #######################################################################
 dump_traceroute() {
-    local option_targets=""
+    declare -a option_targets
 
     # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
     while :; do

@@ -22,6 +22,7 @@ The **patch** part changes is incremented if multiple releases happen the same m
 ### Fixed
 
 * dump_redis: do not delete entire backup directory
+* dump_redis: clean backup directory only if the Redis instance is valid
 
 ### Security
 
