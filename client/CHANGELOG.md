@@ -21,6 +21,8 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ### Fixed
 
+* dump_redis: do not delete entire backup directory
+
 ### Security
 
 ## [24.07] - 2022-07-16

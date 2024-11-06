@@ -39,7 +39,7 @@ dump_ldap() {
 dump_redis() {
     all_instances=$(find /var/lib/ -mindepth 1 -maxdepth 1 '(' -type d -o -type l ')' -name 'redis*')
 
-    local option_instances=""
+    declare -a option_instances
     # Parse options, based on https://gist.github.com/deshion/10d3cb5f88a21671e17a
     while :; do
         case ${1:-''} in
