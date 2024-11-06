@@ -356,8 +356,10 @@ dump_postgresql_per_base() {
             fi
         fi
 
-        cd /var/lib/postgresql
+        cd /var/lib/postgresql || { log "LOCAL_TASKS - ${FUNCNAME[0]}: /var/lib/postgresql not found"; return; }
+    
         databases=$(sudo -u postgres psql -U postgres ${connect_options[*]} -lt | awk -F \| '{print $1}' | grep -v "template.*")
+
         for database in ${databases} ; do
             local error_file="${errors_dir}/${database}.err"
             local dump_file="${dump_dir}/${database}.sql${dump_ext}"

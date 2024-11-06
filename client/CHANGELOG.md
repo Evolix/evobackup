@@ -23,6 +23,7 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 * dump_redis: do not delete entire backup directory
 * dump_redis: clean backup directory only if the Redis instance is valid
+* dump_postgresql_per_base: return if postgresql directory is missing
 
 ### Security
 
