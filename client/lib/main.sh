@@ -135,7 +135,6 @@ sync_tasks_wrapper() {
         'lxc/*/rootfs/var/tmp'
         'lxc/*/rootfs/dev'
         /home/mysqltmp
-        /var/lib/docker/volumes
     )
     readonly rsync_default_excludes
 
