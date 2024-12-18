@@ -15,6 +15,8 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ### Changed
 
+* client: the template defaults to full Evolix backup
+
 ### Deprecated
 
 ### Removed
