@@ -21,6 +21,8 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ### Fixed
 
+* client: add exclude for 'lxc/*/rootfs/dev'
+
 ### Security
 
 ## [24.11] - 2022-11-29
