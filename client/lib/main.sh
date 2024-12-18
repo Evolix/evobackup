@@ -133,6 +133,7 @@ sync_tasks_wrapper() {
         'lxc/*/rootfs/var/run'
         'lxc/*/rootfs/var/state'
         'lxc/*/rootfs/var/tmp'
+        'lxc/*/rootfs/dev'
         /home/mysqltmp
     )
     readonly rsync_default_excludes
