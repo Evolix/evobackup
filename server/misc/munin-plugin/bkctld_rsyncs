@@ -1,0 +1,38 @@
+#!/bin/bash
+#
+#
+
+case $1 in
+   config)
+        cat <<'UNLIKELY_EOF'
+graph_title bkctld rsync
+graph_vlabel Number of rsync running in jails
+graph_args --lower-limit 0
+
+graph_scale no
+graph_category bkctld
+graph_info The total number of running rsync process running in jails (ecluding the rsync used to delete old incs)
+
+rsync.info Number of rsync running in jails
+rsync.label Rsync running in jails
+
+UNLIKELY_EOF
+        exit 0;;
+esac
+
+rsync_count=0
+pid_list=$(ps aux | grep "sh -c rsync" | grep -v grep | awk '{ print $2 }')
+
+for pid in $pid_list; do 
+    pid_root=$(realpath "/proc/${pid}/root")
+
+    if [[ $pid_root != '/' ]]; then
+        ((rsync_count++))
+    fi
+
+done
+
+printf "rsync.value %s\n" $rsync_count
+
+
+
