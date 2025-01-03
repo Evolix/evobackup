@@ -20,16 +20,16 @@ kill_or_clean_lockfile() {
                 # Kill the parent
                 kill -9 "${pid}"
                 #  Only one bkctld-rm can run in parallel, the latest wins
-                lockfile_date=$(date --date "@$(stat -c %Y ${lock_file})" +"%Y-%m-%d %H:%M:%S")
-                warning "Process \`${pid}' (started at ${lockfile_date}) has been killed by \`$$'"
+                lockfile_date=$(date --date "@$(stat -c %Y "${lock_file}")" +"%Y-%m-%d %H:%M:%S")
+                warning "Process '${pid}' (started at ${lockfile_date}) has been killed by '$$'"
             else
-                warning "Process not found at PID \`${pid}'. Ignoring lock file \`${lock_file}'."
+                warning "Process not found at PID '${pid}'. Ignoring lock file '${lock_file}'."
             fi
         else
-            warning "Empty lockfile \`${lock_file}'. It should contain a PID."
+            warning "Empty lockfile '${lock_file}'. It should contain a PID."
         fi
         # Remove the lock file
-        rm -f ${lock_file}
+        rm -f "${lock_file}"
     fi
 }
 incs_to_delete() {
@@ -40,13 +40,13 @@ incs_to_delete() {
     incs_list_file=$(new_tmp_file "${jail_name}.incs_list")
 
     # loop for each line in jail configuration
-    for incs_policy_line in $(grep "^\+" ${incs_policy_file}); do
+    for incs_policy_line in $(grep "^\+" "${incs_policy_file}"); do
         # inc date in ISO format
-        incs_policy_date=$(relative_date ${incs_policy_line})
-        echo ${incs_policy_date} >> "${incs_policy_keep_file}"
+        incs_policy_date=$(relative_date "${incs_policy_line}")
+        echo "${incs_policy_date}" >> "${incs_policy_keep_file}"
     done
     for inc_name in $(incs_list "${jail_name}"); do
-        echo "${inc_name}" >> ${incs_list_file}
+        echo "${inc_name}" >> "${incs_list_file}"
     done
 
     # shellcheck disable=SC2046
@@ -54,7 +54,7 @@ incs_to_delete() {
 
     rm -f "${incs_policy_keep_file}" "${incs_list_file}"
 
-    echo ${incs_to_delete}
+    echo "${incs_to_delete}"
 }
 delete_inc_btrfs() {
     jail_name=$1
@@ -83,7 +83,7 @@ delete_inc_ext4() {
         echo "[dry-run] delete ${inc_path} with rsync from empty directory"
     else
         empty=$(new_tmp_dir "empty")
-        rsync --archive --delete "${empty}/" "${inc_path}/"
+        rsync --max-alloc=0 --archive --delete "${empty}/" "${inc_path}/"
         rmdir "${inc_path}/"
         rmdir "${empty}"
     fi
@@ -97,10 +97,10 @@ delete_empty_inc() {
 
     for empty_inc in ${empty_incs_list}; do
         if dry_run; then
-            echo "[dry-run] Delete empty \`${empty_inc}'"
+            echo "[dry-run] Delete empty '${empty_inc}'"
         else
             rmdir "${empty_inc}"
-            notice "Delete empty \`${empty_inc}' : OK"
+            notice "Delete empty '${empty_inc}' : OK"
         fi
     done
 }
@@ -115,25 +115,25 @@ new_lock_file "${lock_file}"
 # We list jails in "incs" directory, not in "jails" directory
 # so we can clean old incs after a jail is archived
 jails_list=$(jails_with_incs_list)
-jails_total=$(echo $jails_list | wc -w)
+jails_total=$(echo "$jails_list" | wc -w)
 jails_count=0
 
 for jail_name in ${jails_list}; do
     jails_count=$((jails_count+1))
-    incs_policy_file=$(current_jail_incs_policy_file ${jail_name})
+    incs_policy_file=$(current_jail_incs_policy_file "${jail_name}")
     # If no incs policy is found, we don't remove incs
     if [ -n "${incs_policy_file}" ]; then
         # shellcheck disable=SC2046
         incs_to_delete=$(incs_to_delete "${jail_name}" "${incs_policy_file}")
-        incs_total=$(echo ${incs_to_delete} | wc -w)
+        incs_total=$(echo "${incs_to_delete}" | wc -w)
         incs_count=0
 
         if [ -n "${incs_to_delete}" ]; then
-            debug "Incs to be deleted for \`${jail_name}' : $(echo "${incs_to_delete}" | tr '\n', ',' | sed 's/,$//')."
+            debug "Incs to be deleted for '${jail_name}' : $(echo "${incs_to_delete}" | tr '\n', ',' | sed 's/,$//')."
             for inc_name in ${incs_to_delete}; do
                 incs_count=$((incs_count+1))
                 info "Progress: jail ${jails_count} out of ${jails_total} - inc ${incs_count} out of ${incs_total}"
-                notice "Delete inc \`${inc_name}' for jail \`${jail_name}' : start"
+                notice "Delete inc '${inc_name}' for jail '${jail_name}' : start"
 
                 inc_path=$(inc_path "${jail_name}" "${inc_name}")
 
@@ -143,13 +143,13 @@ for jail_name in ${jails_list}; do
                     delete_inc_ext4 "${jail_name}" "${inc_name}"
                 fi
 
-                notice "Delete inc \`${inc_name}' for jail \`${jail_name}' : finish"
+                notice "Delete inc '${inc_name}' for jail '${jail_name}' : finish"
             done
         else
-            notice "Skip jail \`${jail_name}' : no inc to delete"
+            notice "Skip jail '${jail_name}' : no inc to delete"
         fi
     else
-        notice "Skip jail \`${jail_name}' : incs policy is missing"
+        notice "Skip jail '${jail_name}' : incs policy is missing"
     fi
     # Delete empty incs directory for jail
     delete_empty_inc "${jail_name}"

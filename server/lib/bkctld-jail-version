@@ -1,7 +1,7 @@
 #!/bin/sh
 #
-# Description: Check if a SSH server is on (exit 0) or not (exit 100)
-# Usage: is-on <jailname>
+# Description: Returns the jail version 
+# Usage: jail-version <jailname>
 #
 
 # shellcheck source=./includes
@@ -16,9 +16,4 @@ jail_path=$(jail_path "${jail_name}")
 
 test -d "${jail_path}" || error "${jail_name}: jail not found" 2
 
-# Error codes are references in "includes" file
-return=100
-if systemctl is-active --quiet systemd-nspawn@"${jail_name}"; then
-     return=0
-fi
-exit "${return}"
+get_jail_version "${jail_name}"

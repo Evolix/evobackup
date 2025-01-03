@@ -37,16 +37,18 @@ And **if the backup server is compromised** an attacker has complete access to a
 
 This architecture is as secure as SSH, Rsync, chroot and iptables are.
 
-## Install
-
-See the [installation guide](docs/install.md) for instructions.
-
 ## Testing
 
 You can deploy test environments with Vagrant :
 
 ~~~
 vagrant up
+~~~
+
+To destroy Vagrant VMs :
+
+~~~
+vagrant destroy
 ~~~
 
 ### Deployment
