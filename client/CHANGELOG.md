@@ -13,6 +13,9 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ### Added
 
+* Introducing munin-plugins for bkctld
+* Add function for backup Linstor Database
+
 ### Changed
 
 ### Deprecated
@@ -20,6 +23,9 @@ The **patch** part changes is incremented if multiple releases happen the same m
 ### Removed
 
 ### Fixed
+
+* dump_elasticsearch: Add an `\n` before HTTP status code
+* Fix compatibility with OpenBSD
 
 ### Security
 
