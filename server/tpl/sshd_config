@@ -1,0 +1,38 @@
+Port 2222
+Protocol 2
+
+HostKey /etc/ssh/ssh_host_rsa_key
+HostKey /etc/ssh/ssh_host_ecdsa_key
+HostKey /etc/ssh/ssh_host_ed25519_key
+
+## Uncomment if an old client (Debian <= 8) still uses ssh-rsa key
+#PubkeyAcceptedAlgorithms +ssh-rsa
+
+## Uncomment if an old client (Debian <= 8) only knows the rsa host key
+#HostkeyAlgorithms +ssh-rsa
+
+
+SyslogFacility AUTH
+LogLevel INFO
+LoginGraceTime 120
+PermitRootLogin without-password
+StrictModes yes
+PubkeyAuthentication yes
+AuthorizedKeysFile %h/.ssh/authorized_keys
+
+IgnoreRhosts yes
+HostbasedAuthentication no
+PermitEmptyPasswords no
+ChallengeResponseAuthentication no
+PasswordAuthentication no
+
+X11Forwarding no
+X11DisplayOffset 10
+PrintMotd no
+PrintLastLog yes
+TCPKeepAlive yes
+UseDNS no
+
+Subsystem sftp /usr/lib/openssh/sftp-server
+
+AllowUsers root@0.0.0.0/0

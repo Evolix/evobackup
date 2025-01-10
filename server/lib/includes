@@ -1,0 +1,562 @@
+#!/bin/sh
+#
+# Config for bkctld
+#
+# shellcheck disable=SC2034
+
+[ -f /etc/default/bkctld ] && . /etc/default/bkctld
+
+VERSION="24.10"
+CURRENT_JAIL_VERSION="2"
+
+LIBDIR=${LIBDIR:-/usr/lib/bkctld}
+CONFDIR="${CONFDIR:-/etc/evobackup}"
+BACKUP_DISK="${BACKUP_DISK:-}"
+BACKUP_PARTITION="${BACKUP_PARTITION:-/backup}"
+JAILDIR="${JAILDIR:-${BACKUP_PARTITION}/jails}"
+INCDIR="${INCDIR:-${BACKUP_PARTITION}/incs}"
+TPLDIR="${TPLDIR:-/usr/share/bkctld}"
+LOCALTPLDIR="${LOCALTPLDIR:-/usr/local/share/bkctld}"
+LOCKDIR="${LOCKDIR:-/run/lock/bkctld}"
+ARCHIVESDIR="${ARCHIVESDIR:-${BACKUP_PARTITION}/archives}"
+INDEX_DIR="${INDEX_DIR:-${BACKUP_PARTITION}/index}"
+IDX_FILE="${IDX_FILE:-${INDEX_DIR}/bkctld-jails.idx}"
+CANARY_RELATIVE_FILE="${CANARY_RELATIVE_FILE:-/zzz_evobackup_canary}"
+SSHD_PID="${SSHD_PID:-/run/sshd.pid}"
+SSHD_CONFIG="${SSHD_CONFIG:-/etc/ssh/sshd_config}"
+AUTHORIZED_KEYS="${AUTHORIZED_KEYS:-/root/.ssh/authorized_keys}"
+FIREWALL_RULES="${FIREWALL_RULES:-}"
+LOGLEVEL="${LOGLEVEL:-6}"
+CRITICAL="${CRITICAL:-48}"
+WARNING="${WARNING:-24}"
+DUC=$(command -v duc-nox || command -v duc)
+FORCE="${FORCE:-0}"
+HEADER="${HEADER:-1}"
+
+show_version() {
+    cat <<END
+bkctld version ${VERSION}
+
+Copyright 2004-2022 Evolix <info@evolix.fr>,
+                    Victor Laborie <vlaborie@evolix.fr>,
+                    Jérémy Lecour <jlecour@evolix.fr>
+                    and others.
+
+bkctld comes with ABSOLUTELY NO WARRANTY.  This is free software,
+and you are welcome to redistribute it under certain conditions.
+See the GNU Affero General Public License v3.0 for details.
+END
+}
+show_help() {
+    cat <<EOF
+Usage: bkctld [options] <subcommand> [arguments]
+Options
+    -h|--help|-?     Display help
+    -V|--version     Display version, authors and license
+Subcommands:
+EOF
+
+    for filename in ${LIBDIR}/bkctld-*; do
+        desc=$(grep -E "^# Description:" "${filename}"|sed "s/^# Description: //")
+        usage=$(grep -E "^# Usage:" "${filename}"|sed "s/^# Usage: //")
+        printf "    %- 32s %s\n" "${usage}" "${desc}"
+    done
+
+    printf "\n"
+}
+
+is_quiet() {
+    test "${QUIET}" -eq 1
+}
+is_verbose() {
+    test "${VERBOSE}" -eq 1
+}
+
+log_date() {
+    echo "[$(date +"%Y-%m-%d %H:%M:%S")]"
+}
+process_name() {
+    basename "$0"
+}
+debug() {
+    msg="${1:-$(cat /dev/stdin)}"
+    if [ "${LOGLEVEL}" -ge 7 ]; then
+        echo "${msg}"
+        logger -t bkctld -p daemon.debug "$(process_name) ${msg}"
+    fi
+}
+
+info() {
+    msg="${1:-$(cat /dev/stdin)}"
+    if [ "${LOGLEVEL}" -ge 6 ]; then
+        tty -s && echo "${msg}"
+        logger -t bkctld -p daemon.info "$(process_name) ${msg}"
+    fi
+}
+
+notice() {
+    msg="${1:-$(cat /dev/stdin)}"
+    tty -s && echo "${msg}"
+    [ "${LOGLEVEL}" -ge 5 ] && logger -t bkctld -p daemon.notice "$(process_name) ${msg}"
+}
+
+warning() {
+    msg="${1:-$(cat /dev/stdin)}"
+    tty -s && echo "${msg}" >&2
+    if [ "${LOGLEVEL}" -ge 4 ]; then
+        tty -s || echo "${msg}" >&2
+        logger -t bkctld -p daemon.warning "$(process_name) ${msg}"
+    fi
+}
+# Return codes
+# 1 : generic error
+# 2 : jail not found
+# > 100 : subcommands specific errors
+error() {
+    msg="${1:-$(cat /dev/stdin)}"
+    rc="${2:-1}"
+    tty -s && echo "${msg}" >&2
+    if [ "${LOGLEVEL}" -ge 5 ]; then
+        tty -s || echo "${msg}" >&2
+        logger -t bkctld -p daemon.error "$(process_name) ${msg}"
+    fi
+    exit "${rc}"
+}
+
+dry_run() {
+    test "$DRY_RUN" = "1"
+}
+
+current_time() {
+    date +"%H:%M:%S"
+}
+
+# Returns true if the given path is on a btrfs filesystem
+is_btrfs() {
+    path=$1
+
+    inode=$(stat --format=%i "${path}")
+
+    test "$inode" -eq 256
+}
+
+# Returns the list of jails found in the "jails" directory (default)
+jails_list() {
+    # TODO: try if this command works the same :
+    # find "${JAILDIR}" -mindepth 1 -maxdepth 1 -type d -printf '%f\n'
+    find "${JAILDIR}" -mindepth 1 -maxdepth 1 -type d | sed 's!.*/!!' | sort -h
+}
+# Returns the list of jails found in the "incs" directory
+jails_with_incs_list() {
+    find "${INCDIR}" -mindepth 1 -maxdepth 1 -type d | sed 's!.*/!!' | sort -h
+}
+# Returns the complete path of a jail
+jail_path() {
+    jail_name=${1:?}
+
+    echo "${JAILDIR}/${jail_name}"
+}
+jail_rootfs_path() {
+    jail_name=${1:?}
+
+    echo "${JAILDIR}/${jail_name}/rootfs"
+}
+jail_var_path() {
+    jail_name=${1:?}
+
+    echo "${JAILDIR}/${jail_name}/var"
+}
+jail_config_dir() {
+    jail_name=${1:?}
+
+    echo "${CONFDIR}/${jail_name}.d"
+}
+jail_incs_policy_file() {
+    jail_name=${1:?}
+
+    jail_config_dir=$(jail_config_dir "${jail_name}")
+
+    echo "${jail_config_dir}/incs_policy"
+}
+# Returns the complete path of an archived jail
+archive_path() {
+    jail_name=${1:?}
+
+    echo "${ARCHIVESDIR}/${jail_name}"
+}
+# Returns the path of incs for a jail
+incs_path() {
+    jail_name=${1:?}
+
+    echo "${INCDIR}/${jail_name}"
+}
+# Returns the path of a specific inc for a jail
+inc_path() {
+    jail_name=${1:?}
+    inc_name=${2:?}
+
+    echo "${INCDIR}/${jail_name}/${inc_name}"
+}
+# Test the existence of an inc pattern for a jail
+inc_exists() {
+    jail_name=${1-?}
+    inc_pattern=${2-?}
+    inc_path=$(inc_path "${jail_name}" "${inc_pattern}")
+
+    # inc_path must not be quoted because it can contain globs
+    # shellcheck disable=SC2086
+    ls -d ${inc_path} > /dev/null 2>&1
+}
+# Returns the list of all incs for a jail
+incs_list() {
+    jail_name=${1:?}
+    find "$(incs_path "${jail_name}")" -mindepth 1 -maxdepth 1 -type d | sed 's!.*/!!' | sort -h
+}
+# Return the list of empty incs directories
+empty_incs_list() {
+    find "${INCDIR}" -mindepth 1 -maxdepth 1 -type d -empty
+}
+current_jail_incs_policy_file() {
+    jail_name=${1:?}
+
+    new_file="$(jail_incs_policy_file "${jail_name}")"
+    old_file="${CONFDIR}/${jail_name}"
+
+    if [ -f "${new_file}" ]; then
+        echo "${new_file}"
+    elif [ -f "${old_file}" ]; then
+        echo "${old_file}"
+    else
+        echo ""
+    fi
+}
+jail_check_policy_file() {
+    jail_name=${1:?}
+
+    jail_config_dir=$(jail_config_dir "${jail_name}")
+
+    echo "${jail_config_dir}/check_policy"
+}
+current_jail_check_policy_file() {
+    jail_name=${1:?}
+
+    new_file="$(jail_check_policy_file "${jail_name}")"
+    # old_file="${JAILDIR}/${jail_name}/etc/bkctld-check"
+
+    if [ -f "${new_file}" ]; then
+        echo "${new_file}"
+    # elif [ -f "${old_file}" ]; then
+    #     echo "${old_file}"
+    else
+        echo ""
+    fi
+}
+# relative_date "+%Y-%m-%d.-2day"
+relative_date() {
+    format=$(echo "$1" | cut -d'.' -f1)
+    time_jump=$(echo "$1" | cut -d'.' -f2)
+
+    reference_date=$(date "${format}")
+    past_date=$(date --date "${reference_date} ${time_jump}" +"%Y-%m-%d")
+
+    echo "${past_date}"
+}
+new_tmp_file() {
+    name=${1:-}
+
+    mktemp --tmpdir "bkctld.${$}.${name}.XXXXX"
+}
+new_tmp_dir() {
+    name=${1:-}
+
+    mktemp --directory --tmpdir "bkctld.${$}.${name}.XXXXX"
+}
+cleanup_tmp() {
+    find "${TMPDIR:-/tmp}" -name "bkctld.${$}.*" -delete
+}
+new_lock_file() {
+    lock_file=${1:-}
+    lock_dir=$(dirname "${lock_file}")
+
+    mkdir --parents "${lock_dir}" && echo $$ > "${lock_file}" || error "Failed to acquire lock file '${lock_file}'"
+}
+
+pkg_version() {
+    # $(command -v ssh) -V 2>&1 | grep -iEo 'OpenSSH_(\S+)' | cut -d '_' -f2
+    dpkg-query -W -f='${Version}\n' "$1" \
+    | sed 's/[~+-].\+//' \
+    | sed 's/.\+://' \
+    | sed 's/p.*//' \
+    | cut -d. -f1,2
+}
+ssh_keygen_with_prefix() {
+    # openssh-client 7.9 provides ssh-keygen with "-f prefix_path" option
+    dpkg --compare-versions "$(pkg_version 'openssh-client')" ge "7.9"
+}
+
+setup_jail_chroot() {
+    jail_name=${1:?}
+
+    jail_path=$(jail_path "${jail_name}")
+    jail_rootfs_path=$(jail_rootfs_path "${jail_name}")
+    jail_var_path=$(jail_var_path "${jail_name}")
+
+    mkdir --parents "${jail_rootfs_path}"
+    mkdir --parents "${jail_var_path}"
+    mkdir --parents "${jail_path}"/data
+
+    passwd="${TPLDIR}/passwd"
+    shadow="${TPLDIR}/shadow"
+    group="${TPLDIR}/group"
+    sshrc="${TPLDIR}/sshrc"
+    [ -f "${LOCALTPLDIR}/passwd" ] && passwd="${LOCALTPLDIR}/passwd"
+    [ -f "${LOCALTPLDIR}/shadow" ] && shadow="${LOCALTPLDIR}/shadow"
+    [ -f "${LOCALTPLDIR}/group" ] && group="${LOCALTPLDIR}/group"
+    [ -f "${LOCALTPLDIR}/sshrc" ] && sshrc="${LOCALTPLDIR}/sshrc"
+
+    cd "${jail_path}" || error "${jail_name}: failed to change directory to ${jail_path}."
+    umask 077
+
+    info "1 - Creating the jail directories"
+    echo "${CURRENT_JAIL_VERSION}" > ./version
+
+    rm -rf ./rootfs/usr
+    rm -rf ./rootfs/bin
+    rm -rf ./rootfs/lib
+    rm -rf ./rootfs/lib64
+    # Let's not delete the existing SSH host keys and server config
+    # otherwise the clients will have to accept the new keys
+
+    mkdir -p ./rootfs/dev
+    mkdir -p ./rootfs/proc
+    mkdir -p ./rootfs/run
+    mkdir -p ./rootfs/tmp
+    mkdir -p ./rootfs/data
+
+    mkdir -p ./rootfs/usr/bin
+    mkdir -p ./rootfs/usr/sbin
+    mkdir -p ./rootfs/usr/lib
+    mkdir -p ./rootfs/usr/lib/x86_64-linux-gnu
+    mkdir -p ./rootfs/usr/lib/openssh
+    mkdir -p ./rootfs/usr/lib64
+    mkdir -p ./rootfs/etc/ssh
+
+    mkdir -p ./var/log
+
+    # shellcheck disable=SC2174
+    mkdir -p ./rootfs/root/.ssh --mode 0700
+    # shellcheck disable=SC2174
+    mkdir -p ./var/backup --mode 0700
+
+    ln -s ./usr/bin ./rootfs/bin
+    ln -s ./usr/lib ./rootfs/lib
+    ln -s ./usr/lib64 ./rootfs/lib64
+
+    touch ./rootfs/etc/localtime ./rootfs/etc/resolv.conf
+    touch ./var/log/lastlog ./var/log/wtmp
+
+
+    info "2 - Copying essential files"
+
+    if ssh_keygen_with_prefix; then
+        # Generate SSH host keys if missing in jail
+        ssh-keygen -A -f "${jail_rootfs_path}"
+    else
+        # Copy SSH host keys from host if missing in jail
+        for key in /etc/ssh/*_key; do
+            cp --no-clobber "${key}" "${jail_rootfs_path}"/"${key}";
+        done
+    fi
+
+    touch "./rootfs/${AUTHORIZED_KEYS}"
+    chmod 600 "./rootfs/${AUTHORIZED_KEYS}"
+
+    cp "${passwd}" ./rootfs/etc
+    cp "${shadow}" ./rootfs/etc
+    cp "${group}" ./rootfs/etc
+    cp "${sshrc}" ./rootfs/etc/ssh
+
+    cp /etc/os-release ./rootfs/etc/os-release
+    sed -i -E 's/^ID=(.*)$/ID=\1-bkctld/g' ./rootfs/etc/os-release
+
+    info "3 - Copying binaries"
+
+    cp -f /usr/lib/ld-linux.so.2 ./rootfs/usr/lib 2>/dev/null || cp -f /usr/lib64/ld-linux-x86-64.so.2 ./rootfs/usr/lib64
+    cp /usr/lib/x86_64-linux-gnu/libnss* ./rootfs/usr/lib/x86_64-linux-gnu
+
+    for dbin in \
+        /usr/bin/sh \
+        /usr/bin/ls \
+        /usr/bin/mkdir \
+        /usr/bin/cat \
+        /usr/bin/rm \
+        /usr/bin/sed \
+        /usr/bin/rsync \
+        /usr/bin/lastlog \
+        /usr/bin/touch \
+        /usr/sbin/sshd \
+        /usr/lib/openssh/sftp-server\
+        ; do
+        cp -f "${dbin}" "./rootfs/${dbin}";
+        for lib in $(ldd "${dbin}" | grep -Eo "/.*so.[0-9\.]+"); do
+            cp -p "${lib}" "./rootfs/usr/${lib}"
+        done
+    done
+
+    info "4 - Add startup script & nspawn config"
+
+    cat <<UNLIKELY_EOF >./rootfs/start.sh
+#!/bin/sh
+
+mkdir /run/sshd
+exec /usr/sbin/sshd -D -e -f /etc/ssh/sshd_config
+UNLIKELY_EOF
+
+    
+    generate_jail_nspawn_config "${jail_name}"
+
+    [ -e "/var/lib/machines/${jail_name}" ] && unlink "/var/lib/machines/${jail_name}"
+    ln -s "${jail_rootfs_path}" "/var/lib/machines/${jail_name}"
+
+}
+
+setup_jail_config() {
+    jail_name=${1:?}
+
+    jail_rootfs_path=$(jail_rootfs_path "${jail_name}")
+    jail_sshd_config="${jail_rootfs_path}/${SSHD_CONFIG}"
+
+    sshd_config_tpl="${TPLDIR}/sshd_config"
+    test -f "${LOCALTPLDIR}/sshd_config" && sshd_config_tpl="${LOCALTPLDIR}/sshd_config"
+
+    info "5 - Copy default sshd_config"
+    install -m 0640 "${sshd_config_tpl}" "${jail_sshd_config}"
+
+
+    info "6 - Copy default inc configuration"
+    incs_policy_tpl="${TPLDIR}/incs_policy.tpl"
+    test -f "${LOCALTPLDIR}/incs_policy.tpl" && incs_policy_tpl="${LOCALTPLDIR}/incs_policy.tpl"
+    jail_incs_policy_file=$(jail_incs_policy_file "${jail_name}")
+    mkdir --parents "$(dirname "${jail_incs_policy_file}")"
+    install -m 0640 "${incs_policy_tpl}" "${jail_incs_policy_file}"
+
+    check_policy_tpl="${TPLDIR}/check_policy.tpl"
+    test -f "${LOCALTPLDIR}/check_policy.tpl" && check_policy_tpl="${LOCALTPLDIR}/check_policy.tpl"
+    jail_check_policy_file=$(jail_check_policy_file "${jail_name}")
+    mkdir --parents "$(dirname "${jail_check_policy_file}")"
+    install -m 0640 "${check_policy_tpl}" "${jail_check_policy_file}"
+
+    "${LIBDIR}/bkctld-port" "${jail_name}" auto
+}
+
+generate_jail_nspawn_config(){
+    jail_name=${1:?}
+
+    mkdir --parents /etc/systemd/nspawn/
+
+    cat <<UNLIKELY_EOF >/etc/systemd/nspawn/"${jail_name}".nspawn
+[Exec]
+ProcessTwo=True
+Parameters=/bin/sh start.sh
+DropCapability=CAP_SYS_ADMIN
+NoNewPrivileges=True
+SystemCallFilter=~@system-service
+PrivateUsers=False
+LinkJournal=no
+
+[Files]
+ReadOnly=True
+Bind=/backup/jails/${jail_name}/var:/var
+Bind=/backup/jails/${jail_name}/data:/data
+Bind=/backup/jails/${jail_name}/data:/var/backup
+
+[Network]
+Private=False
+
+UNLIKELY_EOF
+}
+
+convert_jail_chroot_to_v2() {
+    jail_name=${1:?}
+
+    jail_path=$(jail_path "${jail_name}")
+    jail_rootfs_path=$(jail_rootfs_path "${jail_name}")
+    jail_var_path=$(jail_var_path "${jail_name}")
+
+
+    cd "${jail_path}" || error "${jail_name}: failed to change directory to ${jail_path}."
+    umask 077
+
+    # Create the new jail rootfs path
+    mkdir --parents "${jail_rootfs_path}"
+
+    # Move config & jail data into their new paths
+    mv ./etc ./rootfs/etc
+    mv ./root ./rootfs/root
+    mv ./var/backup ./data
+
+    # Cleanup old directories
+    # They will be recreated with the next setup_jail_chroot() call
+    rm -rf ./bin
+    rm -rf ./lib
+    rm -rf ./lib64
+    rm -rf ./run
+    rm -rf ./usr
+    rm -rf ./var/run
+
+    test -d ./proc/ && rmdir ./proc/
+    test -d ./dev/ && rmdir ./dev/
+
+    # Mark the jail as version 2
+    echo "2" > ./version
+}
+
+is_mounted_inside_jail() {
+    target=${1:?}
+
+    # TODO: try to find why it doesn't work with this findmnt(8) command
+    # findmnt --target "${target}" --tab-file /proc/mounts
+    grep -q "${target}" /proc/mounts
+}
+
+read_variable() {
+    file=${1:?}
+    var_name=${2:?}
+
+    pattern="^\s*${var_name}=.+"
+
+    grep --extended-regexp --only-matching "${pattern}" "${file}" | tail -1 | cut -d= -f2
+}
+
+read_numerical_variable() {
+    file=${1:?}
+    var_name=${2:?}
+
+    pattern="^\s*${var_name}=-?[0-9]+"
+
+    grep --extended-regexp --only-matching "${pattern}" "${file}" | tail -1 | cut -d= -f2
+}
+
+get_jail_sshd_pid(){
+    jail_name=${1:?}
+    
+    ## Expected PID hierarchy (ps --forest...)
+    # 62054 ?        Ss     0:00 systemd-nspawn --quiet --keep-unit --boot --link-journal=try-guest --network-veth -U --settings=override --machine=test
+    # 62057 ?        Ss     0:00  \_ (sd-stubinit)
+    # 62059 pts/0    Ss+    0:00      \_ sshd: /usr/sbin/sshd -D -e -f /etc/ssh/sshd_config [listener] 0 of 10-100 startups
+
+    jail_init_pid=$(pgrep -P "$(systemctl show --value --property MainPID systemd-nspawn@"${jail_name}")")
+    pgrep -P "${jail_init_pid}"
+}
+
+get_jail_version(){
+    jail_name=${1:?}
+    jail_path=$(jail_path "${jail_name}")
+
+    if [ -e "${jail_path}/version" ]; then 
+        cat "${jail_path}/version"
+    else
+        echo 1
+    fi
+}
+

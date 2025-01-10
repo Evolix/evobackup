@@ -1,0 +1,53 @@
+#!/bin/sh
+#
+# Description: Lock or unlock dated copies (incs) on BTRFS formatted volumes
+# Usage: inc-<lock|unlock> <all|jailname[/inc]>
+#
+
+# shellcheck source=./includes
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
+
+lock_status="${1:?}"
+target_path="${2:?}"
+
+lock_target() {
+    target="${1:?}"
+    btrfs_bin=$(command -v btrfs)
+    if [ -z "${btrfs_bin}" ]; then
+        error "btrfs not found. Please install btrfs-progs."
+    fi
+    if is_btrfs "${target}"; then
+        ${btrfs_bin} property set -ts "${target}" ro true
+        info "Lock ${target}: done".
+    else
+        info "Lock ${target}: not BTRFS, nothing done".
+    fi
+}
+unlock_target() {
+    target="${1:?}"
+    btrfs_bin=$(command -v btrfs)
+    if [ -z "${btrfs_bin}" ]; then
+        error "btrfs not found. Please install brtfs-progs."
+    fi
+    if is_btrfs "${target}"; then
+        ${btrfs_bin} property set -ts "${target}" ro false
+        info "Unlock ${target}: done."
+    else
+        info "Unlock ${target}: not BTRFS, nothing done."
+    fi
+}
+
+# this directory test must be quoted,beacause of the probable globbing
+if [ -d "${target_path}" ]; then
+    if [ "${lock_status}" = "on" ]; then
+        lock_target "${target_path}"
+    elif [ "${lock_status}" = "off" ]; then
+        unlock_target "${target_path}"
+    else
+        error "Unknown lock status '${lock_status}'."
+        exit 1
+    fi
+else
+    error "'${target_path}': no such file or directory."
+    exit 1
+fi

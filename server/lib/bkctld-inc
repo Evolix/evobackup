@@ -1,0 +1,78 @@
+#!/bin/sh
+#
+# Description: Make dated copies (incs) of jails
+# Usage: inc
+#
+
+# shellcheck source=./includes
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
+
+create_inc_btrfs() {
+    jail_name=${1:?}
+    inc_name=${2:?}
+
+    jail_path=$(jail_path "${jail_name}")
+    inc_path=$(inc_path "${jail_name}" "${inc_name}")
+
+    btrfs_bin=$(command -v btrfs)
+    if [ -z "${btrfs_bin}" ]; then
+        error "btrfs not found. Please install btrfs-progs."
+    fi
+
+    if dry_run; then
+        echo "[dry-run] btrfs subvolume snapshot of ${jail_path} to ${inc_path}"
+    else
+        mkdir --parents "$(dirname "${inc_path}")"
+        # create a btrfs readonly snapshot from the jail
+        ${btrfs_bin} subvolume snapshot -r "${jail_path}" "${inc_path}" | debug
+    fi
+}
+create_inc_ext4() {
+    jail_name=${1:?}
+    inc_name=${2:?}
+
+    jail_path=$(jail_path "${jail_name}")
+    inc_path=$(inc_path "${jail_name}" "${inc_name}")
+
+    if dry_run; then
+        echo "[dry-run] copy of ${jail_path} to ${inc_path}"
+    else
+        mkdir --parents "$(dirname "${inc_path}")"
+        # create a copy of the jail with hard links
+        cp --archive --link --one-file-system "${jail_path}/" "${inc_path}"
+    fi
+}
+
+inc_name=$(date +"%Y-%m-%d-%H")
+
+jails_list=$(jails_list)
+jails_total=$(echo "$jails_list" | wc -w)
+jails_count=0
+
+for jail_name in ${jails_list}; do
+    jails_count=$((jails_count+1))
+    jail_path=$(jail_path "${jail_name}")
+    inc_path=$(inc_path "${jail_name}" "${inc_name}")
+    incs_policy_file=$(current_jail_incs_policy_file "${jail_name}")
+
+    # If no incs policy is found, we don't create incs
+    if [ -n "${incs_policy_file}" ]; then
+        # If inc directory is not present, we proceed with inc creation
+        if [ ! -d "${inc_path}" ]; then
+            info "Progress: jail ${jails_count} out of ${jails_total}"
+            notice "Create inc '${inc_name}' for jail '${jail_name}' : start"
+
+            if is_btrfs "${jail_path}"; then
+                create_inc_btrfs "${jail_name}" "${inc_name}"
+            else
+                create_inc_ext4 "${jail_name}" "${inc_name}"
+            fi
+
+            notice "Create inc '${inc_name}' for jail '${jail_name}' : finish"
+        else
+            warning "Skip inc '${inc_name}' for jail '${jail_name}' : it already exists."
+        fi
+    else
+        notice "Skip jail '${jail_name}' : incs policy is missing"
+    fi
+done

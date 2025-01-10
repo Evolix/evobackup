@@ -1,0 +1,26 @@
+#!/bin/sh
+#
+# Description: Reload SSH server
+# Usage: reload [<jailname>|all]
+#
+
+# shellcheck source=./includes
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
+
+jail_name="${1:?}"
+if [ -z "${jail_name}" ]; then
+    show_help && exit 1
+fi
+jail_path=$(jail_path "${jail_name}")
+
+test -d "${jail_path}" || error "${jail_name}: jail not found" 2
+
+"${LIBDIR}/bkctld-is-on" "${jail_name}" || exit 0
+
+pid=$(get_jail_sshd_pid "${jail_name}")
+
+if kill -HUP "${pid}"; then
+    notice "Reload jail '${jail_name}' : OK [${pid}]"
+else
+    error "Reload jail '${jail_name}' : failed [${pid}]"
+fi

@@ -1,0 +1,62 @@
+#!/bin/sh
+#
+# Description: Start SSH Server
+# Usage: start <jailname>|all
+#
+
+# shellcheck source=./includes
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
+
+jail_name="${1:?}"
+if [ -z "${jail_name}" ]; then
+    show_help && exit 1
+fi
+jail_path=$(jail_path "${jail_name}")
+
+test -d "${jail_path}" || error "${jail_name}: jail not found" 2
+
+"${LIBDIR}/bkctld-is-on" "${jail_name}" && exit 0
+
+# Ensure we only start jails in the current/compatible version format
+test "$(get_jail_version "${jail_name}")" -ne "${CURRENT_JAIL_VERSION}" && error "${jail_name}: jail needs to be updated to version ${CURRENT_JAIL_VERSION} (currently $(get_jail_version "${jail_name}")) - Use bkctld convert-v2 <jail>" 3
+
+# Start the jail
+notice "Starting jail '${jail_name}'"
+systemctl start systemd-nspawn@"${jail_name}"  || error "Failed to start nspawn container for jail '${jail_name}'"
+
+if systemctl is-active --quiet systemd-nspawn@"${jail_name}"; then
+    port=$("${LIBDIR}/bkctld-port" "${jail_name}")
+    success=1
+
+    for try in $(seq 1 10); do
+        # Is the jail still running?
+        if ! systemctl is-active --quiet systemd-nspawn@"${jail_name}"; then
+            printf 'x '
+            break
+        fi
+        
+        # Is SSH alive and responding ?
+        if /usr/lib/nagios/plugins/check_ssh  --port="${port}" localhost >/dev/null 2>&1; then
+            success=0
+            break
+        else
+            printf '.'
+            sleep 0.3
+        fi
+    done
+    
+
+    if [ "${success}" -eq 0 ]; then
+        notice "OK SSH : Started jail '${jail_name}'"
+    else
+        if systemctl is-active --quiet systemd-nspawn@"${jail_name}"; then
+            error "WARNING SSH : Jail is running, but failed to get response from sshd for jail '${jail_name}' within 3 seconds"
+        else
+            error "Failed to to start '${jail_name}' - Jail terminated. Check 'systemctl status systemd-nspawn@${jail_name}'"
+        fi
+        
+    fi
+
+else
+    error "Failed to to start '${jail_name}' - Jail terminated. Check 'systemctl status systemd-nspawn@${jail_name}'"
+fi

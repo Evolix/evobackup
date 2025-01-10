@@ -1,0 +1,29 @@
+#!/bin/bash
+#
+#
+
+case $1 in
+   config)
+        cat <<'UNLIKELY_EOF'
+graph_title bkctld jails
+graph_vlabel Number of jails
+graph_args --lower-limit 0
+
+graph_scale no
+graph_category bkctld
+graph_info The total number of configured jails on the server
+
+jails.info Number of backup jails configured
+jails.label Jails Configured
+
+jails_active.info Number of backup jails active (running)
+jails_active.label Jails active
+UNLIKELY_EOF
+        exit 0;;
+esac
+
+printf "jails.value "
+bkctld list | wc -l
+
+printf "jails_active.value "
+bkctld status all | grep -v "^JAIL NAME" | grep ON | wc -l

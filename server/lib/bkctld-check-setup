@@ -1,0 +1,91 @@
+#!/bin/sh
+#
+# Description: Run check on jails (NRPE output)
+# Usage: check setup
+#
+
+# shellcheck source=./includes
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
+
+return=0
+nb_crit=0
+nb_warn=0
+nb_ok=0
+nb_unkn=0
+output=""
+
+# Verify backup partition is mounted and writable
+if ! findmnt -O rw --mountpoint "${BACKUP_PARTITION}" > /dev/null; then
+    nb_crit=$((nb_crit + 1))
+    output="${output}CRITICAL - Backup disk '/backup' is not mounted (or read-only) !\n"
+    return=2
+else
+    nb_ok=$((nb_ok + 1))
+    output="${output}OK - Backup disk '/backup' is mounted and writable.\n"
+fi
+
+# Check if the firewall file is sourced
+
+minifirewall_config=/etc/default/minifirewall
+
+if [ -n "${FIREWALL_RULES}" ] \
+&& [ -r "${FIREWALL_RULES}" ] \
+&& [ -f "${minifirewall_config}" ]; then
+    minifirewall_version=$(grep -E -o "^VERSION=(\S+)" /etc/init.d/minifirewall | head -1 | cut -d '=' -f 2 | tr -d "'" | tr -d '"')
+
+    if [ -n "${minifirewall_version}" ] && dpkg --compare-versions "${minifirewall_version}" ge "22.03"; then
+        # Minifirewall 22.03+ includes files automatically
+        nb_ok=$((nb_ok + 1))
+        output="${output}OK - Firewall file '${FIREWALL_RULES}' is present.\n"
+    else
+        if grep -qE "^(\.|source) ${FIREWALL_RULES}" "${minifirewall_config}"; then
+            nb_ok=$((nb_ok + 1))
+            output="${output}OK - Firewall file '${FIREWALL_RULES}' is sourced by '${minifirewall_config}'.\n"
+        else
+            nb_warn=$((nb_warn + 1))
+            output="${output}WARNING - Firewall file '${FIREWALL_RULES}' doesn't seem to be sourced by '${minifirewall_config}'\n"
+            [ "${return}" -le 1 ] && return=1
+        fi
+    fi
+fi
+
+# Check if jails are started
+nb_on=0
+nb_off=0
+for jail_name in $(jails_list); do
+    if "${LIBDIR}/bkctld-is-on" "${jail_name}"; then
+        nb_on=$((nb_on + 1))
+    else
+        expected_state="ON"
+        check_policy_file=$(current_jail_check_policy_file "${jail_name}")
+
+        if [ -f "${check_policy_file}" ]; then
+            expected_state=$(read_variable "${check_policy_file}" "EXPECTED_STATE")
+        fi
+        if [ "${expected_state}" != "OFF" ]; then
+            nb_off=$((nb_off + 1))
+        fi
+    fi
+done
+if [ "${nb_off}" -eq 0 ]; then
+    output="${output}OK - all jails are in their expected state.\n"
+    nb_ok=$((nb_ok + 1))
+else
+    output="${output}CRITICAL - ${nb_off} jail(s) shouldn't be OFF !\n"
+    nb_crit=$((nb_crit + 1))
+    [ "${return}" -le 2 ] && return=2
+fi
+
+[ "${return}" -ge 0 ] && header="OK"
+[ "${return}" -ge 1 ] && header="WARNING"
+[ "${return}" -ge 2 ] && header="CRITICAL"
+[ "${return}" -ge 3 ] && header="UNKNOWN"
+
+printf "%s - %s UNK / %s CRIT / %s WARN / %s OK\n\n" "${header}" "${nb_unkn}" "${nb_crit}" "${nb_warn}" "${nb_ok}"
+
+echo -n "${output}" | grep -E "^UNKNOWN"
+echo -n "${output}" | grep -E "^CRITICAL"
+echo -n "${output}" | grep -E "^WARNING"
+echo -n "${output}" | grep -E "^OK"
+
+exit "${return}"
