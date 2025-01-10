@@ -19,6 +19,8 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 * bkctld-inc: Add log message at begining/end of operations (with the inc name)
 * bkctld-inc: Inverted log message priorities (progress messages are notice, and start/finish are info)
+* bkctld-rm: Add log message at begining/end of operations
+* bkctld-rm: Inverted log message priorities (progress messages are notice, and start/finish are info)
 * bkctld-status: Disable padding for the last column [#54](https://gitea.evolix.org/evolix/evobackup/pulls/54) 
 
 ### Deprecated
