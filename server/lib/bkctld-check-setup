@@ -76,6 +76,21 @@ else
     [ "${return}" -le 2 ] && return=2
 fi
 
+# Check if there is no more than one inc running
+nb_inc_running=$(pgrep --count bkctld-inc)
+if [ "${nb_inc_running}" -eq 0 ]; then
+    output="${output}OK - no inc operations currently running.\n"
+    nb_ok=$((nb_ok + 1))
+elif [ "${nb_inc_running}" -eq 1 ]; then
+    output="${output}OK - one inc operation currently running.\n"
+    nb_ok=$((nb_ok + 1))
+else
+    output="${output}CRITICAL - ${nb_inc_running} inc operations currently running (should be 1 or 0)\n"
+    nb_crit=$((nb_crit + 1))
+    [ "${return}" -le 2 ] && return=2
+fi
+
+
 [ "${return}" -ge 0 ] && header="OK"
 [ "${return}" -ge 1 ] && header="WARNING"
 [ "${return}" -ge 2 ] && header="CRITICAL"
