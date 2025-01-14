@@ -11,6 +11,7 @@ CURRENT_JAIL_VERSION="2"
 
 LIBDIR=${LIBDIR:-/usr/lib/bkctld}
 CONFDIR="${CONFDIR:-/etc/evobackup}"
+DATADIR="${DATADIR:-/var/lib/bkctld}"
 BACKUP_DISK="${BACKUP_DISK:-}"
 BACKUP_PARTITION="${BACKUP_PARTITION:-/backup}"
 JAILDIR="${JAILDIR:-${BACKUP_PARTITION}/jails}"
@@ -560,3 +561,17 @@ get_jail_version(){
     fi
 }
 
+ensure_datadir_exists(){
+    if [ ! -d "${DATADIR}" ]; then
+        mkdir --mode 755 "${DATADIR}"
+    fi
+}
+
+get_timestamp(){
+    date "+%s"
+}
+
+datadir_cleanup(){
+    # Files created by bkctld inc to keep track of inc creation time
+    find "${DATADIR}" -maxdepth 1 -type f -name "time-inc_????-??-??-??" -ctime +1
+}
