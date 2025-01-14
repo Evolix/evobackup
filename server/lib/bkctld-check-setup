@@ -94,13 +94,59 @@ fi
 nb_inc_running=$(pgrep --count bkctld-inc)
 nb_rm_running=$(pgrep --count bkctld-rm)
 if [ "${nb_inc_running}" -ge 1 ] && [ "${nb_rm_running}" -eq 1 ]; then
-    nb_warn=$((nb_warn + 1))
     output="${output}WARNING - Inc and rm operations running simulteanously\n"
+    nb_warn=$((nb_warn + 1))
     [ "${return}" -le 1 ] && return=1
 else
     output="${output}OK - No inc and rm operations running simulteanously.\n"
     nb_ok=$((nb_ok + 1))
 fi
+
+
+# Look at inc creation time in the previous days
+timing_files=$(find "${DATADIR}" -maxdepth 1 -type f -name "time-inc_????-??-??-??" -ctime -10)
+timing_nb_ok=0
+timing_nb_warn=0
+timing_nb_crit=0
+timing_unfinished=0
+for timing_file in $timing_files; do
+
+    if ! tail -n1 ${timing_file} | grep -q GLOBAL; then 
+        # Ignore if it's an inc not finished
+        timing_unfinished=$((timing_unfinished + 1))
+        continue;
+    fi
+
+    global_time=$(tail -n1 ${timing_file} | grep  GLOBAL | cut -d ';' -f1)
+    if [ $global_time -gt $((INCTIME_CRITICAL * 3600)) ]; then
+        timing_nb_crit=$((timing_nb_crit + 1))
+    elif [ $global_time -gt $((INCTIME_WARNING * 3600)) ]; then
+        timing_nb_warn=$((timing_nb_warn + 1))
+    else
+        timing_nb_ok=$((timing_nb_ok + 1))
+    fi
+done
+
+if [ $timing_nb_crit -ge 1 ]; then
+    output="${output}CRITICAL - ${timing_nb_crit} incs took more than ${INCTIME_CRITICAL} hours to be created in the last 10 days\n"
+    nb_crit=$((nb_crit + 1))
+    [ "${return}" -le 2 ] && return=2
+elif [ $timing_nb_warn -ge 1 ]; then
+    output="${output}WARNING - ${timing_nb_warn} incs took more than ${INCTIME_WARNING} hours to be created in the last 10 days\n"
+    nb_warn=$((nb_warn + 1))
+    [ "${return}" -le 1 ] && return=1
+else
+    output="${output}OK - All inc creation time is bellow ${INCTIME_WARNING} hours in the last 10 days.\n"
+    nb_ok=$((nb_ok + 1))
+fi
+
+# Look if theres more than one inc operation that is unfinished
+if [ $timing_unfinished -gt 1 ]; then
+    output="${output}CRITICAL - ${timing_unfinished} incs did not finish ! (Possible overlap or inc creation aborted)\n"
+    nb_crit=$((nb_crit + 1))
+    [ "${return}" -le 2 ] && return=2
+fi
+
 
 [ "${return}" -ge 0 ] && header="OK"
 [ "${return}" -ge 1 ] && header="WARNING"
