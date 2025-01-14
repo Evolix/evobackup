@@ -90,6 +90,17 @@ else
     [ "${return}" -le 2 ] && return=2
 fi
 
+# Warn about inc/rm operations running at the same time
+nb_inc_running=$(pgrep --count bkctld-inc)
+nb_rm_running=$(pgrep --count bkctld-rm)
+if [ "${nb_inc_running}" -ge 1 ] && [ "${nb_rm_running}" -eq 1 ]; then
+    nb_warn=$((nb_warn + 1))
+    output="${output}WARNING - Inc and rm operations running simulteanously\n"
+    [ "${return}" -le 1 ] && return=1
+else
+    output="${output}OK - No inc and rm operations running simulteanously.\n"
+    nb_ok=$((nb_ok + 1))
+fi
 
 [ "${return}" -ge 0 ] && header="OK"
 [ "${return}" -ge 1 ] && header="WARNING"
