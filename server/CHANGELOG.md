@@ -13,6 +13,12 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ### Added
 
+* bkctld-check-setup: Check how many incs operation are running (Critical if >=2)
+* bkctld-check-setup: Check if inc and rm operations are running simultaneously (Warning if yes)
+* bkctld-check-setup: Check if inc creation time (in the last 10 days) is bellow given thresholds
+* bkctld-check-setup: Check if there is more than 1 unfinished inc operation
+* bkctld-inc: Save inc creation time
+* Directory /var/lib/bkctld to store internal bkctld informations
 * Munin plugins for bkctld [#64](https://gitea.evolix.org/evolix/evobackup/pulls/64)
 
 ### Changed
