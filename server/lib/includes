@@ -575,5 +575,5 @@ get_timestamp(){
 
 datadir_cleanup(){
     # Files created by bkctld inc to keep track of inc creation time
-    find "${DATADIR}" -maxdepth 1 -type f -name "time-inc_????-??-??-??" -ctime +1
+    find "${DATADIR}" -maxdepth 1 -type f -name "time-inc_????-??-??-??" -ctime +30 -delete
 }
