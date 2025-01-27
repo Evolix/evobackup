@@ -35,6 +35,8 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ### Fixed
 
+* munin : bkctld_incs > Correct the counting logic of the plugin
+
 ### Security
 
 
