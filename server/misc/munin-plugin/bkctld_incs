@@ -1,0 +1,41 @@
+#!/bin/bash
+#
+# This plugin count how many incs are present on the system and
+# how many are expected, according to bkctld configuration.
+
+case $1 in
+   config)
+        cat <<'UNLIKELY_EOF'
+graph_title bkctld incs
+graph_vlabel Number of incs
+graph_args --lower-limit 0
+
+graph_scale no
+graph_category bkctld
+graph_info The total number of available incs on the server
+
+incs.info Number of backup incs available
+incs.label Incs available
+
+incs_expected.info Number of backup incs expected by config
+incs_expected.label Incs expected by config
+
+UNLIKELY_EOF
+    exit 0;;
+esac
+
+incs_expected=0
+incs=0
+
+for jail_name in $(bkctld list); do
+    ((incs+=$(ls -ld /backup/incs/${jail_name}/* | wc -l)))
+
+    if [[ -f "/etc/evobackup/${jail_name}.d/incs_policy" ]]; then
+        ((incs_expected+=$(cat /etc/evobackup/${jail_name}.d/incs_policy | sed '/^[[:space:]]*$/d' | wc -l )))
+    elif [[ -f "/etc/evobackup/${jail_name}" ]]; then
+        ((incs_expected+=$(cat /etc/evobackup/${jail_name} | sed '/^[[:space:]]*$/d' | wc -l )))
+    fi
+done;
+
+printf "incs.value %d \n" ${incs}
+printf "incs_expected.value  %d \n" ${incs_expected}

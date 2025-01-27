@@ -49,18 +49,26 @@ jails_list=$(jails_list)
 jails_total=$(echo "$jails_list" | wc -w)
 jails_count=0
 
+ensure_datadir_exists
+timing_file="${DATADIR}/time-inc_${inc_name}"
+timing_start_time=$(get_timestamp)
+echo "# Begining creating incs (name: ${inc_name}) for ${jails_total} jails - Starting at $(date)" > "${timing_file}"
+
+notice "Begining creating incs (name: ${inc_name}) for ${jails_total} jails"
+
 for jail_name in ${jails_list}; do
     jails_count=$((jails_count+1))
     jail_path=$(jail_path "${jail_name}")
     inc_path=$(inc_path "${jail_name}" "${inc_name}")
     incs_policy_file=$(current_jail_incs_policy_file "${jail_name}")
+    jail_start_time=$(get_timestamp)
 
     # If no incs policy is found, we don't create incs
     if [ -n "${incs_policy_file}" ]; then
         # If inc directory is not present, we proceed with inc creation
         if [ ! -d "${inc_path}" ]; then
-            info "Progress: jail ${jails_count} out of ${jails_total}"
-            notice "Create inc '${inc_name}' for jail '${jail_name}' : start"
+            notice "Progress: jail ${jails_count} out of ${jails_total}"
+            info "Create inc '${inc_name}' for jail '${jail_name}' : start"
 
             if is_btrfs "${jail_path}"; then
                 create_inc_btrfs "${jail_name}" "${inc_name}"
@@ -68,11 +76,19 @@ for jail_name in ${jails_list}; do
                 create_inc_ext4 "${jail_name}" "${inc_name}"
             fi
 
-            notice "Create inc '${inc_name}' for jail '${jail_name}' : finish"
+            info "Create inc '${inc_name}' for jail '${jail_name}' : finish"
         else
             warning "Skip inc '${inc_name}' for jail '${jail_name}' : it already exists."
         fi
     else
         notice "Skip jail '${jail_name}' : incs policy is missing"
     fi
+
+    jail_time=$(($(get_timestamp) - jail_start_time))
+    echo "${jail_time} ;${jail_name} " >> "${timing_file}"
 done
+
+notice "Finished creating incs (name: ${inc_name}) for ${jails_total} jails"
+echo "$(($(get_timestamp) - timing_start_time)) ;GLOBAL " >> "${timing_file}"
+
+datadir_cleanup

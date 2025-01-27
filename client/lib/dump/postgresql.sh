@@ -347,17 +347,19 @@ dump_postgresql_per_base() {
         # shellcheck disable=SC2164
         
         declare -a connect_options
-        if [ -n "${connect_options}" ]; then
+        if [ -n "${option_host}" ]; then
             connect_options+=(--host ${option_host})
-            if [ -n "${connect_options}" ]; then
+            if [ -n "${option_port}" ]; then
                 connect_options+=(--port ${option_port})
             else
                 connect_options+=(--port 5432)
             fi
         fi
 
-        cd /var/lib/postgresql
+        cd /var/lib/postgresql || { log "LOCAL_TASKS - ${FUNCNAME[0]}: /var/lib/postgresql not found"; return; }
+    
         databases=$(sudo -u postgres psql -U postgres ${connect_options[*]} -lt | awk -F \| '{print $1}' | grep -v "template.*")
+
         for database in ${databases} ; do
             local error_file="${errors_dir}/${database}.err"
             local dump_file="${dump_dir}/${database}.sql${dump_ext}"

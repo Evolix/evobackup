@@ -1,0 +1,39 @@
+#!/bin/bash
+#
+# This plugin, will count how many rsync operations are curently running
+# in all bkctld jails
+
+case $1 in
+   config)
+        cat <<'UNLIKELY_EOF'
+graph_title bkctld rsync
+graph_vlabel Number of rsync operations curently running in jails
+graph_args --lower-limit 0
+
+graph_scale no
+graph_category bkctld
+graph_info The total number of running rsync operations in jails
+
+rsync.info Number of rsync operations running in jails
+rsync.label Rsync operations running in jails
+
+UNLIKELY_EOF
+        exit 0;;
+esac
+
+rsync_count=0
+pid_list=$(pgrep --full "sh -c rsync")  
+
+for pid in $pid_list; do
+    pid_cgroup=$(cat "/proc/${pid}/cgroup")
+
+    if [[ "$pid_cgroup" =~ /machine.slice/systemd-nspawn@ ]]; then
+        ((rsync_count++))
+    fi
+
+done
+
+printf "rsync.value %s\n" $rsync_count
+
+
+

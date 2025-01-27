@@ -118,6 +118,8 @@ jails_list=$(jails_with_incs_list)
 jails_total=$(echo "$jails_list" | wc -w)
 jails_count=0
 
+notice "Begining deleting incs for ${jails_total} jails"
+
 for jail_name in ${jails_list}; do
     jails_count=$((jails_count+1))
     incs_policy_file=$(current_jail_incs_policy_file "${jail_name}")
@@ -132,8 +134,8 @@ for jail_name in ${jails_list}; do
             debug "Incs to be deleted for '${jail_name}' : $(echo "${incs_to_delete}" | tr '\n', ',' | sed 's/,$//')."
             for inc_name in ${incs_to_delete}; do
                 incs_count=$((incs_count+1))
-                info "Progress: jail ${jails_count} out of ${jails_total} - inc ${incs_count} out of ${incs_total}"
-                notice "Delete inc '${inc_name}' for jail '${jail_name}' : start"
+                notice "Progress: jail ${jails_count} out of ${jails_total} - inc ${incs_count} out of ${incs_total}"
+                info "Delete inc '${inc_name}' for jail '${jail_name}' : start"
 
                 inc_path=$(inc_path "${jail_name}" "${inc_name}")
 
@@ -143,10 +145,10 @@ for jail_name in ${jails_list}; do
                     delete_inc_ext4 "${jail_name}" "${inc_name}"
                 fi
 
-                notice "Delete inc '${inc_name}' for jail '${jail_name}' : finish"
+                info "Delete inc '${inc_name}' for jail '${jail_name}' : finish"
             done
         else
-            notice "Skip jail '${jail_name}' : no inc to delete"
+            info "Skip jail '${jail_name}' : no inc to delete"
         fi
     else
         notice "Skip jail '${jail_name}' : incs policy is missing"
@@ -154,6 +156,9 @@ for jail_name in ${jails_list}; do
     # Delete empty incs directory for jail
     delete_empty_inc "${jail_name}"
 done
+
+notice "Finished deleting incs for ${jails_total} jails"
+
 
 # Remove the lock file and cleanup tmp files
 rm -f "${lock_file}"
