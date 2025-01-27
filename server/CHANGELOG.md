@@ -24,6 +24,37 @@ The **patch** part changes is incremented if multiple releases happen the same m
 ### Security
 
 
+## [25.01] - 2024-01-27
+
+### Added
+
+* bkctld-check-setup: Check how many incs operation are running (Critical if >=2)
+* bkctld-check-setup: Check if inc and rm operations are running simultaneously (Warning if yes)
+* bkctld-check-setup: Check if inc creation time (in the last 10 days) is bellow given thresholds
+* bkctld-check-setup: Check if there is more than 1 unfinished inc operation
+* bkctld-inc: Save inc creation time
+* Directory /var/lib/bkctld to store internal bkctld informations
+* Munin plugins for bkctld [#64](https://gitea.evolix.org/evolix/evobackup/pulls/64)
+
+### Changed
+
+* bkctld-inc: Add log message at begining/end of operations (with the inc name)
+* bkctld-inc: Inverted log message priorities (progress messages are notice, and start/finish are info)
+* bkctld-rm: Add log message at begining/end of operations
+* bkctld-rm: Inverted log message priorities (progress messages are notice, and start/finish are info)
+* bkctld-status: Disable padding for the last column [#54](https://gitea.evolix.org/evolix/evobackup/pulls/54) 
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+* munin : bkctld_incs > Correct the counting logic of the plugin
+
+### Security
+
+
 ## [24.10] - 2024-10-10
 
 ### BREAKING
