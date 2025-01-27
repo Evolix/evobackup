@@ -6,7 +6,7 @@
 
 [ -f /etc/default/bkctld ] && . /etc/default/bkctld
 
-VERSION="24.10"
+VERSION="25.01"
 CURRENT_JAIL_VERSION="2"
 
 LIBDIR=${LIBDIR:-/usr/lib/bkctld}

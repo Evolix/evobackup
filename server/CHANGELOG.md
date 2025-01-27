@@ -13,6 +13,21 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+
+## [25.01] - 2024-01-27
+
+### Added
+
 * bkctld-check-setup: Check how many incs operation are running (Critical if >=2)
 * bkctld-check-setup: Check if inc and rm operations are running simultaneously (Warning if yes)
 * bkctld-check-setup: Check if inc creation time (in the last 10 days) is bellow given thresholds
