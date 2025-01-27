@@ -1,3 +1,33 @@
+bkctld (25.01-1) stable; urgency=medium
+
+  [ Alexis Ben Miloud--Josselin ]
+  * Disable padding for the last column
+
+  [ Ludovic Poujol ]
+  * Update debian/control for new dependency: systemd-container
+  * Introducing munin-plugins for bkctld (#64)
+  * server: update changelog
+  * server: update changelog
+  * server: Update munin plugin bkctld_rsyncs
+  * server: bkctld-inc: Add Begining/end log message (with the inc name) and invert logging priorities
+  * server: bkctld-rm: Add Begining/end log message and invert logging priorities
+  * server: Measure and keep inc creation time
+  * server: bkctld-check-setup - Check how many inc operations are running
+  * server: bkctld-check-setup : Warn when inc and rm are running at the same time
+  * server: bkctld-check-setup : Add a check to ensure inc creation time is bellow a given warning/critical threshold
+  * server: Update CHANGELOG.md
+  * server: Delete inc timing files after 30days
+  * server : munin : bkctld_incs > Correct the counting logic of the plugin
+  * server: Release 25.01
+  * debian/watch: Only take server releases
+  * debian/copyright: Update copyright year
+  * debian/docs: no more zzz_evobackup
+
+  [ David Prevot ]
+  * Install munin-plugins for bkctld
+
+ -- Ludovic Poujol <lpoujol@evolix.fr>  Mon, 27 Jan 2025 17:59:40 +0100
+
 bkctld (24.10-1) stable; urgency=medium
 
   * New upstream release: 24.10
