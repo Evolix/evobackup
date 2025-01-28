@@ -3,5 +3,5 @@ server/bkctld usr/sbin
 server/lib/* usr/lib/bkctld
 server/tpl/* usr/share/bkctld
 server/bkctld.service lib/systemd/system
+server/misc/munin-plugin/* usr/lib/munin/plugins
 server/bash_completion => /usr/share/bash_completion/bkctld
-server/misc/munin-plugin/* /usr/local/lib/munin/plugins
