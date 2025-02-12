@@ -299,7 +299,13 @@ sync() {
     # Copy last lines of rsync log to the main log
     tail -n 30 "${RSYNC_LOGFILE}" >> "${LOGFILE}"
     # Copy Rsync stats to special file
-    tail -n 30 "${RSYNC_LOGFILE}" | grep --invert-match --extended-regexp " [\<\>ch\.\*]\S{10} " > "${RSYNC_STATSFILE}"
+    ignore_pattern=" [\<\>ch\.\*]\S{10} "
+    if is_openbsd; then
+        # OpenBSD grep(1) doesn't support --invert-match
+        tail -n 30 "${RSYNC_LOGFILE}" | grep -v --extended-regexp "${ignore_pattern}" > "${RSYNC_STATSFILE}"
+    else
+        tail -n 30 "${RSYNC_LOGFILE}" | grep --invert-match --extended-regexp "${ignore_pattern}" > "${RSYNC_STATSFILE}"
+    fi
 
     # We ignore rc=24 (vanished files)
     if [ ${rsync_main_rc} -ne 0 ] && [ ${rsync_main_rc} -ne 24 ]; then

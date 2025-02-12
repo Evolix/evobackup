@@ -15,7 +15,8 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ### Changed
 
-* utilities: replace realpath for OpenBSD (missing options)
+* utilities: replace realpath(1) for OpenBSD (missing options)
+* main: use short option for OpenBSD grep(1)
 
 ### Deprecated
 
