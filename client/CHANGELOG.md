@@ -22,6 +22,8 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ### Removed
 
+* disable mtree on OpenBSD (missing important feature)
+
 ### Fixed
 
 ### Security

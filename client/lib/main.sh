@@ -410,6 +410,12 @@ setup() {
     # Enable/disable mtree (default: enabled)
     : "${MTREE_ENABLED:=1}"
 
+    if is_openbsd; then
+        # mtree(1) on OpenBSD doesn't support exclusions list (-X option)
+        # which makes it unusable for us.
+        MTREE_ENABLED=0 
+    fi
+
     # If "setup_custom" exists and is a function, let's call it
     setup_custom_type="$(type -t setup_custom)"
     if [ "${setup_custom_type}" = "function" ]; then
