@@ -1,0 +1,44 @@
+From: Ludovic Poujol <lpoujol@evolix.fr>
+Date: Thu, 6 Mar 2025 15:03:48 +0100
+Subject: Move away the munin plugins' readme
+
+---
+ server/misc/munin-plugin/README.md | 29 -----------------------------
+ 1 file changed, 29 deletions(-)
+ delete mode 100644 server/misc/munin-plugin/README.md
+
+diff --git a/server/misc/munin-plugin/README.md b/server/misc/munin-plugin/README.md
+deleted file mode 100644
+index 8e066f6..0000000
+--- a/server/misc/munin-plugin/README.md
++++ /dev/null
+@@ -1,29 +0,0 @@
+-# Munin plugins for bkctld
+-
+-Plugins can be installed in /etc/munin/plugins/bkctld_incs (as executables)
+-and be run as root :
+-
+-~~~
+-# cat /etc/munin/plugin-conf.d/bkctld
+-[bkctld_*]
+-    user root
+-~~~
+-
+-Don't forget to `systemctl restart munin-node`
+-
+-
+-## Manual/Quick Deploy
+-
+-~~~
+-wget https://gitea.evolix.org/evolix/evobackup/raw/branch/master/server/misc/munin-plugin/bkctld_incs -O /etc/munin/plugins/bkctld_incs
+-wget https://gitea.evolix.org/evolix/evobackup/raw/branch/master/server/misc/munin-plugin/bkctld_jails -O /etc/munin/plugins/bkctld_jails
+-wget https://gitea.evolix.org/evolix/evobackup/raw/branch/master/server/misc/munin-plugin/bkctld_ops -O /etc/munin/plugins/bkctld_ops
+-wget https://gitea.evolix.org/evolix/evobackup/raw/branch/master/server/misc/munin-plugin/bkctld_rsyncs -O /etc/munin/plugins/bkctld_rsyncs
+-chmod 755 /etc/munin/plugins/bkctld_*
+-
+-echo "[bkctld_*]
+-    user root
+-" > /etc/munin/plugin-conf.d/bkctld
+-
+-systemctl restart munin-node
+-~~~
