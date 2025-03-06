@@ -1,3 +1,10 @@
+bkctld (25.01-2) stable; urgency=medium
+
+  * debian/install: Correct munin plugin folder installation
+  * Quick patch to remove the README.md file in the munin-plugin dir
+
+ -- Ludovic Poujol <lpoujol@evolix.fr>  Thu, 06 Mar 2025 15:00:00 +0100
+
 bkctld (25.01-1) stable; urgency=medium
 
   [ Alexis Ben Miloud--Josselin ]
