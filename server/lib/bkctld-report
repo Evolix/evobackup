@@ -1,0 +1,37 @@
+#!/bin/sh
+#
+# Description: Do a reporting (jail list, policy and current incs presents on disk)
+# Usage: report
+#
+
+set -eu
+
+# shellcheck source=./includes
+LIBDIR="$(dirname $0)" && . "${LIBDIR}/includes"
+
+[ -d "${JAILDIR}" ] || exit 0
+
+(
+echo "<name>\t <status>\t <port>\t <policy>\t <ip(s)>\t <incs>" 
+for jail_name in $(jails_list); do
+
+    status="OFF"
+    "${LIBDIR}/bkctld-is-on" "${jail_name}" && status="ON "
+
+    port=$("${LIBDIR}/bkctld-port" "${jail_name}")
+    ip=$("${LIBDIR}/bkctld-ip" "${jail_name}" | xargs | tr -s ' ' ',')
+
+    incs_policy_file=$(current_jail_incs_policy_file "${jail_name}")
+    incs_policy="0"
+    if [ -r "${incs_policy_file}" ]; then
+        days=$(grep "^\+" "${incs_policy_file}" | grep --count "day")
+        months=$(grep "^\+" "${incs_policy_file}" | grep --count "month")
+        incs_policy="${days}/${months}"
+    fi
+
+    incs=$(incs_list "$jail_name" | tac | tr '\n' ',' | sed 's/,$//g' | sed 's/,/, /g')
+    echo "${jail_name}\t\t ${status}\t\t ${port}\t\t ${ip}\t\t ${incs_policy} \t\t ${incs}"
+done
+) | column -t
+
+

@@ -13,6 +13,8 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ### Added
 
+* bkctld-report: New command to generate a simple reporting (jails with their settings and current incs on disk)
+
 ### Changed
 
 ### Deprecated
