@@ -525,7 +525,7 @@ dump_mysql_global() {
     while :; do
         case ${1:-''} in
             --masterdata)
-                option_masterdata="--masterdata"
+                option_masterdata="--master-data"
                 ;;
             --defaults-file)
                 # defaults-file options, with value separated by space
