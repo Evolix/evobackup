@@ -111,6 +111,7 @@ sync_tasks_wrapper() {
         /var/lib/postgres
         /var/lib/postgresql
         /var/lib/sympa
+        /var/lib/filebeat
         /var/lock
         /var/run
         /var/spool/postfix
