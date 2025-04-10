@@ -15,6 +15,8 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ### Changed
 
+* default canary file is in a top-level directory, for sorting purposes
+
 ### Deprecated
 
 ### Removed
