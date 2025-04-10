@@ -15,8 +15,6 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ### Changed
 
-* Rsync includes are sorted
-
 ### Deprecated
 
 ### Removed
