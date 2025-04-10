@@ -256,20 +256,29 @@ OUT
 @test "Check-canary fails if a canary file doesn't exist" {
     run /usr/lib/bkctld/bkctld-check-canary "${JAILNAME}"
     assert_equal "$status" "2"
-    assert_line "CRITICAL - ${JAILNAME} - missing /zzz_evobackup_canary file"
+    assert_line "CRITICAL - ${JAILNAME} - missing /zzz_evobackup/canary file"
 }
 
 @test "Check-canary fails if a canary is missing today's entries" {
+    canary_file="${JAILPATH}/data/zzz_evobackup/canary"
+    parent_dir=$(dirname "${canary_file}")
+    mkdir --parents "${parent_dir}"
+
+    touch "${canary_file}"
+
     today="$(date +%Y-%m-%d)"
-    touch "${JAILPATH}/data/zzz_evobackup_canary"
 
     run /usr/lib/bkctld/bkctld-check-canary "${JAILNAME}"
     assert_equal "$status" "2"
-    assert_line "CRITICAL - ${JAILNAME} - No entry for ${today} in /zzz_evobackup_canary file"
+    assert_line "CRITICAL - ${JAILNAME} - No entry for ${today} in /zzz_evobackup/canary file"
 }
 
 @test "Check-canary succeeds if a canary has today's entries" {
-    echo "$(date "+%FT%T%z") bats-test" >> "${JAILPATH}/data/zzz_evobackup_canary"
+    canary_file="${JAILPATH}/data/zzz_evobackup/canary"
+    parent_dir=$(dirname "${canary_file}")
+    mkdir --parents "${parent_dir}"
+
+    echo "$(date "+%FT%T%z") bats-test" >> "${canary_file}"
 
     run /usr/lib/bkctld/bkctld-check-canary "${JAILNAME}"
     assert_success
