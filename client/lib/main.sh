@@ -152,6 +152,16 @@ sync() {
     local -a rsync_includes=("${!3}")
     local -a rsync_excludes=("${!4}")
 
+    # Sort includes by alphanumeric name
+    readarray -td '' rsync_sorted_includes < <(printf '%s\0' "${rsync_includes[@]}" | sort --zero-terminated --numeric-sort )
+    # Check if we have the same number of items
+    if [ ${#rsync_includes[@]} -eq ${#rsync_sorted_includes[@]} ]; then
+        # Replace the unsorted array with the sorted array
+        rsync_includes=(${rsync_sorted_includes[@]})
+    else
+        log_error "SYNC_TASKS - ${sync_name}: ERROR: raw and sorted includes arrays don't have the same size (${#rsync_includes[@]} vs ${#rsync_sorted_includes[@]}). Let's keep the raw array."
+    fi
+
     ## Initialize variable to store SSH connection errors
     declare -a SSH_ERRORS=()
 
