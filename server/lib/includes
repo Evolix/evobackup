@@ -40,9 +40,10 @@ show_version() {
     cat <<END
 bkctld version ${VERSION}
 
-Copyright 2004-2022 Evolix <info@evolix.fr>,
+Copyright 2004-2025 Evolix <info@evolix.fr>,
                     Victor Laborie <vlaborie@evolix.fr>,
-                    Jérémy Lecour <jlecour@evolix.fr>
+                    Jérémy Lecour <jlecour@evolix.fr>,
+                    Ludovic Poujol <lpoujol@evolix.fr>
                     and others.
 
 bkctld comes with ABSOLUTELY NO WARRANTY.  This is free software,
