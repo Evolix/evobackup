@@ -25,6 +25,8 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ### Fixed
 
+* bkctld-archive : Remove firewall rules when archiving a jail (fixes #69)
+
 ### Security
 
 
