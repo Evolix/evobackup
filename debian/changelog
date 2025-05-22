@@ -1,3 +1,16 @@
+bkctld (25.05-1) stable; urgency=medium
+
+  [ Jeremy Lecour ]
+  * Server - update credits to include lpoujol
+  * Server - new location for canary file
+
+  [ Ludovic Poujol ]
+  * server: bkctld-report: New command to generate a simple reporting (jails with their settings and current incs on disk)
+  * server: bkctld-archive : Remove firewall rules when archiving a jail
+  * server: Release 25.05
+
+ -- Ludovic Poujol <lpoujol@evolix.fr>  Thu, 22 May 2025 17:00:00 +0200
+
 bkctld (25.01-2) stable; urgency=medium
 
   * debian/install: Correct munin plugin folder installation
