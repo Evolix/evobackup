@@ -24,6 +24,27 @@ The **patch** part changes is incremented if multiple releases happen the same m
 ### Security
 
 
+## [25.05]
+
+### Added
+
+* bkctld-report: New command to generate a simple reporting (jails with their settings and current incs on disk)
+
+### Changed
+
+* new default location for canary file
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+* bkctld-archive : Remove firewall rules when archiving a jail (fixes #69)
+
+### Security
+
+
 ## [25.01] - 2024-01-27
 
 ### Added

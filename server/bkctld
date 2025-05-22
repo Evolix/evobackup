@@ -67,7 +67,7 @@ done
 
 subcommand="${1:-}"
 case "${subcommand}" in
-    "inc" | "rm" | "check-jails" | "check-setup" | "check-canary" | "stats" | "list")
+    "inc" | "rm" | "check-jails" | "check-setup" | "check-canary" | "stats" | "list" | "report")
         "${LIBDIR}/bkctld-${subcommand}"
     ;;
     "check")

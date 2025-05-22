@@ -16,7 +16,7 @@ log_error() {
     if [ -n "${error_file}" ] && [ -f "${error_file}" ]; then
         printf "\n### %s\n" "${error_msg}" >&2
         # shellcheck disable=SC2046
-        if [ $(wc -l "${error_file}" | cut -d " " -f 1) -gt 30 ]; then
+        if [ $(wc -l "${error_file}" | awk '{print $1}') -gt 30 ]; then
             printf "~~~{%s (tail -30)}\n" "${error_file}" >&2
             tail -n 30 "${error_file}" >&2
         else
@@ -41,6 +41,9 @@ cleanup() {
     # shellcheck disable=SC2086
     rm -f "${TEMP_FILES[@]}"
     find "${ERRORS_DIR}" -type d -empty -delete
+}
+is_openbsd() {
+    test "$(uname -s)" = "OpenBSD"
 }
 enforce_single_process() {
     local pidfile=$1
@@ -68,10 +71,18 @@ enforce_single_process() {
 # Build the error directory (inside ERRORS_DIR) based on the dump directory path
 errors_dir_from_dump_dir() {
     local dump_dir=$1
-    local relative_path=$(realpath --relative-to="${LOCAL_BACKUP_DIR}" "${dump_dir}")
-
-    # return absolute path
-    realpath --canonicalize-missing "${ERRORS_DIR}/${relative_path}"
+    local relative_path
+    
+    if is_openbsd; then
+        # OpenBSD realpath lacks options, let's do something dumber
+        relative_path=$(echo "${dump_dir}" | sed -e "s|${LOCAL_BACKUP_DIR}/||")
+        # return absolute path
+        echo "${ERRORS_DIR}/${relative_path}"
+    else
+        relative_path=$(realpath --relative-to="${LOCAL_BACKUP_DIR}" "${dump_dir}")
+        # return absolute path
+        realpath --canonicalize-missing "${ERRORS_DIR}/${relative_path}"
+    fi
 }
 
 # Call test_server with "HOST:PORT" string
