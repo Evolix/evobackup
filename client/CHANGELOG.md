@@ -15,11 +15,13 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ### Changed
 
+* better names for LDAP dumps
+
 ### Deprecated
 
 ### Removed
 
-Client : remove useless LDAP backup
+* remove useless LDAP backup
 
 ### Fixed
 
