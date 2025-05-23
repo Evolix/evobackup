@@ -23,10 +23,6 @@ dump_ldap() {
     log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
     ${dump_cmd}
 
-    dump_cmd="slapcat -l ${dump_dir}/all.bak"
-    log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
-    ${dump_cmd}
-
     log "LOCAL_TASKS - ${FUNCNAME[0]}: stop  ${FUNCNAME[0]}"
 }
 

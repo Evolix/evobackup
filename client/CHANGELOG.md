@@ -19,6 +19,8 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ### Removed
 
+Client : remove useless LDAP backup
+
 ### Fixed
 
 ### Security
