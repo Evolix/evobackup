@@ -1,3 +1,11 @@
+bkctld (25.06-1) stable; urgency=medium
+
+  [ Ludovic Poujol ]
+  * server: bkctld-check-setup: Correct process counting to not have false positives
+  * server: Release 25.06
+
+ -- Ludovic Poujol <lpoujol@evolix.fr>  Wed, 18 Jun 2025 15:52:57 +0200
+
 bkctld (25.05-1) stable; urgency=medium
 
   [ Jeremy Lecour ]
