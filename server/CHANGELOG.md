@@ -21,6 +21,8 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ### Fixed
 
+* bkctld-check-setup: Correct process counting to not have false positives
+
 ### Security
 
 
