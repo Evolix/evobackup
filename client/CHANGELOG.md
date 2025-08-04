@@ -21,6 +21,8 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ### Fixed
 
+* elasticsearch: use "errors_dir_from_dump_dir" function instead of duplicating its (current) logic
+
 ### Security
 
 ## [25.05] - 2025-05-27
