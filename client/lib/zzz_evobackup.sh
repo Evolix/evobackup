@@ -252,17 +252,9 @@ local_tasks() {
 
     ########## Elasticsearch ##########
 
-    # Snapshot data for a single-node cluster
-    #
     # Full options list is available here: ${LIBDIR}/dump/elasticsearch.sh
     #
     ### dump_elasticsearch [--protocol=http] [--host=localhost] [--port=9200] [--user=foo] [--password=123456789] [--repository=snaprepo] [--snapshot=snapshot.daily]
-
-    # Snapshot data for a multi-node cluster
-    #
-    # Full options list is available here: ${LIBDIR}/dump/elasticsearch.sh
-    #
-    ### dump_elasticsearch [--protocol=http] [--host=localhost] [--port=9200] [--user=foo] [--password=123456789] [--repository=snaprepo] [--snapshot=snapshot.daily] [--nfs-server=192.168.2.1]
 
     ########## RabbitMQ ###############
 
