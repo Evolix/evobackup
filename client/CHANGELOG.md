@@ -15,6 +15,8 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ### Changed
 
+* Revert LOCAL_BACKUP_DIR permissions to 700
+
 ### Deprecated
 
 ### Removed
