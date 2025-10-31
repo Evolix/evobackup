@@ -91,8 +91,8 @@ else
 fi
 
 # Warn about inc/rm operations running at the same time
-nb_inc_running=$(pgrep --full --count  "/bin/sh /usr/sbin/bkctld inc"))
-nb_rm_running=$(pgrep --full --count  "/bin/sh /usr/sbin/bkctld rm"))
+nb_inc_running=$(pgrep --full --count  "/bin/sh /usr/sbin/bkctld inc")
+nb_rm_running=$(pgrep --full --count  "/bin/sh /usr/sbin/bkctld rm")
 if [ "${nb_inc_running}" -ge 1 ] && [ "${nb_rm_running}" -eq 1 ]; then
     output="${output}WARNING - Inc and rm operations running simulteanously\n"
     nb_warn=$((nb_warn + 1))
