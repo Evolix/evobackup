@@ -6,7 +6,7 @@
 
 [ -f /etc/default/bkctld ] && . /etc/default/bkctld
 
-VERSION="25.06"
+VERSION="25.10"
 CURRENT_JAIL_VERSION="2"
 
 LIBDIR=${LIBDIR:-/usr/lib/bkctld}
@@ -388,19 +388,29 @@ setup_jail_chroot() {
     cp -f /usr/lib/ld-linux.so.2 ./rootfs/usr/lib 2>/dev/null || cp -f /usr/lib64/ld-linux-x86-64.so.2 ./rootfs/usr/lib64
     cp /usr/lib/x86_64-linux-gnu/libnss* ./rootfs/usr/lib/x86_64-linux-gnu
 
-    for dbin in \
-        /usr/bin/sh \
-        /usr/bin/ls \
-        /usr/bin/mkdir \
-        /usr/bin/cat \
-        /usr/bin/rm \
-        /usr/bin/sed \
-        /usr/bin/rsync \
-        /usr/bin/lastlog \
-        /usr/bin/touch \
-        /usr/sbin/sshd \
-        /usr/lib/openssh/sftp-server\
-        ; do
+    # Build the list of programs to be included in the jail
+    bin_list=''
+    bin_list="$bin_list /usr/bin/sh"
+    bin_list="$bin_list /usr/bin/ls"
+    bin_list="$bin_list /usr/bin/mkdir"
+    bin_list="$bin_list /usr/bin/cat"
+    bin_list="$bin_list /usr/bin/rm"
+    bin_list="$bin_list /usr/bin/sed"
+    bin_list="$bin_list /usr/bin/rsync"
+    bin_list="$bin_list /usr/bin/touch"
+    bin_list="$bin_list /usr/sbin/sshd"
+    bin_list="$bin_list /usr/lib/openssh/sftp-server"
+    [ -f /usr/bin/lastlog ] && bin_list="$bin_list /usr/bin/lastlog"
+
+    # Collect all internal binaries of sshd (if they exists)
+    if [ -f "/usr/lib/openssh/sshd-session" ]; then
+        for bin in /usr/lib/openssh/sshd*; do
+            bin_list="$bin_list $bin"
+        done
+    fi
+
+    # Copy the binaries (and their associated libs)
+    for dbin in $bin_list; do
         cp -f "${dbin}" "./rootfs/${dbin}";
         for lib in $(ldd "${dbin}" | grep -Eo "/.*so.[0-9\.]+"); do
             cp -p "${lib}" "./rootfs/usr/${lib}"
