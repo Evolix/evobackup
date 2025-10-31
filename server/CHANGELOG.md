@@ -24,6 +24,21 @@ The **patch** part changes is incremented if multiple releases happen the same m
 ### Security
 
 
+## [25.10]
+
+### Fixed
+
+* bkctld-check-setup: Correct process counting to not have false positives
+* includes(setup_jail_chroot): Integrate sshd new internal binaries (if they're present)
+
+
+## [25.06]
+
+### Fixed
+
+* bkctld-check-setup: Correct process counting to not have false positives
+
+
 ## [25.05]
 
 ### Added

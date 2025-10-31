@@ -23,6 +23,26 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ### Security
 
+## [25.09] - 2025-09-09
+
+### Changed
+
+* Revert LOCAL_BACKUP_DIR permissions to 700
+
+### Fixed
+
+* elasticsearch: use "errors_dir_from_dump_dir" function instead of duplicating its (current) logic
+
+## [25.05] - 2025-05-27
+
+### Changed
+
+* better names for LDAP dumps
+
+### Removed
+
+* remove useless LDAP backup
+
 ## [25.04] - 2025-04-10
 
 ### Added
