@@ -7,7 +7,7 @@ pipeline {
             }
             steps {
                 script {
-                    sh 'gbp buildpackage'
+                    sh 'gbp buildpackage --no-clean'
                 }
                 archiveArtifacts allowEmptyArchive: true, artifacts: 'build-area/*.gz,build-area/*.bz2,build-area/*.xz,build-area/*.deb,build-area/*.dsc,build-area/*.changes,build-area/*.buildinfo,build-area/*.build,build-area/lintian.txt'
             }
