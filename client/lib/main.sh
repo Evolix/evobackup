@@ -281,6 +281,9 @@ sync() {
     rsync_main_args+=(--delete-excluded)
     rsync_main_args+=(--force)
     rsync_main_args+=(--ignore-errors)
+    rsync_main_args+=(--no-devices)
+    rsync_main_args+=(--no-specials)
+    rsync_main_args+=(--info=nonreg0)
     rsync_main_args+=(--log-file "${RSYNC_LOGFILE}")
     rsync_main_args+=(--rsh "ssh -p ${rsync_port} -o 'ConnectTimeout ${SSH_CONNECT_TIMEOUT}'")
 
