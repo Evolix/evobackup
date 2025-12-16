@@ -206,7 +206,7 @@ dump_elasticsearch() {
         option_cacert="${default_cacert}"
     fi
 
-    local errors_dir="${ERRORS_DIR}/elasticsearch-${option_repository}-${option_snapshot}"
+    local errors_dir=$(errors_dir_from_dump_dir "${LOCAL_BACKUP_DIR}/elasticsearch-${option_repository}-${option_snapshot}") 
     rm -rf "${errors_dir}"
     mkdir -p "${errors_dir}"
     # No need to change recursively, the top directory is enough
@@ -252,7 +252,7 @@ dump_elasticsearch() {
     ${dump_cmd} > "${error_file}"
 
     # test if the last line of the log file is "200"
-    tail -n 1 "${error_file}" | grep --quiet "^200$" "${error_file}"
+    tail -n 1 "${error_file}" | grep "^200$" >/dev/null 2>&1
 
     local last_rc=$?
     # shellcheck disable=SC2086
@@ -285,7 +285,7 @@ dump_elasticsearch() {
         ${dump_cmd} > "${error_file}"
 
         # test if the last line of the log file is "200"
-        tail -n 1 "${error_file}" | grep --quiet "^200$" "${error_file}"
+        tail -n 1 "${error_file}" | grep "^200$" >/dev/null 2>&1
 
         local last_rc=$?
         # shellcheck disable=SC2086

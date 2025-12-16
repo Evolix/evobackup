@@ -13,6 +13,59 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+* munin-plugins: Ensure files are executables
+
+### Security
+
+
+## [25.10]
+
+### Fixed
+
+* bkctld-check-setup: Correct process counting to not have false positives
+* includes(setup_jail_chroot): Integrate sshd new internal binaries (if they're present)
+
+
+## [25.06]
+
+### Fixed
+
+* bkctld-check-setup: Correct process counting to not have false positives
+
+
+## [25.05]
+
+### Added
+
+* bkctld-report: New command to generate a simple reporting (jails with their settings and current incs on disk)
+
+### Changed
+
+* new default location for canary file
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+* bkctld-archive : Remove firewall rules when archiving a jail (fixes #69)
+
+### Security
+
+
+## [25.01] - 2024-01-27
+
+### Added
+
 * bkctld-check-setup: Check how many incs operation are running (Critical if >=2)
 * bkctld-check-setup: Check if inc and rm operations are running simultaneously (Warning if yes)
 * bkctld-check-setup: Check if inc creation time (in the last 10 days) is bellow given thresholds
@@ -34,6 +87,8 @@ The **patch** part changes is incremented if multiple releases happen the same m
 ### Removed
 
 ### Fixed
+
+* munin : bkctld_incs > Correct the counting logic of the plugin
 
 ### Security
 

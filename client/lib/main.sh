@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2034,SC2317
 
-readonly VERSION="25.01"
+readonly VERSION="25.09"
 
 # set all programs to C language (english)
 export LC_ALL=C
@@ -78,7 +78,14 @@ sync_tasks_wrapper() {
             ;;
     esac
     if [ -f "${CANARY_FILE}" ]; then
-        rsync_default_includes+=("${CANARY_FILE}")
+        canary_parent_dir="$(dirname "${CANARY_FILE}")"
+        # Warning: we don't want to add / to the list of sources to backup
+        # but we want the canary file wherever it is
+        if [ -d "${canary_parent_dir}" ] && [ "${canary_parent_dir}" != "/" ]; then
+            rsync_default_includes+=("${canary_parent_dir}")
+        elif [ -f "${CANARY_FILE}" ]; then
+            rsync_default_includes+=("${CANARY_FILE}")
+        fi
     fi
     readonly rsync_default_includes
 
@@ -302,7 +309,13 @@ sync() {
     # Copy last lines of rsync log to the main log
     tail -n 30 "${RSYNC_LOGFILE}" >> "${LOGFILE}"
     # Copy Rsync stats to special file
-    tail -n 30 "${RSYNC_LOGFILE}" | grep --invert-match --extended-regexp " [\<\>ch\.\*]\S{10} " > "${RSYNC_STATSFILE}"
+    ignore_pattern=" [\<\>ch\.\*]\S{10} "
+    if is_openbsd; then
+        # OpenBSD grep(1) doesn't support --invert-match
+        tail -n 30 "${RSYNC_LOGFILE}" | grep -v --extended-regexp "${ignore_pattern}" > "${RSYNC_STATSFILE}"
+    else
+        tail -n 30 "${RSYNC_LOGFILE}" | grep --invert-match --extended-regexp "${ignore_pattern}" > "${RSYNC_STATSFILE}"
+    fi
 
     # We ignore rc=24 (vanished files)
     if [ ${rsync_main_rc} -ne 0 ] && [ ${rsync_main_rc} -ne 24 ]; then
@@ -370,7 +383,7 @@ setup() {
     : "${LOGFILE:="/var/log/evobackup.log"}"
 
     # Canary file to update before executing tasks
-    : "${CANARY_FILE:="/zzz_evobackup_canary"}"
+    : "${CANARY_FILE:="/zzz_evobackup/canary"}"
 
     # Date format for log messages
     : "${DATE_FORMAT:="%Y-%m-%d %H:%M:%S"}"
@@ -382,11 +395,16 @@ setup() {
 
     : "${LOCAL_BACKUP_DIR:="/home/backup"}"
     # shellcheck disable=SC2174
-    mkdir -p -m 711 "${LOCAL_BACKUP_DIR}"
+    mkdir -p "${LOCAL_BACKUP_DIR}"
+    # Make sure that the permissions are correct, even if the directory exist.
+    # They MUST stay "0700"! (cf. Issue #90)
+    chmod 700 "${LOCAL_BACKUP_DIR}"
 
     : "${ERRORS_DIR:="${LOCAL_BACKUP_DIR}/${PROGNAME}.errors-${START_TIME}"}"
     # shellcheck disable=SC2174
-    mkdir -p -m 700 "${ERRORS_DIR}"
+    mkdir -p "${ERRORS_DIR}"
+    # Make sure that the permissions are correct, even if the directory exist.
+    chmod 700 "${ERRORS_DIR}"
 
     # Backup directory on remote server
     : "${REMOTE_BACKUP_DIR:="/var/backup"}"
@@ -406,6 +424,12 @@ setup() {
 
     # Enable/disable mtree (default: enabled)
     : "${MTREE_ENABLED:=1}"
+
+    if is_openbsd; then
+        # mtree(1) on OpenBSD doesn't support exclusions list (-X option)
+        # which makes it unusable for us.
+        MTREE_ENABLED=0 
+    fi
 
     # If "setup_custom" exists and is a function, let's call it
     setup_custom_type="$(type -t setup_custom)"
