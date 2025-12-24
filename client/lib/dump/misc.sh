@@ -609,7 +609,7 @@ dump_linstordb() {
         log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
 
         # Execute the dump command
-        ${dump_cmd} 2> ${error_file}
+        ${dump_cmd} &> ${error_file}
 
         # Check result and deal with potential errors
         local last_rc=$?
