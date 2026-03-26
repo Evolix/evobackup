@@ -113,6 +113,7 @@ sync_tasks_wrapper() {
         /var/lib/mongodb
         '/var/lib/munin/*tmp*'
         /var/lib/mysql
+        /var/lib/mariadb
         /var/lib/php/sessions
         /var/lib/php5
         /var/lib/postgres

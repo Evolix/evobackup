@@ -13,6 +13,8 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ### Added
 
+* Exclude /var/lib/mariadb by default (default directory with Debian 14)
+
 ### Changed
 
 ### Deprecated
