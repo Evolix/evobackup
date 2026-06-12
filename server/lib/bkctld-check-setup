@@ -31,7 +31,7 @@ minifirewall_config=/etc/default/minifirewall
 if [ -n "${FIREWALL_RULES}" ] \
 && [ -r "${FIREWALL_RULES}" ] \
 && [ -f "${minifirewall_config}" ]; then
-    minifirewall_version=$(grep -E -o "^VERSION=(\S+)" /etc/init.d/minifirewall | head -1 | cut -d '=' -f 2 | tr -d "'" | tr -d '"')
+    minifirewall_version=$(test -x /usr/local/sbin/minifirewall && { /usr/local/sbin/minifirewall version | head -n 1 | awk '{print $3}'; } || { grep --extended-regexp '^\s*VERSION=' /etc/init.d/minifirewall | cut -d '=' -f2 | tr -d '\"'; })
 
     if [ -n "${minifirewall_version}" ] && dpkg --compare-versions "${minifirewall_version}" ge "22.03"; then
         # Minifirewall 22.03+ includes files automatically
