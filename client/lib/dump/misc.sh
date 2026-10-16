@@ -493,12 +493,19 @@ dump_server_state() {
     else
         dump_cmd="${dump_server_state_bin} ${options[*]}"
         log "LOCAL_TASKS - ${FUNCNAME[0]}: ${dump_cmd}"
-        ${dump_cmd}
+
+        timeout_duration="5m"
+        # shellcheck disable=SC2086
+        timeout ${timeout_duration} --kill-after=10s ${dump_cmd}
 
         local last_rc=$?
         # shellcheck disable=SC2086
         if [ ${last_rc} -ne 0 ]; then
-            log_error "LOCAL_TASKS - ${FUNCNAME[0]}: dump-server-state returned an error ${last_rc}, check ${dump_dir}"
+            if [ ${last_rc} -eq 124 ]; then
+                log_error "LOCAL_TASKS - ${FUNCNAME[0]}: dump-server-state has been killed because it ran longer than ${timeout_duration}, check ${dump_dir}"
+            else
+                log_error "LOCAL_TASKS - ${FUNCNAME[0]}: dump-server-state returned an error ${last_rc}, check ${dump_dir}"
+            fi
             GLOBAL_RC=${E_DUMPFAILED}
         fi
     fi
