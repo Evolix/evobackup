@@ -357,7 +357,7 @@ setup_jail_chroot() {
     ln -s ./usr/lib64 ./rootfs/lib64
 
     touch ./rootfs/etc/localtime ./rootfs/etc/resolv.conf
-    touch ./var/log/lastlog ./var/log/wtmp
+    touch ./var/log/lastlog
 
 
     info "2 - Copying essential files"
@@ -400,7 +400,6 @@ setup_jail_chroot() {
     bin_list="$bin_list /usr/bin/touch"
     bin_list="$bin_list /usr/sbin/sshd"
     bin_list="$bin_list /usr/lib/openssh/sftp-server"
-    [ -f /usr/bin/lastlog ] && bin_list="$bin_list /usr/bin/lastlog"
 
     # Collect all internal binaries of sshd (if they exists)
     if [ -f "/usr/lib/openssh/sshd-session" ]; then

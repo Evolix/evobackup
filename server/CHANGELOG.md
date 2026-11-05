@@ -19,6 +19,8 @@ The **patch** part changes is incremented if multiple releases happen the same m
 
 ### Removed
 
+* jail: Don't rely on old/deprecated "lastlog" command to keep last conn. to jail
+
 ### Fixed
 
 * munin-plugins: Ensure files are executables
